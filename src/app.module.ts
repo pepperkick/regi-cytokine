@@ -8,7 +8,10 @@ import { DiscordService } from './discord.service';
 @Module({
   imports: [],
   controllers: [AppController],
-  providers: [AppService, DiscordService, LobbyCommand],
+  providers: [AppService,
+    DiscordService,
+    LobbyCommand
+  ],
   exports: [DiscordService],
 })
 export class AppModule {}

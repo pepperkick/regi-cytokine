@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { CommandInteraction } from 'discord.js';
-import { Discord, SelectMenuComponent, ButtonComponent, SlashGroup, Slash, SlashOption } from 'discordx';
+import { Discord, SlashGroup, Slash, SlashOption } from 'discordx';
 //import { LobbyService } from '../lobby.service';
 
 @Discord()

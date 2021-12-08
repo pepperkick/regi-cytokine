@@ -1,5 +1,5 @@
 export enum RequirementName {
-    // TF2Center & TF2Pickup Lobby Type
+    // TF2Center & TF2Pickup Lobby Type (Player picks their team and class)
     REDSCOUT = "red-scout",
     BLUSCOUT = "blu-scout",
     REDSOLDIER = "red-soldier",
