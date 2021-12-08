@@ -1,8 +1,8 @@
 {
   "name": "regi-cytokine",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "",
-  "author": "",
+  "author": "Qixalite",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -44,9 +44,9 @@
     "@types/supertest": "^2.0.11",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
-    "eslint": "^8.0.1",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^4.0.0",
+    "eslint": "^7.12.1",
+    "eslint-config-prettier": "7.1.0",
+    "eslint-plugin-prettier": "^3.1.4",
     "jest": "^27.2.5",
     "prettier": "^2.3.2",
     "source-map-support": "^0.5.20",
