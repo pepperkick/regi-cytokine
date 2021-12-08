@@ -17,6 +17,8 @@ export class LobbyCommand {
         region: string,
         interaction: CommandInteraction
     ) {
+        const user = interaction.user;
+
         if (interaction instanceof CommandInteraction)
             return await interaction.reply(`${region} is what the user wants!`)
     }
