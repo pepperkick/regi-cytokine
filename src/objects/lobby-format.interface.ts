@@ -1,4 +1,5 @@
 import { FormatRequirement } from './requirement.interface';
+import { LobbyType } from './lobby-type.enum';
 
 /*
  * Represents a format in a lobby.
@@ -10,7 +11,7 @@ export class LobbyFormat {
   name: string;
 
   // Type of lobby (Ex: "captain-based", "normal", ...) TODO: Code in types
-  type?: string;
+  type?: LobbyType;
 
   // The game this format is compatible with.
   // TODO: Add other games (since it's a single game for now, later could be "tf2" | "csgo" | ... )

@@ -8,7 +8,6 @@ import axios from 'axios';
 import { Client } from 'discordx';
 
 export class LobbyService {
-  private currentLobby: Model<Lobby>;
   private readonly logger = new Logger(LobbyService.name);
 
   constructor(
@@ -16,8 +15,11 @@ export class LobbyService {
     private readonly lobby: Model<Lobby>,
     private readonly bot: Client,
   ) {
-    this.currentLobby = lobby;
+    // instance the new lobby
   }
 
-  
+  /**
+   * Sends a request to Cytokine to create a new lobby with asked requirements.
+   */
+  async createLobby(region: String,
 }

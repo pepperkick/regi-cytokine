@@ -6,5 +6,108 @@
     "client": {
         "guild": "",
         "token": ""
-    }
+    },
+
+    "formats": [
+        {
+            "name": "6vs6",
+            "game": "tf2",
+            "mapTypes": ["cp", "koth"],
+            "type": "TEAM_ROLE_BASED",
+            "maxPlayers": 12,
+            "requirements": [
+                { "name": "red-scout", "count": 2 },
+                { "name": "red-soldier", "count": 2 },
+                { "name": "red-demoman", "count": 1 },
+                { "name": "red-medic", "count": 1 },
+                { "name": "red-pyro", "count": 1 },
+                { "name": "red-heavy", "count": 1 },
+                { "name": "red-engineer", "count": 1 },
+                { "name": "red-sniper", "count": 1 },
+                { "name": "blu-scout", "count": 2 },
+                { "name": "blu-soldier", "count": 2 },
+                { "name": "blu-demoman", "count": 1 },
+                { "name": "blu-medic", "count": 1 },
+                { "name": "blu-pyro", "count": 1 },
+                { "name": "blu-heavy", "count": 1 },
+                { "name": "blu-engineer", "count": 1 },
+                { "name": "blu-sniper", "count": 1 }
+            ]
+        },
+        {
+            "name": "9vs9",
+            "game": "tf2",
+            "mapTypes": ["koth", "pl"],
+            "type": "TEAM_ROLE_BASED",
+            "maxPlayers": 19,
+            "requirements": [
+                { "name": "red-scout", "count": 1 },
+                { "name": "red-soldier", "count": 1 },
+                { "name": "red-demoman", "count": 1 },
+                { "name": "red-medic", "count": 1 },
+                { "name": "red-pyro", "count": 1 },
+                { "name": "red-heavy", "count": 1 },
+                { "name": "red-engineer", "count": 1 },
+                { "name": "red-sniper", "count": 1 },
+                { "name": "blu-scout", "count": 1 },
+                { "name": "blu-soldier", "count": 1 },
+                { "name": "blu-demoman", "count": 1 },
+                { "name": "blu-medic", "count": 1 },
+                { "name": "blu-pyro", "count": 1 },
+                { "name": "blu-heavy", "count": 1 },
+                { "name": "blu-engineer", "count": 1 },
+                { "name": "blu-sniper", "count": 1 }
+            ]
+        },
+        {
+            "name": "4vs4",
+            "game": "tf2",
+            "mapTypes": ["koth"],
+            "type": "TEAM_ROLE_BASED",
+            "maxPlayers": 8,
+            "requirements": [
+                { "name": "red-scout", "count": 1 },
+                { "name": "red-soldier", "count": 1 },
+                { "name": "red-demoman", "count": 1 },
+                { "name": "red-medic", "count": 1 },
+                { "name": "red-pyro", "count": 1 },
+                { "name": "red-heavy", "count": 1 },
+                { "name": "red-engineer", "count": 1 },
+                { "name": "red-sniper", "count": 1 },
+                { "name": "blu-scout", "count": 1 },
+                { "name": "blu-soldier", "count": 1 },
+                { "name": "blu-demoman", "count": 1 },
+                { "name": "blu-medic", "count": 1 },
+                { "name": "blu-pyro", "count": 1 },
+                { "name": "blu-heavy", "count": 1 },
+                { "name": "blu-engineer", "count": 1 },
+                { "name": "blu-sniper", "count": 1 }
+            ]
+        },
+        {
+            "name": "Ultiduo",
+            "game": "tf2",
+            "mapTypes": ["ultiduo"],
+            "type": "TEAM_ROLE_BASED",
+            "maxPlayers": 4,
+            "requirements": [
+                { "name": "red-scout", "count": 0 },
+                { "name": "red-soldier", "count": 1 },
+                { "name": "red-demoman", "count": 0 },
+                { "name": "red-medic", "count": 1 },
+                { "name": "red-pyro", "count": 0 },
+                { "name": "red-heavy", "count": 0 },
+                { "name": "red-engineer", "count": 0 },
+                { "name": "red-sniper", "count": 0 },
+                { "name": "blu-scout", "count": 0 },
+                { "name": "blu-soldier", "count": 1 },
+                { "name": "blu-demoman", "count": 0 },
+                { "name": "blu-medic", "count": 1 },
+                { "name": "blu-pyro", "count": 0 },
+                { "name": "blu-heavy", "count": 0 },
+                { "name": "blu-engineer", "count": 0 },
+                { "name": "blu-sniper", "count": 0 }
+            ]
+        }
+    ]
 }
