@@ -21,5 +21,5 @@ export class LobbyService {
   /**
    * Sends a request to Cytokine to create a new lobby with asked requirements.
    */
-  async createLobby(region: String,
+  //async createLobby(region: String,
 }
