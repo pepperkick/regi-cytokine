@@ -6,10 +6,5 @@
     "client": {
         "guild": "",
         "token": ""
-    },
-
-    "main": {
-        "lobby-create-role": "",
-        "lobby-join-role": ""
     }
 }
