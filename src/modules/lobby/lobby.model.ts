@@ -4,6 +4,7 @@ import { FormatRequirement } from '../../objects/requirement.interface';
 import { Document } from 'mongoose';
 import { LobbyFormat } from '../../objects/lobby-format.interface';
 import { LobbyStatus } from './lobby-status.enum';
+import { LobbyCreator } from './lobby-creator.interface';
 
 @Schema()
 export class Lobby extends Document {
@@ -11,16 +12,13 @@ export class Lobby extends Document {
   createdAt: Date;
 
   @Prop()
-  match: string;
+  creator: LobbyCreator;
 
   @Prop({ type: String })
   status: LobbyStatus;
 
   @Prop({ type: String })
   type: LobbyFormat;
-
-  @Prop({ type: Object })
-  queuedPlayers: Player[];
 
   @Prop({ type: Object })
   requirements: FormatRequirement[];
