@@ -16,11 +16,7 @@ export class DiscordService {
   private async run() {
     // Create a new Discord client
     const bot = new Client({
-      intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_MEMBERS,
-      ],
+      intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
       botGuilds: [config.client.guild],
       silent: true,
     });
@@ -32,8 +28,8 @@ export class DiscordService {
     bot.once('ready', async () => {
       // Load all commands available
       await bot.initApplicationCommands({
-        guild: { log: true },
-        global: { log: true },
+        guild: { log: true, disable: { delete: true } },
+        global: { log: true, disable: { delete: true } },
       });
 
       // Load permissions
