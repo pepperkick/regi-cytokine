@@ -24,6 +24,7 @@ export class LobbyCommand {
     interaction: CommandInteraction,
   ) {
     if (interaction instanceof CommandInteraction)
+      // Temporary reply until Lobby creation logic is finished.
       return await interaction.reply(
         `${format} at ${region} is what the user wants!`,
       );

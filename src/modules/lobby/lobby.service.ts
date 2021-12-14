@@ -5,6 +5,7 @@ import * as config from '../../../config.json';
 import { LobbyType } from '../../objects/lobby-type.enum';
 import { RequirementName } from '../../objects/requirement-names.enum';
 import axios from 'axios';
+import { LobbyOptions } from './lobby-options.interface';
 
 export class LobbyService {
   private readonly logger = new Logger(LobbyService.name);
@@ -15,7 +16,23 @@ export class LobbyService {
   /**
    * Sends a request to Cytokine to create a new lobby with asked requirements.
    */
-  //async createLobby(region: String,
+  async createLobby(options: LobbyOptions) {
+    // Deconstruct the options object
+    const { region, format } = options;
+
+    // Do a request to Cytokine to create a new lobby.
+    // The format the data is sent in doesn't match the one from Cytokine's API.
+    // This could be solved by discussing it this Friday (or before).
+    //
+    // data will be a Mongoose document with the Lobby's info.
+    const { data } = await axios.post(
+      `${config.localhost}/api/v1/lobbies`,
+      options,
+      {
+        headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+      },
+    );
+  }
 
   /**
    * Parses the config's LobbyFormats and returns an array containing the LobbyFormat types.

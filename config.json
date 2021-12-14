@@ -5,6 +5,9 @@
         "guild": "",
         "token": ""
     },
+    "secret": {
+        "cytokine": ""
+    },
     "formats": [
         {
             "name": "6vs6",
