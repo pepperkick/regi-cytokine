@@ -39,7 +39,7 @@
             "game": "tf2",
             "mapTypes": ["koth", "pl"],
             "distribution": "TEAM_ROLE_BASED",
-            "maxPlayers": 19,
+            "maxPlayers": 18,
             "requirements": [
                 { "name": "red-scout", "count": 1 },
                 { "name": "red-soldier", "count": 1 },
