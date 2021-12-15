@@ -5,10 +5,10 @@ import { LobbyService } from './lobby.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Lobby.name, schema: LobbySchema }]),
+    // MongooseModule.forFeature([{ name: Lobby.name, schema: LobbySchema }]),
   ],
   controllers: [],
   providers: [LobbyService],
   exports: [LobbyService],
 })
-export class AppModule {}
+export class LobbyModule {}

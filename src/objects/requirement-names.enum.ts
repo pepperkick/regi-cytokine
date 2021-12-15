@@ -1,4 +1,8 @@
 export enum RequirementName {
+  // Generic roles
+  CAPTAIN = 'captain',
+  PLAYER = 'player',
+
   // TF2Center & TF2Pickup Lobby Type (Player picks their team and class)
   RED_SCOUT = 'red-scout',
   BLU_SCOUT = 'blu-scout',

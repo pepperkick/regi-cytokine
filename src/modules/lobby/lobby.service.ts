@@ -2,10 +2,10 @@ import { Logger } from '@nestjs/common';
 import { Client } from 'discordx';
 import { LobbyFormat } from '../../objects/lobby-format.interface';
 import * as config from '../../../config.json';
-import { LobbyType } from '../../objects/lobby-type.enum';
 import { RequirementName } from '../../objects/requirement-names.enum';
 import axios from 'axios';
 import { LobbyOptions } from './lobby-options.interface';
+import { DistributionType } from '../../objects/distribution.enum';
 
 export class LobbyService {
   private readonly logger = new Logger(LobbyService.name);
@@ -17,21 +17,24 @@ export class LobbyService {
    * Sends a request to Cytokine to create a new lobby with asked requirements.
    */
   async createLobby(options: LobbyOptions) {
-    // Deconstruct the options object
-    const { region, format } = options;
+    try {
+      // Do a request to Cytokine to create a new lobby.
+      // The format the data is sent in doesn't match the one from Cytokine's API.
+      // This could be solved by discussing it this Friday (or before).
+      //
+      // data will be a Mongoose document with the Lobby's info.
+      const { data } = await axios.post(
+        `${config.cytokine.host}/api/v1/lobbies`,
+        options,
+        {
+          headers: { Authorization: `Bearer ${config.cytokine.clientSecret}` },
+        },
+      );
 
-    // Do a request to Cytokine to create a new lobby.
-    // The format the data is sent in doesn't match the one from Cytokine's API.
-    // This could be solved by discussing it this Friday (or before).
-    //
-    // data will be a Mongoose document with the Lobby's info.
-    const { data } = await axios.post(
-      `${config.localhost}/api/v1/lobbies`,
-      options,
-      {
-        headers: { Authorization: `Bearer ${config.secret.cytokine}` },
-      },
-    );
+      return data;
+    } catch (error) {
+      console.log(error.response.data);
+    }
   }
 
   /**
@@ -49,8 +52,12 @@ export class LobbyService {
         // throw new Error(`${format.game} is not a supported game.`);
         continue;
 
-      // Format type must belong to enum
-      if (!Object.values(LobbyType).includes(<LobbyType>format.type))
+      // Format distribution type must belong to enum
+      if (
+        !Object.values(DistributionType).includes(
+          <DistributionType>format.distribution,
+        )
+      )
         // throw new Error(`${format.type} is not a supported Lobby type.`);
         continue;
 
