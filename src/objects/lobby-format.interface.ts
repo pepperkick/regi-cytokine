@@ -15,7 +15,7 @@ export class LobbyFormat {
 
   // The game this format is compatible with.
   // TODO: Add other games (since it's a single game for now, later could be "tf2" | "csgo" | ... )
-  game: 'tf2';
+  game: 'tf2-comp';
 
   // Requirements list for this type of format (determining maximum classes, etcetera)
   requirements: FormatRequirement[];

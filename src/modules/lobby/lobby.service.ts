@@ -24,10 +24,10 @@ export class LobbyService {
       //
       // data will be a Mongoose document with the Lobby's info.
       const { data } = await axios.post(
-        `${config.cytokine.host}/api/v1/lobbies`,
+        `${config.localhost}/api/v1/matches`,
         options,
         {
-          headers: { Authorization: `Bearer ${config.cytokine.clientSecret}` },
+          headers: { Authorization: `Bearer ${config.secret.cytokine}` },
         },
       );
 
