@@ -17,6 +17,7 @@ export class LobbyCommand {
     LobbyCommand.service = service;
   }
 
+  // Slash command
   @Slash('create', { description: 'Create a new lobby for a pug.' })
   async create(
     // TODO: Properly support regions
@@ -26,6 +27,7 @@ export class LobbyCommand {
       required: true,
     })
     region: string,
+    // Supported parsed formats as an option
     @SlashChoice(LobbyService.formats.names)
     @SlashOption('format', {
       description: 'The format of the lobby.',
@@ -34,7 +36,10 @@ export class LobbyCommand {
     format: string,
     interaction: CommandInteraction,
   ) {
+    // Check for the interaction being of type CommandInteraction
+    // This way we can reply to the user once the command has been executed, and get corresponding Discord data.
     if (interaction instanceof CommandInteraction) {
+      // Check validity of format sent by user.
       const formatConfig = config.formats.filter(
         (item) => item.name === format,
       )[0] as LobbyFormat;
@@ -46,12 +51,14 @@ export class LobbyCommand {
         });
       }
 
+      // Get player from the Discord initiator
       const player: Player = {
         name: interaction.user.username,
         discord: interaction.user.id,
         roles: ['creator'],
       };
 
+      // Declare the LobbyOptions object to send over the request.
       const options: LobbyOptions = {
         distribution: formatConfig.distribution,
         callbackUrl: config.localhost,
@@ -66,8 +73,10 @@ export class LobbyCommand {
       };
       console.log(options);
 
+      // Send the request to the lobby service (redirects it to Cytokine's API)
       const lobby = await LobbyCommand.service.createLobby(options);
 
+      // If lobby creation was unsuccessful, return an error message.
       if (!lobby) {
         return await interaction.reply(`Failed to create lobby`);
       }
