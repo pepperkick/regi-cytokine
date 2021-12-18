@@ -1,6 +1,7 @@
 import { Player } from '../../objects/match-player.interface';
 import { FormatRequirement } from '../../objects/requirement.interface';
 import { DistributionType } from '../../objects/distribution.enum';
+import { Game } from 'src/objects/game.enum';
 
 export interface LobbyOptions {
   // Distribution logic type to follow for this lobby
@@ -15,11 +16,14 @@ export interface LobbyOptions {
   // Role requirements to be filled to start the match
   requirements: FormatRequirement[];
 
+  // The game this lobby is for
+  game: Game;
+
+  // The region this lobby will take place in
+  region: string;
+
   // Options for match
   matchOptions: {
-    game: string;
-    region: string;
-    callbackUrl: string;
     players: Player[];
     preferences?: {
       requiredPlayers?: number;

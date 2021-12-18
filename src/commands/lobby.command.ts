@@ -1,4 +1,4 @@
-import { CommandInteraction } from 'discord.js';
+import { CommandInteraction, Message } from 'discord.js';
 import { Discord, SlashGroup, Slash, SlashOption, SlashChoice } from 'discordx';
 import { Logger } from '@nestjs/common';
 import { LobbyService } from '../modules/lobby/lobby.service';
@@ -6,6 +6,7 @@ import { LobbyOptions } from '../modules/lobby/lobby-options.interface';
 import * as config from '../../config.json';
 import { LobbyFormat } from '../objects/lobby-format.interface';
 import { Player } from '../objects/match-player.interface';
+import { Game } from 'src/objects/game.enum';
 
 @Discord()
 @SlashGroup('lobby', 'Interact with lobby options.')
@@ -64,10 +65,9 @@ export class LobbyCommand {
         callbackUrl: config.localhost,
         queuedPlayers: [player],
         requirements: formatConfig.requirements,
+        region,
+        game: <Game>formatConfig.game,
         matchOptions: {
-          region,
-          game: formatConfig.game,
-          callbackUrl: config.localhost,
           players: [],
         },
       };
@@ -82,6 +82,8 @@ export class LobbyCommand {
       }
 
       console.log(lobby);
+
+      // Create a Discord message from JSON with embed info.
 
       // Temporary reply until Lobby creation logic is finished.
       return await interaction.reply(
