@@ -1,4 +1,4 @@
-import { CommandInteraction, Message } from 'discord.js';
+import { CommandInteraction, Message, MessageEmbed } from 'discord.js';
 import { Discord, SlashGroup, Slash, SlashOption, SlashChoice } from 'discordx';
 import { Logger } from '@nestjs/common';
 import { LobbyService } from '../modules/lobby/lobby.service';
@@ -84,6 +84,38 @@ export class LobbyCommand {
       console.log(lobby);
 
       // Create a Discord message from JSON with embed info.
+      const embed = new MessageEmbed({
+        title: `Lobby ${lobby._id}`,
+        description: '',
+        color: 0x3a9d3c,
+        fields: [
+          {
+            name: '🗒 Format',
+            value: `${formatConfig.name}\n\n**Max. Players:** ${formatConfig.maxPlayers}\n\n**Distribution:** ${formatConfig.distribution}\n\n`,
+            inline: true,
+          },
+          {
+            name: '📍 Region',
+            value: `**${region}**`,
+            inline: true,
+          },
+          {
+            name: '🎮 Game',
+            value: `${lobby.game}`,
+            inline: true,
+          },
+          {
+            name: '👥 Queued Players',
+            value: `${lobby.queuedPlayers.length}/${formatConfig.maxPlayers}\n\n<@${interaction.user.id}>`,
+            inline: false,
+          },
+          {
+            name: '\u200B',
+            value: 'Click on the button below to queue up!',
+          },
+        ],
+      });
+      const message = await interaction.reply(embed);
 
       // Temporary reply until Lobby creation logic is finished.
       return await interaction.reply(
