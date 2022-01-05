@@ -1,4 +1,10 @@
-import { CommandInteraction, Message, MessageEmbed } from 'discord.js';
+import {
+  CommandInteraction,
+  Message,
+  MessageActionRow,
+  MessageButton,
+  MessageEmbed,
+} from 'discord.js';
 import { Discord, SlashGroup, Slash, SlashOption, SlashChoice } from 'discordx';
 import { Logger } from '@nestjs/common';
 import { LobbyService } from '../modules/lobby/lobby.service';
@@ -73,12 +79,17 @@ export class LobbyCommand {
       };
       console.log(options);
 
+      // Reply to the interaction with a message stating that the lobby is being created.
+      await interaction.reply(
+        '🕒 Creating a new lobby with your parameters...',
+      );
+
       // Send the request to the lobby service (redirects it to Cytokine's API)
       const lobby = await LobbyCommand.service.createLobby(options);
 
       // If lobby creation was unsuccessful, return an error message.
       if (!lobby) {
-        return await interaction.reply(`Failed to create lobby`);
+        return await interaction.editReply(`❌ Failed to create lobby.`);
       }
 
       console.log(lobby);
@@ -106,7 +117,7 @@ export class LobbyCommand {
           },
           {
             name: '👥 Queued Players',
-            value: `${lobby.queuedPlayers.length}/${formatConfig.maxPlayers}\n\n<@${interaction.user.id}>`,
+            value: `${lobby.players.length}/${formatConfig.maxPlayers}\n\n<@${interaction.user.id}>`,
             inline: false,
           },
           {
@@ -115,12 +126,38 @@ export class LobbyCommand {
           },
         ],
       });
-      const message = await interaction.reply(embed);
+
+      // Create a Button row to queue up or leave the queue.
+      //
+      // TODO: Add support for other Lobby Distribution Methods
+      const btnRow = new MessageActionRow({
+        components: [
+          new MessageButton({
+            label: 'Queue up',
+            customId: 'queue',
+            style: 'SUCCESS',
+            emoji: '✍',
+          }),
+          new MessageButton({
+            label: 'Unqueue',
+            customId: 'unqueue',
+            style: 'DANGER',
+            emoji: '❌',
+          }),
+        ],
+      });
+
+      // Edit the message to include the embed.
+      await interaction.editReply({
+        content: ':white_check_mark: Lobby was created successfully!',
+        embeds: [embed],
+        components: [btnRow],
+      });
 
       // Temporary reply until Lobby creation logic is finished.
-      return await interaction.reply(
+      /*return await interaction.reply(
         `${format} at ${region} is what the user wants! ${lobby._id}`,
-      );
+      );*/
     }
   }
 }
