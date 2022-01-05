@@ -13,6 +13,7 @@ import * as config from '../../config.json';
 import { LobbyFormat } from '../objects/lobby-format.interface';
 import { Player } from '../objects/match-player.interface';
 import { Game } from 'src/objects/game.enum';
+import { createLobbyResponse } from 'src/util';
 
 @Discord()
 @SlashGroup('lobby', 'Interact with lobby options.')
@@ -94,70 +95,14 @@ export class LobbyCommand {
 
       console.log(lobby);
 
-      // Create a Discord message from JSON with embed info.
-      const embed = new MessageEmbed({
-        title: `Lobby ${lobby._id}`,
-        description: '',
-        color: 0x3a9d3c,
-        fields: [
-          {
-            name: '🗒 Format',
-            value: `${formatConfig.name}\n\n**Max. Players:** ${formatConfig.maxPlayers}\n\n**Distribution:** ${formatConfig.distribution}\n\n`,
-            inline: true,
-          },
-          {
-            name: '📍 Region',
-            value: `**${region}**`,
-            inline: true,
-          },
-          {
-            name: '🎮 Game',
-            value: `${lobby.game}`,
-            inline: true,
-          },
-          {
-            name: '👥 Queued Players',
-            value: `${lobby.players.length}/${formatConfig.maxPlayers}\n\n<@${interaction.user.id}>`,
-            inline: false,
-          },
-          {
-            name: '\u200B',
-            value: 'Click on the button below to queue up!',
-          },
-        ],
-      });
-
-      // Create a Button row to queue up or leave the queue.
-      //
-      // TODO: Add support for other Lobby Distribution Methods
-      const btnRow = new MessageActionRow({
-        components: [
-          new MessageButton({
-            label: 'Queue up',
-            customId: 'queue',
-            style: 'SUCCESS',
-            emoji: '✍',
-          }),
-          new MessageButton({
-            label: 'Unqueue',
-            customId: 'unqueue',
-            style: 'DANGER',
-            emoji: '❌',
-          }),
-        ],
+      // Create the new message to edit the interaction with the lobby's status.
+      const status = createLobbyResponse(formatConfig, lobby, {
+        region,
+        userId: interaction.user.id,
       });
 
       // Edit the message to include the embed.
-      await interaction.editReply({
-        content: ':white_check_mark: Lobby was created successfully!',
-        embeds: [embed],
-        components: [btnRow],
-      });
-
-      // Temporary reply until Lobby creation logic is finished.
-      /*return await interaction.reply(
-        `${format} at ${region} is what the user wants! ${lobby._id}`,
-      );*/
+      await interaction.editReply(status);
     }
   }
 }
