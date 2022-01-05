@@ -97,6 +97,7 @@ export class LobbyCommand {
 
       // Create the new message to edit the interaction with the lobby's status.
       const status = createLobbyResponse(formatConfig, lobby, {
+        content: ':white_check_mark: Successfully created lobby.',
         region,
         userId: interaction.user.id,
       });

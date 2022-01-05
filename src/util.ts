@@ -11,7 +11,7 @@ export function createLobbyResponse(format: LobbyFormat, lobby: any, params?) {
     fields: [
       {
         name: '🗒 Format',
-        value: `${format.name}\n\n**Max. Players:** ${format.maxPlayers}\n\n**Distribution:** ${format.distribution}\n\n`,
+        value: `${format.name}\n**Max. Players:** ${format.maxPlayers}\n**Distribution:** ${format.distribution}`,
         inline: true,
       },
       {

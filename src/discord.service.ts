@@ -4,6 +4,8 @@ import { Client } from 'discordx';
 
 import * as config from '../config.json';
 
+import { ButtonInteractionHandler } from './event/button.interaction';
+
 export class DiscordService {
   private readonly logger = new Logger(DiscordService.name);
 
@@ -42,6 +44,13 @@ export class DiscordService {
     // interactionCreate
     bot.on('interactionCreate', (interaction: Interaction) => {
       if (interaction.guild.id !== config.client.guild) return;
+
+      // Button interaction
+      //
+      // The user is interacting with a Lobby
+      if (interaction.isButton()) {
+        const buttonInteraction = new ButtonInteractionHandler(interaction);
+      }
 
       bot.executeInteraction(interaction);
     });
