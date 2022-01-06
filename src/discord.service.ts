@@ -1,10 +1,10 @@
 import { Logger } from '@nestjs/common';
-import { Intents, Interaction } from 'discord.js';
+import { ButtonInteraction, Intents, Interaction } from 'discord.js';
 import { Client } from 'discordx';
 
 import * as config from '../config.json';
-
-import { ButtonInteractionHandler } from './event/button.interaction';
+import { ButtonType } from './objects/buttons/button-types.enum';
+import { Player } from './objects/match-player.interface';
 
 export class DiscordService {
   private readonly logger = new Logger(DiscordService.name);
@@ -44,13 +44,6 @@ export class DiscordService {
     // interactionCreate
     bot.on('interactionCreate', (interaction: Interaction) => {
       if (interaction.guild.id !== config.client.guild) return;
-
-      // Button interaction
-      //
-      // The user is interacting with a Lobby
-      if (interaction.isButton()) {
-        const buttonInteraction = new ButtonInteractionHandler(interaction);
-      }
 
       bot.executeInteraction(interaction);
     });
