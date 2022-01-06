@@ -64,15 +64,19 @@ export class LobbyService {
    * @param lobby The lobby to add the player to.
    */
   async addPlayer(player: Player, lobby) {
-    const { data } = await axios.put(
-      `${config.localhost}/api/v1/matches/${lobby}/join`,
-      player,
-      {
-        headers: { Authorization: `Bearer ${config.secret.cytokine}` },
-      },
-    );
+    try {
+      const { data } = await axios.post(
+        `${config.localhost}/api/v1/matches/${lobby}/join`,
+        player,
+        {
+          headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+        },
+      );
 
-    return data;
+      return data;
+    } catch (error) {
+      console.log(error.response.data);
+    }
   }
 
   /**

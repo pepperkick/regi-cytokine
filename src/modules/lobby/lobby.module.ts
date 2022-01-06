@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { MessagingService } from 'src/messaging.service';
-import { Lobby, LobbySchema } from './lobby.model';
 import { LobbyService } from './lobby.service';
 
 @Module({

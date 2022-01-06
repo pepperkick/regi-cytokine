@@ -91,12 +91,15 @@ export class LobbyCommand {
       );
 
       // Send the request to the lobby service (redirects it to Cytokine's API)
-      const lobby = await LobbyCommand.service.createLobby(options);
+      let lobby = await LobbyCommand.service.createLobby(options);
 
       // If lobby creation was unsuccessful, return an error message.
       if (!lobby) {
         return await interaction.editReply(`❌ Failed to create lobby.`);
       }
+
+      // Add the initiator to the queue.
+      lobby = await LobbyCommand.service.addPlayer(player, lobby._id);
 
       console.log(lobby);
 
