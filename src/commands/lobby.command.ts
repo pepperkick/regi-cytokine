@@ -13,16 +13,21 @@ import * as config from '../../config.json';
 import { LobbyFormat } from '../objects/lobby-format.interface';
 import { Player } from '../objects/match-player.interface';
 import { Game } from 'src/objects/game.enum';
-import { createLobbyResponse } from 'src/util';
+import { MessagingService } from 'src/messaging.service';
 
 @Discord()
 @SlashGroup('lobby', 'Interact with lobby options.')
 export class LobbyCommand {
   private readonly logger = new Logger(LobbyCommand.name);
   static service: LobbyService;
+  static messaging: MessagingService;
 
-  constructor(private readonly service: LobbyService) {
+  constructor(
+    private readonly service: LobbyService,
+    private readonly messaging: MessagingService,
+  ) {
     LobbyCommand.service = service;
+    LobbyCommand.messaging = messaging;
   }
 
   // Slash command
@@ -96,14 +101,16 @@ export class LobbyCommand {
       console.log(lobby);
 
       // Create the new message to edit the interaction with the lobby's status.
-      const status = createLobbyResponse(formatConfig, lobby, {
-        content: ':white_check_mark: Successfully created lobby.',
-        region,
-        userId: interaction.user.id,
-      });
-
-      // Edit the message to include the embed.
-      await interaction.editReply(status);
+      await LobbyCommand.messaging.lobbyReply(
+        interaction,
+        formatConfig,
+        lobby,
+        {
+          content: ':white_check_mark: Successfully created lobby.',
+          region,
+          userId: interaction.user.id,
+        },
+      );
     }
   }
 }

@@ -6,6 +6,7 @@ import { RequirementName } from '../../objects/requirement-names.enum';
 import axios from 'axios';
 import { LobbyOptions } from './lobby-options.interface';
 import { DistributionType } from '../../objects/distribution.enum';
+import { Player } from 'src/objects/match-player.interface';
 
 export class LobbyService {
   private readonly logger = new Logger(LobbyService.name);
@@ -35,6 +36,43 @@ export class LobbyService {
     } catch (error) {
       console.log(error.response.data);
     }
+  }
+
+  /**
+   * Does a GET request to Cytokine to get a current lobby by its ID.
+   * @param lobbyId The ID of the lobby to get.
+   * @returns The API response with the lobby object.
+   */
+  async getLobby(lobbyId: string) {
+    try {
+      const { data } = await axios.get(
+        `${config.localhost}/api/v1/matches/${lobbyId}`,
+        {
+          headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+        },
+      );
+
+      return data;
+    } catch (error) {
+      console.log(error.response.data);
+    }
+  }
+
+  /**
+   * Adds a player to a lobby.
+   * @param player The player to add.
+   * @param lobby The lobby to add the player to.
+   */
+  async addPlayer(player: Player, lobby) {
+    const { data } = await axios.put(
+      `${config.localhost}/api/v1/matches/${lobby}/join`,
+      player,
+      {
+        headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+      },
+    );
+
+    return data;
   }
 
   /**
