@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { APIMessage } from 'discord-api-types';
 import {
+  ButtonInteraction,
   CommandInteraction,
   Message,
   MessageActionRow,
@@ -9,6 +10,7 @@ import {
 } from 'discord.js';
 import { ButtonType } from './objects/buttons/button-types.enum';
 import { LobbyFormat } from './objects/lobby-format.interface';
+import { Player } from './objects/match-player.interface';
 
 interface ReplyParameters {
   content?: string;
@@ -32,11 +34,16 @@ export class MessagingService {
    * @return The sent message.
    */
   async lobbyReply(
-    interaction: CommandInteraction,
+    interaction: ButtonInteraction | CommandInteraction,
     format: LobbyFormat,
     lobby,
     params: ReplyParameters,
-  ): Promise<Message<true> | APIMessage | Message<boolean>> {
+  ): Promise<Message<true> | APIMessage | Message<boolean> | void> {
+    // Make a user list with all Discord tags.
+    const userList = lobby.players
+      .map((user: Player) => `<@${user.discord}>`)
+      .join('\n');
+
     const embed = new MessageEmbed({
       title: `Lobby ${lobby._id}`,
       description: '',
@@ -59,7 +66,7 @@ export class MessagingService {
         },
         {
           name: '👥 Queued Players',
-          value: `${lobby.players.length}/${format.maxPlayers}\n\n<@${params.userId}>`,
+          value: `${lobby.players.length}/${format.maxPlayers}\n\n${userList}`,
           inline: false,
         },
         {
@@ -72,38 +79,32 @@ export class MessagingService {
     // Create a Button row to queue up or leave the queue.
     //
     // TODO: Add support for other Lobby Distribution Methods
-    const buttonInfo = {
-      lobbyId: lobby._id,
-    };
-
     const btnRow = new MessageActionRow({
       components: [
         new MessageButton({
           label: 'Queue up',
-          customId: JSON.stringify({
-            ...buttonInfo,
-            type: ButtonType.QUEUE,
-          }),
+          customId: ButtonType.QUEUE,
           style: 'SUCCESS',
           emoji: '✍',
         }),
         new MessageButton({
           label: 'Unqueue',
-          customId: JSON.stringify({
-            ...buttonInfo,
-            type: ButtonType.UNQUEUE,
-          }),
+          customId: ButtonType.UNQUEUE,
           style: 'DANGER',
           emoji: '❌',
         }),
       ],
     });
 
-    // Reply to the interaction with the embed and button row.
-    return await interaction.editReply({
+    const message = {
       content: params.content,
       embeds: [embed],
       components: [btnRow],
-    });
+    };
+
+    // Reply to the interaction with the embed and button row.
+    if (interaction instanceof CommandInteraction)
+      return await interaction.editReply(message);
+    else return await interaction.update(message);
   }
 }

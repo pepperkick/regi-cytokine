@@ -2,6 +2,7 @@ import { Player } from '../../objects/match-player.interface';
 import { FormatRequirement } from '../../objects/requirement.interface';
 import { DistributionType } from '../../objects/distribution.enum';
 import { Game } from 'src/objects/game.enum';
+import { LobbyFormat } from 'src/objects/lobby-format.interface';
 
 export interface LobbyOptions {
   // Distribution logic type to follow for this lobby
@@ -21,6 +22,9 @@ export interface LobbyOptions {
 
   // The region this lobby will take place in
   region: string;
+
+  // The format of the lobby
+  format?: LobbyFormat;
 
   // Options for match
   matchOptions: {

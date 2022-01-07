@@ -1,11 +1,19 @@
 import {
+  ButtonInteraction,
   CommandInteraction,
   Message,
   MessageActionRow,
   MessageButton,
   MessageEmbed,
 } from 'discord.js';
-import { Discord, SlashGroup, Slash, SlashOption, SlashChoice } from 'discordx';
+import {
+  Discord,
+  SlashGroup,
+  Slash,
+  SlashOption,
+  SlashChoice,
+  ButtonComponent,
+} from 'discordx';
 import { Logger } from '@nestjs/common';
 import { LobbyService } from '../modules/lobby/lobby.service';
 import { LobbyOptions } from '../modules/lobby/lobby-options.interface';
@@ -14,6 +22,7 @@ import { LobbyFormat } from '../objects/lobby-format.interface';
 import { Player } from '../objects/match-player.interface';
 import { Game } from 'src/objects/game.enum';
 import { MessagingService } from 'src/messaging.service';
+import { ButtonType } from '../objects/buttons/button-types.enum';
 
 @Discord()
 @SlashGroup('lobby', 'Interact with lobby options.')
@@ -57,6 +66,7 @@ export class LobbyCommand {
         (item) => item.name === format,
       )[0] as LobbyFormat;
 
+      // If the format is invalid, reply with an error message.
       if (!formatConfig) {
         return await interaction.reply({
           content: 'Unknown format',
@@ -79,6 +89,7 @@ export class LobbyCommand {
         requirements: formatConfig.requirements,
         region,
         game: <Game>formatConfig.game,
+        format: formatConfig,
         matchOptions: {
           players: [],
         },
@@ -115,5 +126,44 @@ export class LobbyCommand {
         },
       );
     }
+  }
+
+  @ButtonComponent(ButtonType.QUEUE)
+  async handleQueue(interaction: ButtonInteraction) {
+    // Hacky way to get the Lobby ID from the embed.
+    const lobbyId = interaction.message.embeds[0].title.replace('Lobby ', '');
+
+    console.log(lobbyId);
+
+    // Find the lobby with this ID.
+    let lobby = await LobbyCommand.service.getLobby(lobbyId);
+
+    console.log(lobby);
+
+    // If the lobby wasn't found, change the message into an error one.
+    if (!lobby) {
+      return interaction.update({
+        content: '❌ Lobby not found: must have expired or been deleted.',
+      });
+    }
+
+    // Declare player object to add/remove from the queue.
+    const player = {
+      name: interaction.user.username,
+      discord: interaction.user.id,
+      roles: ['player'],
+    };
+
+    // TODO: Check if the player is already in the queue to deny their entry.
+
+    // Add the player to the queue.
+    lobby = await LobbyCommand.service.addPlayer(player, lobbyId);
+
+    // Do the lobbyReply again, but this time with the updated lobby.
+    LobbyCommand.messaging.lobbyReply(interaction, lobby.format, lobby, {
+      content: `:white_check_mark: **${interaction.user.username}** has joined the queue.`,
+      region: lobby.region,
+      userId: interaction.user.id,
+    });
   }
 }
