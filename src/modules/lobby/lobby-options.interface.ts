@@ -17,18 +17,22 @@ export interface LobbyOptions {
   // Role requirements to be filled to start the match
   requirements: FormatRequirement[];
 
-  // The game this lobby is for
-  game: Game;
-
-  // The region this lobby will take place in
-  region: string;
-
   // The format of the lobby
   format?: LobbyFormat;
 
   // Options for match
   matchOptions: {
     players: Player[];
+
+    // The game this lobby is for
+    game: Game;
+
+    // The region this lobby will take place in
+    region: string;
+
+    // Maximum players required for the lobby to start
+    requiredPlayers: number;
+
     preferences?: {
       requiredPlayers?: number;
     };
