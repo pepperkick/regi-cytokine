@@ -1,5 +1,6 @@
 { 
     "mongodbUri": "",
+    "localhost": "",
     "cytokineHost": "",
     "client": {
         "guild": "",
