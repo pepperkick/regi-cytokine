@@ -25,7 +25,7 @@ export class LobbyService {
       //
       // data will be a Mongoose document with the Lobby's info.
       const { data } = await axios.post(
-        `${config.localhost}/api/v1/lobbies`,
+        `${config.cytokineHost}/api/v1/lobbies`,
         options,
         {
           headers: { Authorization: `Bearer ${config.secret.cytokine}` },
@@ -46,7 +46,7 @@ export class LobbyService {
   async getLobby(lobbyId: string) {
     try {
       const { data } = await axios.get(
-        `${config.localhost}/api/v1/lobbies/${lobbyId}`,
+        `${config.cytokineHost}/api/v1/lobbies/${lobbyId}`,
         {
           headers: { Authorization: `Bearer ${config.secret.cytokine}` },
         },
@@ -66,7 +66,7 @@ export class LobbyService {
   async addPlayer(player: Player, lobby) {
     try {
       const { data } = await axios.post(
-        `${config.localhost}/api/v1/lobbies/${lobby}/join`,
+        `${config.cytokineHost}/api/v1/lobbies/${lobby}/join`,
         player,
         {
           headers: { Authorization: `Bearer ${config.secret.cytokine}` },

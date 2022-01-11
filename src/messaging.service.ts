@@ -61,7 +61,7 @@ export class MessagingService {
         },
         {
           name: '🎮 Game',
-          value: `${lobby.game}`,
+          value: `${format.game}`,
           inline: true,
         },
         {

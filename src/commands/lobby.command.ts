@@ -78,7 +78,7 @@ export class LobbyCommand {
       const player: Player = {
         name: interaction.user.username,
         discord: interaction.user.id,
-        roles: ['creator'],
+        roles: ['creator', 'player'],
       };
 
       // Declare the LobbyOptions object to send over the request.
@@ -103,7 +103,7 @@ export class LobbyCommand {
       );
 
       // Send the request to the lobby service (redirects it to Cytokine's API)
-      let lobby = await LobbyCommand.service.createLobby(options);
+      const lobby = await LobbyCommand.service.createLobby(options);
 
       // If lobby creation was unsuccessful, return an error message.
       if (!lobby) {
@@ -111,7 +111,7 @@ export class LobbyCommand {
       }
 
       // Add the initiator to the queue.
-      lobby = await LobbyCommand.service.addPlayer(player, lobby._id);
+      // lobby = await LobbyCommand.service.addPlayer(player, lobby._id);
 
       console.log(lobby);
 
@@ -171,6 +171,13 @@ export class LobbyCommand {
     if (lobby.queuedPlayers.find((p) => p.discord == player.discord))
       return interaction.reply({
         content: `<@${player.discord}> You cannot queue into this lobby: You're already queued.`,
+        ephemeral: true,
+      });
+
+    // Check if the queue is full.
+    if (lobby.queuedPlayers.length >= lobby.maxPlayers)
+      return interaction.reply({
+        content: `<@${player.discord}> You cannot queue into this lobby: The lobby is full.`,
         ephemeral: true,
       });
 

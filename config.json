@@ -1,6 +1,6 @@
 { 
     "mongodbUri": "",
-    "localhost": "",
+    "cytokineHost": "",
     "client": {
         "guild": "",
         "token": ""
@@ -12,7 +12,9 @@
         {
             "name": "Test",
             "game": "tf2",
+            "mapTypes": ["cp"],
             "distribution": "RANDOM",
+            "maxPlayers": 2,
             "requirements": [
                 { "name": "player", "count": 2 }
             ]
