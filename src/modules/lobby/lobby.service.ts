@@ -59,7 +59,7 @@ export class LobbyService {
   }
 
   /**
-   * Adds a player to a lobby.
+   * Adds a player to a lobby's queue.
    * @param player The player to add.
    * @param lobby The lobby to add the player to.
    */
@@ -77,6 +77,15 @@ export class LobbyService {
     } catch (error) {
       console.log(error.response.data);
     }
+  }
+
+  /**
+   * Removes a player from a lobby's queue.
+   * @param player The player to remove.
+   * @param lobby The lobby to remove the player from.
+   */
+  async removePlayer(player: Player, lobby) {
+    // TODO: Needs implementation in the backend.
   }
 
   /**

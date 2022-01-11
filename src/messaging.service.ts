@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { APIMessage } from 'discord-api-types';
 import {
   ButtonInteraction,
@@ -40,7 +40,7 @@ export class MessagingService {
     params: ReplyParameters,
   ): Promise<Message<true> | APIMessage | Message<boolean> | void> {
     // Make a user list with all Discord tags.
-    const userList = lobby.players
+    const userList = lobby.queuedPlayers
       .map((user: Player) => `<@${user.discord}>`)
       .join('\n');
 
@@ -66,7 +66,7 @@ export class MessagingService {
         },
         {
           name: '👥 Queued Players',
-          value: `${lobby.players.length}/${format.maxPlayers}\n\n${userList}`,
+          value: `${lobby.queuedPlayers.length}/${format.maxPlayers}\n\n${userList}`,
           inline: false,
         },
         {
@@ -103,8 +103,36 @@ export class MessagingService {
     };
 
     // Reply to the interaction with the embed and button row.
+    // yes i left this in on purpose :P
     if (interaction instanceof CommandInteraction)
       return await interaction.editReply(message);
     else return await interaction.update(message);
+  }
+
+  /**
+   * Update existing Slash command reply to renew the player counts and user list.
+   *
+   * @param lobby The updated lobby information
+   * @param message The original message to update
+   */
+  async updateReply(
+    lobby,
+    message: Message<true> | Message<boolean>,
+  ): Promise<Message<boolean>> {
+    // Make a user list with all Discord tags.
+    const userList = lobby.queuedPlayers
+      .map((user: Player) => `<@${user.discord}>`)
+      .join('\n');
+
+    // Update the fields that are outdated
+    const embed = message.embeds[0];
+
+    embed.fields[3] = {
+      name: '👥 Queued Players',
+      value: `${lobby.queuedPlayers.length}/${lobby.maxPlayers}\n\n${userList}`,
+      inline: false,
+    };
+
+    return await message.edit({ embeds: [embed] });
   }
 }

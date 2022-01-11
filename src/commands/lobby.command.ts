@@ -87,10 +87,11 @@ export class LobbyCommand {
         callbackUrl: config.localhost,
         queuedPlayers: [player],
         requirements: formatConfig.requirements,
-        region,
-        game: <Game>formatConfig.game,
         format: formatConfig,
         matchOptions: {
+          region: region,
+          game: <Game>formatConfig.game,
+          requiredPlayers: formatConfig.maxPlayers,
           players: [],
         },
       };
@@ -128,24 +129,36 @@ export class LobbyCommand {
     }
   }
 
-  @ButtonComponent(ButtonType.QUEUE)
-  async handleQueue(interaction: ButtonInteraction) {
-    // Hacky way to get the Lobby ID from the embed.
-    const lobbyId = interaction.message.embeds[0].title.replace('Lobby ', '');
-
-    console.log(lobbyId);
-
+  /**
+   * Gets the Lobby object from the command reply.
+   */
+  async getLobbyFromInteraction(interaction: ButtonInteraction, lobbyId) {
     // Find the lobby with this ID.
-    let lobby = await LobbyCommand.service.getLobby(lobbyId);
+    const lobby = await LobbyCommand.service.getLobby(lobbyId);
 
     console.log(lobby);
 
     // If the lobby wasn't found, change the message into an error one.
     if (!lobby) {
-      return interaction.update({
+      interaction.update({
         content: '❌ Lobby not found: must have expired or been deleted.',
       });
+      return;
     }
+
+    return lobby;
+  }
+
+  /**
+   * Queue button handler
+   */
+  @ButtonComponent(ButtonType.QUEUE)
+  async handleQueue(interaction: ButtonInteraction) {
+    // Hacky way to get the Lobby ID from the embed.
+    const lobbyId = interaction.message.embeds[0].title.replace('Lobby ', '');
+
+    // Get the Lobby object, player object and lobbyId
+    let lobby = await this.getLobbyFromInteraction(interaction, lobbyId);
 
     // Declare player object to add/remove from the queue.
     const player = {
@@ -154,16 +167,42 @@ export class LobbyCommand {
       roles: ['player'],
     };
 
-    // TODO: Check if the player is already in the queue to deny their entry.
+    // Check if the player is already in the queue to deny their entry.
+    if (lobby.queuedPlayers.find((p) => p.discord == player.discord))
+      return interaction.reply({
+        content: `<@${player.discord}> You cannot queue into this lobby: You're already queued.`,
+        ephemeral: true,
+      });
 
     // Add the player to the queue.
     lobby = await LobbyCommand.service.addPlayer(player, lobbyId);
 
     // Do the lobbyReply again, but this time with the updated lobby.
-    LobbyCommand.messaging.lobbyReply(interaction, lobby.format, lobby, {
-      content: `:white_check_mark: **${interaction.user.username}** has joined the queue.`,
-      region: lobby.region,
-      userId: interaction.user.id,
-    });
+    LobbyCommand.messaging.updateReply(lobby, <Message>interaction.message);
+  }
+
+  /**
+   * Unqueue button handler
+   */
+  @ButtonComponent(ButtonType.UNQUEUE)
+  async handleUnqueue(interaction: ButtonInteraction) {
+    // TODO: Needs implementation in the backend first.
+    // // Hacky way to get the Lobby ID from the embed.
+    // const lobbyId = interaction.message.embeds[0].title.replace('Lobby ', '');
+    // // Get the Lobby object, player object and lobbyId
+    // let lobby = await this.getLobbyFromInteraction(interaction, lobbyId);
+    // // Declare player object to add/remove from the queue.
+    // const player = {
+    //   name: interaction.user.username,
+    //   discord: interaction.user.id,
+    //   roles: ['player'],
+    // };
+    // // Check if the player is already in the queue to remove them, if not, deny their request to unqueue
+    // // lmao, unqueueing when you're not queued 1000iq
+    // if (!lobby.queuedPlayers.find((p) => p.discord == player.discord))
+    //   return interaction.reply({
+    //     content: `<@${player.discord}> You are not in this lobby's queue.`,
+    //     ephemeral: true,
+    //   });
   }
 }
