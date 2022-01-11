@@ -174,6 +174,8 @@ export class LobbyCommand {
         ephemeral: true,
       });
 
+    // TODO: Verify the SteamID of the player trying to join (check if their Discord<->Steam are linked)
+
     // Add the player to the queue.
     lobby = await LobbyCommand.service.addPlayer(player, lobbyId);
 
