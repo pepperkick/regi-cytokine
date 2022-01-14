@@ -7,12 +7,17 @@ import axios from 'axios';
 import { LobbyOptions } from './lobby-options.interface';
 import { DistributionType } from '../../objects/distribution.enum';
 import { Player } from 'src/objects/match-player.interface';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { DiscordInfo } from 'src/objects/discord-info/discord-info.model';
 
 export class LobbyService {
   private readonly logger = new Logger(LobbyService.name);
   static formats = LobbyService.parseLobbyFormats();
 
-  constructor(private readonly bot: Client) {}
+  constructor(
+    @InjectModel('DiscordInfo') private readonly repo: Model<DiscordInfo>,
+  ) {}
 
   /**
    * Sends a request to Cytokine to create a new lobby with asked requirements.
