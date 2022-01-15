@@ -94,6 +94,36 @@ export class LobbyService {
   }
 
   /**
+   * Saves a new DiscordInfo document to the database.
+   */
+  async saveDiscordInfo(
+    lobbyId: string,
+    creatorId: string,
+    messageId: string,
+    channelId?: string,
+    voiceChannelId?: string,
+  ) {
+    // Create new DiscordInfo document
+    const info = await new this.repo({
+      lobbyId,
+      creatorId,
+      messageId,
+      channelId,
+      voiceChannelId,
+    });
+
+    // Return the saved document
+    return await info.save();
+  }
+
+  /**
+   * Gets the DiscordInfo document for a lobby by its ID.
+   */
+  async getDiscordInfo(lobbyId: string) {
+    return await this.repo.findOne({ lobbyId });
+  }
+
+  /**
    * Parses the config's LobbyFormats and returns an array containing the LobbyFormat types.
    * @returns An object containing the SlashChoice LobbyFormat entries and a LobbyFormat array.
    */

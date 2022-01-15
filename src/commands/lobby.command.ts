@@ -1,11 +1,4 @@
-import {
-  ButtonInteraction,
-  CommandInteraction,
-  Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
-} from 'discord.js';
+import { ButtonInteraction, CommandInteraction, Message } from 'discord.js';
 import {
   Discord,
   SlashGroup,
@@ -116,7 +109,7 @@ export class LobbyCommand {
       console.log(lobby);
 
       // Create the new message to edit the interaction with the lobby's status.
-      await LobbyCommand.messaging.lobbyReply(
+      const messageId = await LobbyCommand.messaging.lobbyReply(
         interaction,
         formatConfig,
         lobby,
@@ -125,6 +118,13 @@ export class LobbyCommand {
           region,
           userId: interaction.user.id,
         },
+      );
+
+      // Save DiscordInfo into MongoDB
+      await LobbyCommand.service.saveDiscordInfo(
+        lobby._id,
+        interaction.user.id,
+        messageId,
       );
     }
   }
@@ -187,7 +187,16 @@ export class LobbyCommand {
     lobby = await LobbyCommand.service.addPlayer(player, lobbyId);
 
     // Do the lobbyReply again, but this time with the updated lobby.
-    LobbyCommand.messaging.updateReply(lobby, <Message>interaction.message);
+    await LobbyCommand.messaging.updateReply(
+      lobby,
+      <Message>interaction.message,
+    );
+
+    // Reply to the user with an ephemeral message saying they've been added to the queue.
+    return await interaction.reply({
+      content: `<@${player.discord}> You have been added to the queue.`,
+      ephemeral: true,
+    });
   }
 
   /**
