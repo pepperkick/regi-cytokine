@@ -1,12 +1,13 @@
 import { Logger } from '@nestjs/common';
-import { APIMessage } from 'discord-api-types';
 import {
   ButtonInteraction,
+  Client,
   CommandInteraction,
   Message,
   MessageActionRow,
   MessageButton,
   MessageEmbed,
+  TextChannel,
 } from 'discord.js';
 import { ButtonType } from './objects/buttons/button-types.enum';
 import { LobbyFormat } from './objects/lobby-format.interface';
@@ -38,7 +39,7 @@ export class MessagingService {
     format: LobbyFormat,
     lobby,
     params: ReplyParameters,
-  ): Promise<Message<true> | APIMessage | Message<boolean> | void> {
+  ): Promise<string> {
     // Make a user list with all Discord tags.
     const userList = lobby.queuedPlayers
       .map((user: Player) => `<@${user.discord}>`)
@@ -47,7 +48,7 @@ export class MessagingService {
     const embed = new MessageEmbed({
       title: `Lobby ${lobby._id}`,
       description: '',
-      color: 0x3a9d3c,
+      color: 0x787878,
       fields: [
         {
           name: '🗒 Format',
@@ -103,10 +104,8 @@ export class MessagingService {
     };
 
     // Reply to the interaction with the embed and button row.
-    // yes i left this in on purpose :P
-    if (interaction instanceof CommandInteraction)
-      return await interaction.editReply(message);
-    else return await interaction.update(message);
+    const msg = await interaction.editReply(message);
+    return msg.id;
   }
 
   /**
