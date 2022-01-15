@@ -7,12 +7,13 @@ import { LobbyCommand } from './commands/lobby.command';
 import { DiscordService } from './discord.service';
 
 import * as config from '../config.json';
+import {
+  DiscordInfo,
+  DiscordInfoSchema,
+} from './objects/discord-info/discord-info.model';
 
 @Module({
-  imports: [
-    LobbyModule,
-    // MongooseModule.forRoot(config.mongodbUri)
-  ],
+  imports: [LobbyModule, MongooseModule.forRoot(config.mongodbUri)],
   controllers: [AppController],
   providers: [AppService, DiscordService, LobbyCommand],
   exports: [DiscordService],
