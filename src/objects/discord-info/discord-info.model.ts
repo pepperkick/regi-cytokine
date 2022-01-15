@@ -26,19 +26,19 @@ export class DiscordInfo extends Document {
     // Team A channels
     teamA: {
       // TextChannel ID
-      textChannelId: string;
+      textChannelId?: string;
 
       // VoiceChannel ID
-      voiceChannelId: string;
+      voiceChannelId?: string;
     };
 
     // Team B channels
     teamB: {
       // TextChannel ID
-      textChannelId: string;
+      textChannelId?: string;
 
       // VoiceChannel ID
-      voiceChannelId: string;
+      voiceChannelId?: string;
     };
   };
 
