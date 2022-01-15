@@ -35,6 +35,7 @@ export interface LobbyOptions {
 
     preferences?: {
       requiredPlayers?: number;
+      createLighthouseServer?: boolean;
     };
   };
 }

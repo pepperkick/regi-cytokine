@@ -16,13 +16,43 @@ export class DiscordInfo extends Document {
   @Prop({ type: String })
   messageId: string;
 
+  // Discord Channels
+  @Prop({ type: Object })
+  channels: {
+    // General TextChannel ID
+    // This is where players inside the queue can talk with each-other in a pre-game manner.
+    generalChannelId: string;
+
+    // Team A channels
+    teamA: {
+      // TextChannel ID
+      textChannelId: string;
+
+      // VoiceChannel ID
+      voiceChannelId: string;
+    };
+
+    // Team B channels
+    teamB: {
+      // TextChannel ID
+      textChannelId: string;
+
+      // VoiceChannel ID
+      voiceChannelId: string;
+    };
+  };
+
   // Discord Text Channel created by this lobby instance.
   @Prop({ type: String })
   channelId: string;
 
-  // Discord Voice Channel created by this lobby instance.
+  // Discord Voice Channel created by this lobby instance (Team A / 1)
   @Prop({ type: String })
-  voiceChannelId: string;
+  voiceChannelTeamA: string;
+
+  // Discord Voice Channel created by this lobby instance (Team B / 2)
+  @Prop({ type: String })
+  voiceChannelTeamB: string;
 }
 
 export const DiscordInfoSchema = SchemaFactory.createForClass(DiscordInfo);
