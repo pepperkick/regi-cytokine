@@ -166,7 +166,7 @@ export class DiscordService {
       await this.bot.initApplicationPermissions(true);
 
       // Log the bot is ready
-      console.log('The Discord bot is ready!');
+      this.logger.log('Discord client initialized successfully.');
     });
 
     // interactionCreate
@@ -177,6 +177,6 @@ export class DiscordService {
     });
 
     // Login to the bot user with the token provided.
-    this.bot.login(config.client.token);
+    await this.bot.login(config.client.token);
   }
 }

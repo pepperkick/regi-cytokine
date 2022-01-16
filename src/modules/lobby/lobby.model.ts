@@ -2,7 +2,7 @@ import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 @Schema()
-export class DiscordInfo extends Document {
+export class Lobby extends Document {
   // The lobby to which store Discord information of.
   @Prop({ type: String })
   lobbyId: string;
@@ -64,4 +64,4 @@ export class DiscordInfo extends Document {
   voiceChannelTeamB: string;
 }
 
-export const DiscordInfoSchema = SchemaFactory.createForClass(DiscordInfo);
+export const LobbySchema = SchemaFactory.createForClass(Lobby);

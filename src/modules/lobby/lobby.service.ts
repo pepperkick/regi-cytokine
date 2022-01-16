@@ -8,10 +8,10 @@ import { DistributionType } from '../../objects/distribution.enum';
 import { Player } from 'src/objects/match-player.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { DiscordInfo } from 'src/objects/discord-info/discord-info.model';
+import { Lobby } from 'src/modules/lobby/lobby.model';
 import { DiscordService } from 'src/discord.service';
 
-interface DiscordInfoChannels {
+interface LobbyChannels {
   categoryId: string;
   general: {
     textChannelId?: string;
@@ -33,7 +33,7 @@ export class LobbyService {
   static discord: DiscordService;
 
   constructor(
-    @InjectModel('DiscordInfo') private readonly repo: Model<DiscordInfo>,
+    @InjectModel('Lobby') private readonly repo: Model<Lobby>,
     private readonly discord: DiscordService,
   ) {
     LobbyService.discord = discord;
@@ -59,7 +59,7 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      console.log(error.response.data);
+      this.logger.error(error.response.data);
     }
   }
 
@@ -68,7 +68,7 @@ export class LobbyService {
    * @param lobbyId The ID of the lobby to get.
    * @returns The API response with the lobby object, if found.
    */
-  async getLobby(lobbyId: string) {
+  async getLobbyById(lobbyId: string) {
     try {
       const { data } = await axios.get(
         `${config.cytokineHost}/api/v1/lobbies/${lobbyId}`,
@@ -79,7 +79,7 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      console.log(error.response.data);
+      this.logger.error(error.response.data);
     }
   }
 
@@ -99,7 +99,7 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      console.log(error.response.data);
+      this.logger.error(error.response.data);
     }
   }
 
@@ -120,23 +120,36 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      console.log(error.response.data);
+      this.logger.error(error.response.data);
     }
   }
 
   /**
    * Removes a player from a lobby's queue.
-   * @param player The player to remove.
+   * @param player The player Discord ID to remove from the queue.
    * @param lobby The lobby to remove the player from.
    */
-  async removePlayer(player: Player, lobby) {
-    // TODO: Needs implementation in the backend.
+  async removePlayer(playerId: string, lobby) {
+    try {
+      const { data } = await axios.delete(
+        `${config.cytokineHost}/api/v1/lobbies/${lobby}/players/discord/${playerId}`,
+        {
+          headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+        },
+      );
+
+      return data;
+    } catch (error) {
+      this.logger.error(
+        `Player '${playerId}' request for removal from lobby '${lobby}' failed: ${error.response.data.error}`,
+      );
+    }
   }
 
   /**
-   * Gets the amount of DiscordInfo documents present in the collection.
+   * Gets the amount of Lobby documents present in the collection.
    */
-  async getDiscordInfoCount(): Promise<number> {
+  async getLobbyCount(): Promise<number> {
     return <number>await this.repo.count();
   }
 
@@ -145,21 +158,21 @@ export class LobbyService {
    */
   async createChannels() {
     return await LobbyService.discord.createLobbyChannels(
-      await this.getDiscordInfoCount(),
+      await this.getLobbyCount(),
       { enabled: false },
     );
   }
 
   /**
-   * Saves a new DiscordInfo document to the database.
+   * Saves a new Lobby document to the database.
    */
-  async saveDiscordInfo(
+  async saveLobby(
     lobbyId: string,
     creatorId: string,
     messageId: string,
-    channels?: DiscordInfoChannels,
+    channels?: LobbyChannels,
   ) {
-    // Create new DiscordInfo document
+    // Create new Lobby document
     const info = await new this.repo({
       lobbyId,
       creatorId,
@@ -172,10 +185,17 @@ export class LobbyService {
   }
 
   /**
-   * Gets the DiscordInfo document for a lobby by its ID.
+   * Gets the Lobby document for a lobby by its ID.
    */
-  async getDiscordInfo(lobbyId: string) {
+  async getInternalLobbyById(lobbyId: string) {
     return await this.repo.findOne({ lobbyId });
+  }
+
+  /**
+   * Gets the Lobby document for a lobby by its Discord Message ID.
+   */
+  async getInternalLobbyByMessageId(messageId: string) {
+    return await this.repo.findOne({ messageId });
   }
 
   /**

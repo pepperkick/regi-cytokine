@@ -18,6 +18,7 @@ interface ReplyParameters {
   ephemeral?: true;
   region: string;
   userId: string;
+  lobbyNumber: number;
 }
 
 export class MessagingService {
@@ -26,7 +27,7 @@ export class MessagingService {
   constructor() {}
 
   /**
-   * Reply to an interaction with the correct embed format.
+   * Reply to an interaction with the initial embed format.
    *
    * @param interaction The interaction to reply to.
    * @param format The lobby format used to create the lobby.
@@ -46,7 +47,7 @@ export class MessagingService {
       .join('\n');
 
     const embed = new MessageEmbed({
-      title: `Lobby ${lobby._id}`,
+      title: `Lobby ${params.lobbyNumber}`,
       description: '',
       color: 0x787878,
       fields: [
@@ -133,5 +134,32 @@ export class MessagingService {
     };
 
     return await message.edit({ embeds: [embed] });
+  }
+
+  /**
+   * Reply to an interaction.
+   * @param interaction The base Interaction we're replying to.
+   * @param content The reply's message content.
+   * @param options Optional parameters.
+   */
+  async replyToInteraction(
+    interaction: CommandInteraction | ButtonInteraction,
+    content: string,
+    options = {
+      ephemeral: true,
+    },
+  ) {
+    // Create Reply object
+    const reply = {
+      content,
+      ...options,
+    };
+
+    // Edit or reply if not replied already
+    return <Message | void>(
+      await (interaction.replied
+        ? interaction.editReply(reply)
+        : interaction.reply(reply))
+    );
   }
 }

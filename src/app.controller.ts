@@ -1,15 +1,17 @@
-import { Body, Controller, Post, Query } from '@nestjs/common';
+import { Body, Controller, Logger, Post, Query } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
+  private readonly logger = new Logger(AppController.name);
   constructor(private readonly appService: AppService) {}
 
   @Post('/lobbies/callback')
   async notify(@Query('status') status: string, @Body() lobby: any) {
-    console.log(`Lobby: ${lobby}`);
-    console.log(`Value of lobby.match: ${lobby.match}`);
-    console.log(`Status: ${status}`);
+    this.logger.log(
+      `Received POST request with status '${status}' for lobby ${lobby._id}`,
+    );
+
     // The lobby object is not always the lobby.
     // To know if we're dealing with a Lobby or Match document, we must check for the "match" prop in it.
     // If it exists, it's a lobby. If not, it's a match.

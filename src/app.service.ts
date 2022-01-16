@@ -21,8 +21,8 @@ export class AppService {
     message: Message;
     discord: any;
   }> {
-    // Get DiscordInfo from the Lobby ID
-    const discord = await this.lobbyService.getDiscordInfo(lobbyId);
+    // Get Lobby from the Lobby ID
+    const discord = await this.lobbyService.getInternalLobbyById(lobbyId);
 
     // Update the message.
     const message = await this.discordService.getMessage(discord.messageId);

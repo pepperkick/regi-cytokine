@@ -2,17 +2,12 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DiscordService } from 'src/discord.service';
 import { MessagingService } from 'src/messaging.service';
-import {
-  DiscordInfo,
-  DiscordInfoSchema,
-} from 'src/objects/discord-info/discord-info.model';
+import { Lobby, LobbySchema } from 'src/modules/lobby/lobby.model';
 import { LobbyService } from './lobby.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: DiscordInfo.name, schema: DiscordInfoSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Lobby.name, schema: LobbySchema }]),
   ],
   controllers: [],
   providers: [LobbyService, MessagingService, DiscordService],

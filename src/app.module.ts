@@ -8,7 +8,7 @@ import { LobbyCommand } from './commands/lobby.command';
 import * as config from '../config.json';
 
 @Module({
-  imports: [LobbyModule, MongooseModule.forRoot(config.mongodbUri)],
+  imports: [MongooseModule.forRoot(config.mongodbUri), LobbyModule],
   controllers: [AppController],
   providers: [AppService, LobbyCommand],
   exports: [],
