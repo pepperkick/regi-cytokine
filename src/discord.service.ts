@@ -1,5 +1,12 @@
 import { Logger } from '@nestjs/common';
-import { Intents, Interaction, Message, TextChannel } from 'discord.js';
+import {
+  CategoryChannel,
+  Intents,
+  Interaction,
+  Message,
+  TextChannel,
+  VoiceChannel,
+} from 'discord.js';
 import { Client } from 'discordx';
 
 import * as config from '../config.json';
@@ -35,6 +42,104 @@ export class DiscordService {
     // Get the message from the channel
     if (channel instanceof TextChannel)
       return await channel.messages.fetch(messageId);
+  }
+
+  /**
+   * Creates general Text & Voice channel for a lobby.
+   */
+  async createLobbyChannels(
+    count: number,
+    team?,
+  ): Promise<{
+    text: TextChannel;
+    voice: VoiceChannel;
+  }> {
+    // Get the Guild we're working on
+    const guild = await this.bot.guilds.fetch(config.client.guild);
+
+    // Create a Text & Voice Channel
+    try {
+      // Get the category set in the Config file. If none is set, create one.
+      let category: CategoryChannel = undefined;
+
+      if (config.lobbyConfig.categoryId.length < 1 && !team.enabled)
+        category = await guild.channels.create(`Lobby #${count}`, {
+          type: 'GUILD_CATEGORY',
+          reason:
+            'This is an automatically generated category for Cytokine lobbies.',
+        });
+      else
+        category = <CategoryChannel>(
+          await guild.channels.fetch(
+            team.enabled ? team.category : config.lobbyConfig.categoryId,
+          )
+        );
+
+      // Now that we have a category, create the General Text & Voice Channels.
+      // TODO: More an idea than a TODO, but this could use permissions where the lobby players are the only ones that can see the channels.
+      const gTextChannel = await category.createChannel(
+          `${team.enabled ? team.name : config.lobbyConfig.lobbyTextPrefix}${
+            team.enabled ? '' : count
+          }`,
+          {
+            type: 'GUILD_TEXT',
+            reason:
+              'This is an automatically generated text channel for Cytokine lobbies.',
+            topic:
+              '**This is a temporary channel for lobby chat.** This will be deleted after the lobby has been completed.',
+          },
+        ),
+        gVoiceChannel = await category.createChannel(
+          `${team.enabled ? team.name : config.lobbyConfig.lobbyVoicePrefix}${
+            team.enabled ? '' : count
+          }`,
+          {
+            type: 'GUILD_VOICE',
+            reason:
+              'This is an automatically generated voice channel for Cytokine lobbies.',
+            topic:
+              '**This is a temporary channel for lobby voice.** This will be deleted after the lobby has been completed.',
+          },
+        );
+
+      return {
+        text: gTextChannel,
+        voice: gVoiceChannel,
+      };
+    } catch (e) {
+      // Probably missing permissions when creating channels.
+      console.error(e);
+    }
+  }
+
+  /**
+   * Creates team specific channels, both Text and Voice.
+   * This should be done after LOBBY_READY status is sent.
+   */
+  async createTeamChannels(categoryId: string): Promise<{
+    teamA: {
+      text: TextChannel;
+      voice: VoiceChannel;
+    };
+    teamB: {
+      text: TextChannel;
+      voice: VoiceChannel;
+    };
+  }> {
+    // Create one for Team A
+    const teamA = await this.createLobbyChannels(0, {
+        name: 'Team A',
+        category: categoryId,
+        enabled: true,
+      }),
+      // Create one for Team B
+      teamB = await this.createLobbyChannels(0, {
+        name: 'Team B',
+        category: categoryId,
+        enabled: true,
+      });
+
+    return { teamA, teamB };
   }
 
   // Run the bot

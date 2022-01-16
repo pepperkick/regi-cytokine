@@ -19,25 +19,34 @@ export class DiscordInfo extends Document {
   // Discord Channels
   @Prop({ type: Object })
   channels: {
-    // General TextChannel ID
-    // This is where players inside the queue can talk with each-other in a pre-game manner.
-    generalChannelId: string;
+    // Category ID where these channels belong on
+    categoryId: string;
 
-    // Team A channels
-    teamA: {
-      // TextChannel ID
+    // General channels
+    // This is where players inside the queue can talk with each-other in a pre-game manner.
+    general: {
+      // General TextChannel
       textChannelId?: string;
 
-      // VoiceChannel ID
+      // General VoiceChannel
+      voiceChannelId?: string;
+    };
+
+    // Team A channels
+    teamA?: {
+      // TextChannel for Team A
+      textChannelId?: string;
+
+      // VoiceChannel for Team A
       voiceChannelId?: string;
     };
 
     // Team B channels
-    teamB: {
-      // TextChannel ID
+    teamB?: {
+      // TextChannel for Team B
       textChannelId?: string;
 
-      // VoiceChannel ID
+      // VoiceChannel for Team B
       voiceChannelId?: string;
     };
   };

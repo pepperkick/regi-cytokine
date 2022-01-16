@@ -1,5 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { Client } from 'discordx';
 import { LobbyFormat } from '../../objects/lobby-format.interface';
 import * as config from '../../../config.json';
 import { RequirementName } from '../../objects/requirement-names.enum';
@@ -10,14 +9,35 @@ import { Player } from 'src/objects/match-player.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DiscordInfo } from 'src/objects/discord-info/discord-info.model';
+import { DiscordService } from 'src/discord.service';
+
+interface DiscordInfoChannels {
+  categoryId: string;
+  general: {
+    textChannelId?: string;
+    voiceChannelId?: string;
+  };
+  teamA?: {
+    textChannelId?: string;
+    voiceChannelId?: string;
+  };
+  teamB?: {
+    textChannelId?: string;
+    voiceChannelId?: string;
+  };
+}
 
 export class LobbyService {
   private readonly logger = new Logger(LobbyService.name);
   static formats = LobbyService.parseLobbyFormats();
+  static discord: DiscordService;
 
   constructor(
     @InjectModel('DiscordInfo') private readonly repo: Model<DiscordInfo>,
-  ) {}
+    private readonly discord: DiscordService,
+  ) {
+    LobbyService.discord = discord;
+  }
 
   /**
    * Sends a request to Cytokine to create a new lobby with asked requirements.
@@ -46,12 +66,32 @@ export class LobbyService {
   /**
    * Does a GET request to Cytokine to get a current lobby by its ID.
    * @param lobbyId The ID of the lobby to get.
-   * @returns The API response with the lobby object.
+   * @returns The API response with the lobby object, if found.
    */
   async getLobby(lobbyId: string) {
     try {
       const { data } = await axios.get(
         `${config.cytokineHost}/api/v1/lobbies/${lobbyId}`,
+        {
+          headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+        },
+      );
+
+      return data;
+    } catch (error) {
+      console.log(error.response.data);
+    }
+  }
+
+  /**
+   * Does a GET request to Cytokine to get a current lobby by its linked Match ID.
+   * @param matchId The ID of the Match the Lobby will be linked to.
+   * @returns The API response with the lobby object, if found.
+   */
+  async getLobbyByMatchId(matchId: string) {
+    try {
+      const { data } = await axios.get(
+        `${config.cytokineHost}/api/v1/lobbies/match/${matchId}`,
         {
           headers: { Authorization: `Bearer ${config.secret.cytokine}` },
         },
@@ -94,22 +134,37 @@ export class LobbyService {
   }
 
   /**
+   * Gets the amount of DiscordInfo documents present in the collection.
+   */
+  async getDiscordInfoCount(): Promise<number> {
+    return <number>await this.repo.count();
+  }
+
+  /**
+   * Creates a Discord Text & Voice channel for a lobby.
+   */
+  async createChannels() {
+    return await LobbyService.discord.createLobbyChannels(
+      await this.getDiscordInfoCount(),
+      { enabled: false },
+    );
+  }
+
+  /**
    * Saves a new DiscordInfo document to the database.
    */
   async saveDiscordInfo(
     lobbyId: string,
     creatorId: string,
     messageId: string,
-    channelId?: string,
-    voiceChannelId?: string,
+    channels?: DiscordInfoChannels,
   ) {
     // Create new DiscordInfo document
     const info = await new this.repo({
       lobbyId,
       creatorId,
       messageId,
-      channelId,
-      voiceChannelId,
+      channels,
     });
 
     // Return the saved document
