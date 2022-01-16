@@ -117,7 +117,8 @@ export class LobbyCommand {
       );
 
       // Create the lobby channels.
-      const { text, voice } = await LobbyCommand.service.createChannels(), lobbyNumber = await LobbyCommand.service.getLobbyCount();
+      const { text, voice } = await LobbyCommand.service.createChannels(),
+        lobbyNumber = await LobbyCommand.service.getLobbyCount();
 
       // Send a message to the text channel explaining its purpose.
       text.send(`:wave: **Welcome to Lobby #${lobbyNumber}!**

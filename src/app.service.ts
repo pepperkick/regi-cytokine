@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Message } from 'discord.js';
 import { DiscordService } from './discord.service';
-import { MessagingService } from './messaging.service';
 import { LobbyService } from './modules/lobby/lobby.service';
 
 import { StatusColors as color } from './objects/status-colors.enum';
@@ -121,7 +120,7 @@ export class AppService {
   /**
    * Does a Lobby Notification for LIVE
    */
-   async lobbyNotifyLive(lobbyId: string) {
+  async lobbyNotifyLive(lobbyId: string) {
     // Get the Message object for this LobbyID
     const { message } = await this.getMessage(lobbyId);
 

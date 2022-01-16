@@ -1,13 +1,11 @@
 import { Logger } from '@nestjs/common';
 import {
   ButtonInteraction,
-  Client,
   CommandInteraction,
   Message,
   MessageActionRow,
   MessageButton,
   MessageEmbed,
-  TextChannel,
 } from 'discord.js';
 import { ButtonType } from './objects/buttons/button-types.enum';
 import { LobbyFormat } from './objects/lobby-format.interface';

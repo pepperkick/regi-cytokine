@@ -46,7 +46,7 @@ export class AppController {
         }
       }
 
-    return 'ok';
+      return 'ok';
     }
   }
 }
