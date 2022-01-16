@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { DiscordService } from 'src/discord.service';
 import { MessagingService } from 'src/messaging.service';
 import {
   DiscordInfo,
@@ -14,7 +15,7 @@ import { LobbyService } from './lobby.service';
     ]),
   ],
   controllers: [],
-  providers: [LobbyService, MessagingService],
-  exports: [LobbyService, MessagingService],
+  providers: [LobbyService, MessagingService, DiscordService],
+  exports: [LobbyService, MessagingService, DiscordService],
 })
 export class LobbyModule {}
