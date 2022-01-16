@@ -33,7 +33,7 @@ export interface LobbyOptions {
     // Maximum players required for the lobby to start
     requiredPlayers: number;
 
-    preferences?: {
+    preference?: {
       requiredPlayers?: number;
       createLighthouseServer?: boolean;
     };
