@@ -4,10 +4,24 @@
     "cytokineHost": "",
     "client": {
         "guild": "",
+        "channel": "",
         "token": ""
     },
     "secret": {
         "cytokine": ""
+    },
+    "lobbyConfig": {
+        "categoryId": "",
+        "lobbyTextPrefix": "lobby-#",
+        "lobbyVoicePrefix": "Lobby #",
+        "names": {
+            "textChannel": "chat",
+            "voiceChannel": "voice"
+        },
+        "teams": {
+            "AName": "team-a",
+            "BName": "team-b"
+        }
     },
     "formats": [
         {
