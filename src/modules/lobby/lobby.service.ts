@@ -30,6 +30,7 @@ interface LobbyChannels {
 export class LobbyService {
   private readonly logger = new Logger(LobbyService.name);
   static formats = LobbyService.parseLobbyFormats();
+  static regions = LobbyService.parseRegions();
   static discord: DiscordService;
 
   constructor(
@@ -50,10 +51,10 @@ export class LobbyService {
       //
       // data will be a Mongoose document with the Lobby's info.
       const { data } = await axios.post(
-        `${config.cytokineHost}/api/v1/lobbies`,
+        `${config.cytokine.host}/api/v1/lobbies`,
         options,
         {
-          headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
         },
       );
 
@@ -71,9 +72,9 @@ export class LobbyService {
   async getLobbyById(lobbyId: string) {
     try {
       const { data } = await axios.get(
-        `${config.cytokineHost}/api/v1/lobbies/${lobbyId}`,
+        `${config.cytokine.host}/api/v1/lobbies/${lobbyId}`,
         {
-          headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
         },
       );
 
@@ -91,9 +92,9 @@ export class LobbyService {
   async getLobbyByMatchId(matchId: string) {
     try {
       const { data } = await axios.get(
-        `${config.cytokineHost}/api/v1/lobbies/match/${matchId}`,
+        `${config.cytokine.host}/api/v1/lobbies/match/${matchId}`,
         {
-          headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
         },
       );
 
@@ -111,10 +112,10 @@ export class LobbyService {
   async addPlayer(player: Player, lobby) {
     try {
       const { data } = await axios.post(
-        `${config.cytokineHost}/api/v1/lobbies/${lobby}/join`,
+        `${config.cytokine.host}/api/v1/lobbies/${lobby}/join`,
         player,
         {
-          headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
         },
       );
 
@@ -132,9 +133,9 @@ export class LobbyService {
   async removePlayer(playerId: string, lobby) {
     try {
       const { data } = await axios.delete(
-        `${config.cytokineHost}/api/v1/lobbies/${lobby}/players/discord/${playerId}`,
+        `${config.cytokine.host}/api/v1/lobbies/${lobby}/players/discord/${playerId}`,
         {
-          headers: { Authorization: `Bearer ${config.secret.cytokine}` },
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
         },
       );
 
@@ -236,5 +237,21 @@ export class LobbyService {
 
     // Return both, names and formats.
     return { names: formatNames, formats };
+  }
+
+  /**
+   * Parses the config's listed regions into a list of options for LobbyCommand to offer.
+   * @returns An object containing the SlashChoice region entries.
+   */
+  static parseRegions() {
+    const regions = {};
+
+    // TODO: Validate regions
+
+    // Iterate through regions available in config, and create the enumerable object.
+    for (const region of Object.keys(config.regions))
+      regions[config.regions[region].name] = region;
+
+    return regions;
   }
 }

@@ -34,10 +34,10 @@ export class DiscordService {
     messageId: string,
   ): Promise<Message<true> | Message<boolean>> {
     // Get the Guild first
-    const guild = await this.bot.guilds.fetch(config.client.guild);
+    const guild = await this.bot.guilds.fetch(config.discord.guild);
 
     // Search for the channel inside the guild
-    const channel = await guild.channels.fetch(config.client.channel);
+    const channel = await guild.channels.fetch(config.discord.channel);
 
     // Get the message from the channel
     if (channel instanceof TextChannel)
@@ -55,14 +55,14 @@ export class DiscordService {
     voice: VoiceChannel;
   }> {
     // Get the Guild we're working on
-    const guild = await this.bot.guilds.fetch(config.client.guild);
+    const guild = await this.bot.guilds.fetch(config.discord.guild);
 
     // Create a Text & Voice Channel
     try {
       // Get the category set in the Config file. If none is set, create one.
       let category: CategoryChannel = undefined;
 
-      if (config.lobbyConfig.categoryId.length < 1 && !team.enabled)
+      if (config.lobbies.categoryId.length < 1 && !team.enabled)
         category = await guild.channels.create(`Lobby #${count}`, {
           type: 'GUILD_CATEGORY',
           reason:
@@ -71,14 +71,14 @@ export class DiscordService {
       else
         category = <CategoryChannel>(
           await guild.channels.fetch(
-            team.enabled ? team.category : config.lobbyConfig.categoryId,
+            team.enabled ? team.category : config.lobbies.categoryId,
           )
         );
 
       // Now that we have a category, create the General Text & Voice Channels.
       // TODO: More an idea than a TODO, but this could use permissions where the lobby players are the only ones that can see the channels.
       const gTextChannel = await category.createChannel(
-          `${team.enabled ? team.name : config.lobbyConfig.lobbyTextPrefix}${
+          `${team.enabled ? team.name : config.lobbies.lobbyTextPrefix}${
             team.enabled ? '' : count
           }`,
           {
@@ -90,7 +90,7 @@ export class DiscordService {
           },
         ),
         gVoiceChannel = await category.createChannel(
-          `${team.enabled ? team.name : config.lobbyConfig.lobbyVoicePrefix}${
+          `${team.enabled ? team.name : config.lobbies.lobbyVoicePrefix}${
             team.enabled ? '' : count
           }`,
           {
@@ -147,7 +147,7 @@ export class DiscordService {
     // Create a new Discord client
     this.bot = new Client({
       intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
-      botGuilds: [config.client.guild],
+      botGuilds: [config.discord.guild],
       silent: true,
     });
 
@@ -171,12 +171,12 @@ export class DiscordService {
 
     // interactionCreate
     this.bot.on('interactionCreate', (interaction: Interaction) => {
-      if (interaction.guild.id !== config.client.guild) return;
+      if (interaction.guild.id !== config.discord.guild) return;
 
       this.bot.executeInteraction(interaction);
     });
 
     // Login to the bot user with the token provided.
-    await this.bot.login(config.client.token);
+    await this.bot.login(config.discord.token);
   }
 }

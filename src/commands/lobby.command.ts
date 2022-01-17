@@ -35,8 +35,7 @@ export class LobbyCommand {
   // Slash command
   @Slash('create', { description: 'Create a new lobby for a pug.' })
   async create(
-    // TODO: Properly support regions
-    @SlashChoice({ Brazil: 'saopaulo' })
+    @SlashChoice(LobbyService.regions)
     @SlashOption('region', {
       description: 'The region the lobby will be in.',
       required: true,
