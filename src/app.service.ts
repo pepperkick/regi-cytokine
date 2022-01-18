@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Message } from 'discord.js';
 import { DiscordService } from './discord.service';
+import { MessagingService } from './messaging.service';
 import { LobbyService } from './modules/lobby/lobby.service';
+import { Player } from './objects/match-player.interface';
 
 import { StatusColors as color } from './objects/status-colors.enum';
 
@@ -9,6 +11,7 @@ import { StatusColors as color } from './objects/status-colors.enum';
 export class AppService {
   constructor(
     private lobbyService: LobbyService,
+    private messagingService: MessagingService,
     private discordService: DiscordService,
   ) {}
 
@@ -63,19 +66,54 @@ export class AppService {
   /**
    * Does a Lobby Notification for DISTRIBUTED
    */
-  async lobbyNotifyDistributed(lobbyId: string) {
+  async lobbyNotifyDistributed(lobby) {
     // Get the Message object for this LobbyID
-    const { message } = await this.getMessage(lobbyId);
+    const { message, discord } = await this.getMessage(lobby._id);
 
     // Update embed color
     const embed = message.embeds[0];
     embed.color = color.DISTRIBUTED;
 
-    // TODO: Edit the embed field to show the players' teams and classes.
+    // Get the user lists
+    const players = await this.messagingService.generateUserList(lobby, {
+        perTeam: true,
+      }),
+      // Create the team specific channels.
+      { teamA, teamB } = await this.discordService.createTeamChannels(
+        discord.channels.categoryId,
+      );
+
+    // Update the Internal Lobby document
+    this.lobbyService.updateLobbyChannels(lobby._id, { A: teamA, B: teamB });
+
+    // Create the embed fields with the team, classes (TODO) and channels displayed.
+    // Remove queued players from the embed fields.
+    delete embed.fields[3];
+
+    // Add the new fields to the embed.
+    embed.fields.splice(3, 0, {
+      name: ':red_circle: Team A',
+      value: `${
+        players.A.length > 0
+          ? players.A.map((user: Player) => `<@${user.discord}>`).join('\n')
+          : 'Team is empty.'
+      }\n\n<#${teamA.text.id}>\n<#${teamA.voice.id}>`,
+      inline: true,
+    });
+    embed.fields.splice(4, 0, {
+      name: ':blue_circle: Team B',
+      value: `${
+        players.B.length > 0
+          ? players.B.map((user: Player) => `<@${user.discord}>`).join('\n')
+          : 'Team is empty.'
+      }\n\n<#${teamB.text.id}>\n<#${teamB.voice.id}>`,
+      inline: true,
+    });
+    embed.fields.join();
 
     return await message.edit({
       content:
-        ':white_check_mark: Players have been distributed!\n\n:hourglass: Creating team specific channels...',
+        ':white_check_mark: Players have been distributed!\n\n:hourglass: Preparing lobby...',
       embeds: [embed],
     });
   }
@@ -85,30 +123,11 @@ export class AppService {
    */
   async lobbyNotifyLobbyReady(lobbyId: string) {
     // Get the Message object for this LobbyID
-    const { message, discord } = await this.getMessage(lobbyId);
+    const { message } = await this.getMessage(lobbyId);
 
     // Update embed color
     const embed = message.embeds[0];
     embed.color = color.LOBBY_READY;
-
-    // Create the team specific channels.
-    const { teamA, teamB } = await this.discordService.createTeamChannels(
-      discord.channels.categoryId,
-    );
-
-    // Update the last field message, mentioning team specific channels.
-    embed.fields.push(
-      {
-        name: ':red_circle: Team A Channels',
-        value: `<#${teamA.text.id}>\n<#${teamA.voice.id}>`,
-        inline: true,
-      },
-      {
-        name: ':blue_circle: Team B Channels',
-        value: `<#${teamB.text.id}>\n<#${teamB.voice.id}>`,
-        inline: true,
-      },
-    );
 
     return await message.edit({
       content:
@@ -130,7 +149,7 @@ export class AppService {
 
     return await message.edit({
       content:
-        ":white_check_mark: It's game time! Server details have been posted below.",
+        ":white_check_mark: Lobby is ready!\n\n:point_right: Join your respective team channels below.\n:white_check_mark: It's game time! Server details have been posted below.",
     });
   }
 }

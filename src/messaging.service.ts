@@ -25,6 +25,43 @@ export class MessagingService {
   constructor() {}
 
   /**
+   * Creates a user list from an array of players.
+   * @param lobby The Lobby object from Cytokine.
+   * @param params Optional parameters.
+   * @returns A string with the user list from the Lobby.
+   */
+  generateUserList(
+    lobby,
+    params?: {
+      classes?: boolean;
+      perTeam?: boolean;
+    },
+  ) {
+    // Return 2 different objects for each team if params.perTeam is set
+    // Cooooould have a different approach but meh
+    if (params) {
+      if (params.perTeam) {
+        const A = lobby.queuedPlayers.filter((user: Player) =>
+            user.roles.includes('team_a'),
+          ),
+          B = lobby.queuedPlayers.filter((user: Player) =>
+            user.roles.includes('team_b'),
+          );
+
+        return { A, B };
+      }
+    }
+
+    // Else return the default list
+    return lobby.queuedPlayers
+      .map((user: Player) => {
+        // TODO: Include classes if params.classes == true
+        return `<@${user.discord}>`;
+      })
+      .join('\n');
+  }
+
+  /**
    * Reply to an interaction with the initial embed format.
    *
    * @param interaction The interaction to reply to.
@@ -40,9 +77,7 @@ export class MessagingService {
     params: ReplyParameters,
   ): Promise<string> {
     // Make a user list with all Discord tags.
-    const userList = lobby.queuedPlayers
-      .map((user: Player) => `<@${user.discord}>`)
-      .join('\n');
+    const userList = this.generateUserList(lobby);
 
     const embed = new MessageEmbed({
       title: `Lobby ${params.lobbyNumber}`,
@@ -118,9 +153,7 @@ export class MessagingService {
     message: Message<true> | Message<boolean>,
   ): Promise<Message<boolean>> {
     // Make a user list with all Discord tags.
-    const userList = lobby.queuedPlayers
-      .map((user: Player) => `<@${user.discord}>`)
-      .join('\n');
+    const userList = this.generateUserList(lobby);
 
     // Update the fields that are outdated
     const embed = message.embeds[0];

@@ -24,7 +24,7 @@ export class AppController {
           break;
         }
         case 'DISTRIBUTED': {
-          this.appService.lobbyNotifyDistributed(lobby._id);
+          this.appService.lobbyNotifyDistributed(lobby);
           break;
         }
       }
