@@ -20,11 +20,11 @@ export class AppController {
       // Currently for DISTRIBUTING and DISTRIBUTED
       switch (status) {
         case 'DISTRIBUTING': {
-          this.appService.lobbyNotifyDistributing(lobby._id);
+          await this.appService.lobbyNotifyDistributing(lobby._id);
           break;
         }
         case 'DISTRIBUTED': {
-          this.appService.lobbyNotifyDistributed(lobby);
+          await this.appService.lobbyNotifyDistributed(lobby);
           break;
         }
       }
@@ -37,11 +37,19 @@ export class AppController {
 
       switch (status) {
         case 'LOBBY_READY': {
-          this.appService.lobbyNotifyLobbyReady(lobbyId);
+          await this.appService.lobbyNotifyLobbyReady(lobbyId);
+          break;
+        }
+        case 'CREATING_SERVER': {
+          await this.appService.lobbyNotifyCreatingServer(lobbyId);
           break;
         }
         case 'LIVE': {
-          this.appService.lobbyNotifyLive(lobbyId);
+          await this.appService.lobbyNotifyLive(lobbyId);
+          break;
+        }
+        case 'FAILED': {
+          await this.appService.lobbyNotifyFailed(lobbyId);
           break;
         }
       }

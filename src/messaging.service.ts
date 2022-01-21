@@ -70,7 +70,7 @@ export class MessagingService {
    *
    * @return The sent message.
    */
-  async lobbyReply(
+  async lobbyInitialReply(
     interaction: ButtonInteraction | CommandInteraction,
     format: LobbyFormat,
     lobby,
@@ -80,8 +80,8 @@ export class MessagingService {
     const userList = this.generateUserList(lobby);
 
     const embed = new MessageEmbed({
-      title: `Lobby ${params.lobbyNumber}`,
-      description: '',
+      title: `Lobby #${params.lobbyNumber}`,
+      description: `Created by <@${interaction.user.id}>`,
       color: 0x787878,
       fields: [
         {

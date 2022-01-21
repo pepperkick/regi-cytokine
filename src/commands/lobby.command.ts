@@ -86,8 +86,7 @@ export class LobbyCommand {
           requiredPlayers: formatConfig.maxPlayers,
           players: [],
           preference: {
-            // ONLY FOR DEVELOPMENT THIS IS ON FALSE
-            createLighthouseServer: false,
+            createLighthouseServer: true,
           },
         },
       };
@@ -132,7 +131,7 @@ export class LobbyCommand {
       this.logger.debug(lobby);
 
       // Create the new message to edit the interaction with the lobby's status.
-      const messageId = await LobbyCommand.messaging.lobbyReply(
+      const messageId = await LobbyCommand.messaging.lobbyInitialReply(
         interaction,
         formatConfig,
         lobby,

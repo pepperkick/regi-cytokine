@@ -142,6 +142,36 @@ export class DiscordService {
     return { teamA, teamB };
   }
 
+  /**
+   * Deletes all the channels created for a lobby.
+   * @param lobby The internal Lobby document.
+   */
+  async deleteChannels(lobby) {
+    // Delete the channels
+    const channels = [
+      lobby.channels.categoryId,
+      lobby.channels.general.textChannelId,
+      lobby.channels.teamA.textChannelId,
+      lobby.channels.teamB.textChannelId,
+      lobby.channels.general.voiceChannelId,
+      lobby.channels.teamA.voiceChannelId,
+      lobby.channels.teamB.voiceChannelId,
+    ];
+
+    for (const id of channels) {
+      try {
+        // Get the channel with that ID and delete it
+        const channel = await this.bot.channels.fetch(id);
+
+        await channel.delete();
+      } catch (e) {
+        this.logger.error(
+          `Tried to delete channel ${id} from Lobby ${lobby.id}: ${e}.`,
+        );
+      }
+    }
+  }
+
   // Run the bot
   private async run() {
     // Create a new Discord client

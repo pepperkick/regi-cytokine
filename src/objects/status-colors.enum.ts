@@ -5,5 +5,9 @@ export enum StatusColors {
   'DISTRIBUTING' = 0xe6800b,
   'DISTRIBUTED' = 0x0b79e6,
   'LOBBY_READY' = 0x0ee31f,
+  'CREATING_SERVER' = 0x787878,
   'LIVE' = 0x2c42e8,
+
+  'FAILED' = 0xeb4034,
+  'UNKNOWN' = 0xeb4034,
 }

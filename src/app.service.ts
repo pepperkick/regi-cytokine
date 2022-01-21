@@ -131,7 +131,24 @@ export class AppService {
 
     return await message.edit({
       content:
-        ':white_check_mark: Lobby is ready!\n\n:point_right: Join your respective team channels below.\n:hourglass: Waiting for server to start...',
+        ':white_check_mark: Lobby is ready!\n\n:point_right: Join your respective team channels below.',
+      embeds: [embed],
+    });
+  }
+
+  /**
+   * Does a Lobby notification for CREATING_SERVER
+   */
+  async lobbyNotifyCreatingServer(lobbyId: string) {
+    // Get the Message object for this LobbyID
+    const { message } = await this.getMessage(lobbyId);
+
+    // Update embed color
+    const embed = message.embeds[0];
+    embed.color = color.CREATING_SERVER;
+
+    return await message.edit({
+      content: `${message.content}\n:hourglass: Waiting for server to start...`,
       embeds: [embed],
     });
   }
@@ -150,6 +167,30 @@ export class AppService {
     return await message.edit({
       content:
         ":white_check_mark: Lobby is ready!\n\n:point_right: Join your respective team channels below.\n:white_check_mark: It's game time! Server details have been posted below.",
+    });
+  }
+
+  /**
+   * Does a Lobby Notification for FAILED
+   */
+  async lobbyNotifyFailed(lobbyId: string) {
+    // Get the Message object for this LobbyID
+    const { message } = await this.getMessage(lobbyId);
+
+    // Update embed color
+    const embed = message.embeds[0];
+    embed.color = color.FAILED;
+
+    // Delete the channels that were created
+    this.discordService.deleteChannels(
+      await this.lobbyService.getInternalLobbyById(lobbyId),
+    );
+
+    return await message.edit({
+      content:
+        ':x: The server failed to start! Contact the Qixalite administration team to troubleshoot this issue.\n\n:x: This lobby is now closed.',
+      embeds: [embed],
+      components: [],
     });
   }
 }
