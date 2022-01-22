@@ -216,6 +216,12 @@ export class AppService {
     const embed = message.embeds[0];
     embed.color = color.FINISHED;
 
+    // Delete the channels that were created
+    // (to be discussed on what's said above)
+    this.discordService.deleteChannels(
+      await this.lobbyService.getInternalLobbyById(lobbyId),
+    );
+
     return await message.edit({
       content: `:lock: The lobby has been locked\n\nThank you all for playing! Logs and Demos will be posted in <#${discord.channels.general.textChannelId}>.`,
     });
