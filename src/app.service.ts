@@ -203,6 +203,25 @@ export class AppService {
   }
 
   /**
+   * Does a Lobby Notification for FINISHED
+   */
+  async lobbyNotifyFinished(lobbyId: string) {
+    // TODO: Add logs and demos links to send into the general channel / in the embed.
+    // This would probably require another state from Lighthouse such as "UPLOADS_FINISHED" or something different as its not Qix dependent but 3rd party.
+
+    // Get the Message object for this LobbyID
+    const { message, discord } = await this.getMessage(lobbyId);
+
+    // Update embed color
+    const embed = message.embeds[0];
+    embed.color = color.FINISHED;
+
+    return await message.edit({
+      content: `:lock: The lobby has been locked\n\nThank you all for playing! Logs and Demos will be posted in <#${discord.channels.general.textChannelId}>.`,
+    });
+  }
+
+  /**
    * Does a Lobby Notification for FAILED
    */
   async lobbyNotifyFailed(lobbyId: string) {

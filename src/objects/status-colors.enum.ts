@@ -8,6 +8,7 @@ export enum StatusColors {
   'CREATING_SERVER' = 0x787878,
   'WAITING_FOR_PLAYERS' = 0xe6800b,
   'LIVE' = 0x2c42e8,
+  'FINISHED' = 0xeb4034,
 
   'FAILED' = 0xeb4034,
   'UNKNOWN' = 0xeb4034,

@@ -53,6 +53,10 @@ export class AppController {
           await this.appService.lobbyNotifyLive(lobbyId);
           break;
         }
+        case 'FINISHED': {
+          await this.appService.lobbyNotifyFinished(lobbyId);
+          break;
+        }
         case 'FAILED': {
           await this.appService.lobbyNotifyFailed(lobbyId);
           break;
