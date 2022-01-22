@@ -4,6 +4,7 @@ import {
   Intents,
   Interaction,
   Message,
+  MessageEmbed,
   TextChannel,
   VoiceChannel,
 } from 'discord.js';
@@ -170,6 +171,67 @@ export class DiscordService {
         );
       }
     }
+  }
+
+  /**
+   * Sends the server details to the general lobby channel.
+   */
+  async sendServerDetails(channel: TextChannel, server) {
+    // Create the embed.
+    const embed = new MessageEmbed({
+      title: "Ready or not, let's play!",
+      description:
+        'Be sure to join your respective **voice channels** before joining the server!',
+      color: 0x37ef09,
+      fields: [
+        {
+          name: `✍️ Manual Connect`,
+          value: `Paste this into your game console.\n\n\`\`connect ${
+            server.ip
+          }:${server.port}; ${
+            server.data.password.length > 0
+              ? `password ${server.data.password}`
+              : ''
+          }\`\``,
+          inline: true,
+        },
+        {
+          name: `🔗 Link Connect`,
+          value: `Click to join instantly!\n\nsteam://connect/${server.ip}:${
+            server.port
+          }/${
+            server.data.password.length > 0 ? `${server.data.password}` : ''
+          }`,
+          inline: true,
+        },
+        {
+          name: `📄 Server Details`,
+          value: `**IP:** ${server.ip}:${server.port}\n**Password:** ${
+            server.data.password.length > 0
+              ? `${server.data.password}`
+              : 'No Password'
+          }`,
+          inline: true,
+        },
+        {
+          name: `🎥 SourceTV`,
+          value: `In case you wish to spectate the lobby, these are the **SourceTV** details.\n\n\`\`connect ${
+            server.ip
+          }:${server.data.tvPort}; ${
+            server.data.tvPassword.length > 0
+              ? `password ${server.data.tvPassword}`
+              : ''
+          }\`\``,
+          inline: true,
+        },
+      ],
+    });
+
+    // Send the message
+    return await channel.send({
+      content: '@here',
+      embeds: [embed],
+    });
   }
 
   // Run the bot

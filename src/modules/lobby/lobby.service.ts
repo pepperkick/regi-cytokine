@@ -148,6 +148,26 @@ export class LobbyService {
   }
 
   /**
+   * Gets the server info for a Match.
+   * @param matchId The ID of the Match to get the server info for.
+   * @returns The server information from Lighthouse.
+   */
+  async getServerInfo(matchId: string) {
+    try {
+      const { data } = await axios.get(
+        `${config.cytokine.host}/api/v1/matches/${matchId}/server`,
+        {
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
+        },
+      );
+
+      return data;
+    } catch (error) {
+      this.logger.error(error.response.data);
+    }
+  }
+
+  /**
    * Gets the amount of Lobby documents present in the collection.
    */
   async getLobbyCount(): Promise<number> {

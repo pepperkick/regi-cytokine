@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Message } from 'discord.js';
+import { Message, TextChannel } from 'discord.js';
 import { DiscordService } from './discord.service';
 import { MessagingService } from './messaging.service';
 import { LobbyService } from './modules/lobby/lobby.service';
@@ -149,6 +149,38 @@ export class AppService {
 
     return await message.edit({
       content: `${message.content}\n:hourglass: Waiting for server to start...`,
+      embeds: [embed],
+    });
+  }
+
+  /**
+   * Does a Lobby Notification for WAITING_FOR_PLAYERS
+   * At this point:
+   * - We have a live server in IDLE status.
+   * - Everybody is queued and distributed accordingly.
+   */
+  async lobbyNotifyWaitingForPlayers(lobbyId: string, data) {
+    // Get the Message object for this LobbyID
+    const { message, discord } = await this.getMessage(lobbyId);
+
+    // Update embed color
+    const embed = message.embeds[0];
+    embed.color = color.WAITING_FOR_PLAYERS;
+
+    // Get the Server info from the server ID
+    const server = await this.lobbyService.getServerInfo(data._id);
+
+    // Find the general lobby channel.
+    const client = await this.discordService.getClient();
+    const lobbyChannel = <TextChannel>(
+      await client.channels.fetch(discord.channels.general.textChannelId)
+    );
+
+    // Update the message and send connect data to the general channel.
+    await this.discordService.sendServerDetails(lobbyChannel, server);
+
+    return await message.edit({
+      content: `:white_check_mark: Server is ready!\n\n:point_right: Details have been posted in <#${discord.channels.general.textChannelId}>\n:hourglass: Waiting for players to join...`,
       embeds: [embed],
     });
   }
