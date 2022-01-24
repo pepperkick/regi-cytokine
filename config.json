@@ -2,11 +2,20 @@
     "mongodbUri": "",
     "localhost": "",
     "regions": {
+        "sydney": {
+            "name": "Sydney",
+            "alias": [ "sy", "syd" ],
+            "continent": "oceania",
+            "tags": [ "sydney", "aus", "oceania" ],
+            "discordVoiceRegion": "sydney",
+            "tiers": {}
+        },
         "brazil": {
             "name": "Brazil",
             "alias": [ "sp", "saopaulo" ],
             "continent": "south_america",
             "tags": [ "brazil", "sa", "sp", "saopaulo" ],
+            "discordVoiceRegion": "brazil",
             "tiers": {}
         },
         "chicago": {
@@ -14,6 +23,7 @@
             "alias": [ "ch", "chi" ],
             "continent": "north_america",
             "tags": [ "na", "usa" ],
+            "discordVoiceRegion": "us-central",
             "tiers": {}
         }
     },

@@ -81,6 +81,7 @@ export class AppService {
       // Create the team specific channels.
       { teamA, teamB } = await this.discordService.createTeamChannels(
         discord.channels.categoryId,
+        discord.region,
       );
 
     // Update the Internal Lobby document

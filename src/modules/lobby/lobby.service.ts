@@ -177,10 +177,11 @@ export class LobbyService {
   /**
    * Creates a Discord Text & Voice channel for a lobby.
    */
-  async createChannels() {
+  async createChannels(voiceRegion?: string) {
     return await LobbyService.discord.createLobbyChannels(
       await this.getLobbyCount(),
       { enabled: false },
+      voiceRegion,
     );
   }
 
@@ -191,6 +192,7 @@ export class LobbyService {
     lobbyId: string,
     creatorId: string,
     messageId: string,
+    region: string,
     channels?: LobbyChannels,
   ) {
     // Create new Lobby document
@@ -198,6 +200,7 @@ export class LobbyService {
       lobbyId,
       creatorId,
       messageId,
+      region,
       channels,
     });
 
@@ -302,14 +305,17 @@ export class LobbyService {
    * @returns An object containing the SlashChoice region entries.
    */
   static parseRegions() {
-    const regions = {};
+    const regions = {},
+      voiceRegions = {};
 
     // TODO: Validate regions
 
     // Iterate through regions available in config, and create the enumerable object.
-    for (const region of Object.keys(config.regions))
+    for (const region of Object.keys(config.regions)) {
       regions[config.regions[region].name] = region;
+      voiceRegions[region] = config.regions[region].discordVoiceRegion;
+    }
 
-    return regions;
+    return { names: regions, voiceRegions };
   }
 }

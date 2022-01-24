@@ -6,6 +6,7 @@ import {
   MessageActionRow,
   MessageButton,
   MessageEmbed,
+  TextChannel,
 } from 'discord.js';
 import { ButtonType } from './objects/buttons/button-types.enum';
 import { LobbyFormat } from './objects/lobby-format.interface';
@@ -192,5 +193,19 @@ export class MessagingService {
         ? interaction.editReply(reply)
         : interaction.reply(reply))
     );
+  }
+
+  /**
+   * Sends initial message to the general lobby channel.
+   * @param channel The General TextChannel object to send the message to.
+   * @param lobbyNumber The number of the lobby.
+   */
+  async sendInitialMessage(channel: TextChannel, lobbyNumber: number) {
+    return await channel.send(`:wave: **Welcome to Lobby #${lobbyNumber}!**
+      
+:point_right: This channel is meant for a pre-game chat between the lobbys' players.
+:x: Please do not spam or use any language that is not supported by the game.
+          
+:smile: Enjoy your game and happy competition!`);
   }
 }

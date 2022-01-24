@@ -51,6 +51,7 @@ export class DiscordService {
   async createLobbyChannels(
     count: number,
     team?,
+    rtcRegion?: string,
   ): Promise<{
     text: TextChannel;
     voice: VoiceChannel;
@@ -100,6 +101,7 @@ export class DiscordService {
               'This is an automatically generated voice channel for Cytokine lobbies.',
             topic:
               '**This is a temporary channel for lobby voice.** This will be deleted after the lobby has been completed.',
+            rtcRegion,
           },
         );
 
@@ -117,7 +119,10 @@ export class DiscordService {
    * Creates team specific channels, both Text and Voice.
    * This should be done after LOBBY_READY status is sent.
    */
-  async createTeamChannels(categoryId: string): Promise<{
+  async createTeamChannels(
+    categoryId: string,
+    region?: string,
+  ): Promise<{
     teamA: {
       text: TextChannel;
       voice: VoiceChannel;
@@ -128,17 +133,25 @@ export class DiscordService {
     };
   }> {
     // Create one for Team A
-    const teamA = await this.createLobbyChannels(0, {
-        name: 'Team A',
-        category: categoryId,
-        enabled: true,
-      }),
+    const teamA = await this.createLobbyChannels(
+        0,
+        {
+          name: 'Team A',
+          category: categoryId,
+          enabled: true,
+        },
+        region,
+      ),
       // Create one for Team B
-      teamB = await this.createLobbyChannels(0, {
-        name: 'Team B',
-        category: categoryId,
-        enabled: true,
-      });
+      teamB = await this.createLobbyChannels(
+        0,
+        {
+          name: 'Team B',
+          category: categoryId,
+          enabled: true,
+        },
+        region,
+      );
 
     return { teamA, teamB };
   }
@@ -256,6 +269,13 @@ export class DiscordService {
 
       // Load permissions
       await this.bot.initApplicationPermissions(true);
+
+      // Prints out the available voice regions (for debugging)
+      this.logger.debug(
+        `Latest Regions List: ${(await this.bot.fetchVoiceRegions())
+          .map((region) => region.id)
+          .join(', ')}`,
+      );
 
       // Log the bot is ready
       this.logger.log('Discord client initialized successfully.');
