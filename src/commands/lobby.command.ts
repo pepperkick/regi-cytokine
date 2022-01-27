@@ -48,6 +48,12 @@ export class LobbyCommand {
       required: true,
     })
     format: string,
+    @SlashOption('valve-sdr', {
+      description:
+        '[OPTIONAL] Whether or not Valve SDR will be enabled on the server.',
+      required: false,
+    })
+    valveSdr: boolean,
     interaction: CommandInteraction,
   ) {
     // Check for the interaction being of type CommandInteraction
@@ -87,6 +93,10 @@ export class LobbyCommand {
           players: [],
           preference: {
             createLighthouseServer: true,
+            valveSdr:
+              valveSdr === undefined
+                ? LobbyCommand.service.getRegion(region).valveSdr
+                : valveSdr,
           },
         },
       };
