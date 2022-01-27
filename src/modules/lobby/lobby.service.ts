@@ -148,6 +148,26 @@ export class LobbyService {
   }
 
   /**
+   * Gets the server info for a Match.
+   * @param matchId The ID of the Match to get the server info for.
+   * @returns The server information from Lighthouse.
+   */
+  async getServerInfo(matchId: string) {
+    try {
+      const { data } = await axios.get(
+        `${config.cytokine.host}/api/v1/matches/${matchId}/server`,
+        {
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
+        },
+      );
+
+      return data;
+    } catch (error) {
+      this.logger.error(error.response.data);
+    }
+  }
+
+  /**
    * Gets the amount of Lobby documents present in the collection.
    */
   async getLobbyCount(): Promise<number> {
@@ -157,10 +177,11 @@ export class LobbyService {
   /**
    * Creates a Discord Text & Voice channel for a lobby.
    */
-  async createChannels() {
+  async createChannels(voiceRegion?: string) {
     return await LobbyService.discord.createLobbyChannels(
       await this.getLobbyCount(),
       { enabled: false },
+      voiceRegion,
     );
   }
 
@@ -171,6 +192,7 @@ export class LobbyService {
     lobbyId: string,
     creatorId: string,
     messageId: string,
+    region: string,
     channels?: LobbyChannels,
   ) {
     // Create new Lobby document
@@ -178,6 +200,7 @@ export class LobbyService {
       lobbyId,
       creatorId,
       messageId,
+      region,
       channels,
     });
 
@@ -186,9 +209,47 @@ export class LobbyService {
   }
 
   /**
+   * Updates a Lobby document in the database saving the new channels.
+   * @param lobbyId The Lobby ID linked to the document.
+   * @param channels The team channels to save.
+   * @returns The new internal Lobby document.
+   */
+  async updateLobbyChannels(lobbyId, teamChannels: { A; B }) {
+    try {
+      // Get the internal Lobby document with this ID linked to it.
+      const lobby = await this.getInternalLobbyById(lobbyId);
+
+      // Update the new channel information.
+      lobby.channels = {
+        ...lobby.channels,
+        teamA: {
+          textChannelId: teamChannels.A.text.id,
+          voiceChannelId: teamChannels.A.voice.id,
+        },
+        teamB: {
+          textChannelId: teamChannels.B.text.id,
+          voiceChannelId: teamChannels.B.voice.id,
+        },
+      };
+
+      // Mark as modified and save it
+      lobby.markModified('channels');
+      await lobby.save();
+
+      // Return the new internal Lobby document
+      return lobby;
+    } catch (e) {
+      // Probably not found or some other error.
+      this.logger.error(
+        `Lobby '${lobbyId}' was requested for internal update but failed: ${e}.`,
+      );
+    }
+  }
+
+  /**
    * Gets the Lobby document for a lobby by its ID.
    */
-  async getInternalLobbyById(lobbyId: string) {
+  async getInternalLobbyById(lobbyId: string): Promise<Lobby> {
     return await this.repo.findOne({ lobbyId });
   }
 
@@ -244,14 +305,17 @@ export class LobbyService {
    * @returns An object containing the SlashChoice region entries.
    */
   static parseRegions() {
-    const regions = {};
+    const regions = {},
+      voiceRegions = {};
 
     // TODO: Validate regions
 
     // Iterate through regions available in config, and create the enumerable object.
-    for (const region of Object.keys(config.regions))
+    for (const region of Object.keys(config.regions)) {
       regions[config.regions[region].name] = region;
+      voiceRegions[region] = config.regions[region].discordVoiceRegion;
+    }
 
-    return regions;
+    return { names: regions, voiceRegions };
   }
 }

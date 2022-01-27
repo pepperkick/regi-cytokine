@@ -4,6 +4,7 @@ import {
   Intents,
   Interaction,
   Message,
+  MessageEmbed,
   TextChannel,
   VoiceChannel,
 } from 'discord.js';
@@ -50,6 +51,7 @@ export class DiscordService {
   async createLobbyChannels(
     count: number,
     team?,
+    rtcRegion?: string,
   ): Promise<{
     text: TextChannel;
     voice: VoiceChannel;
@@ -99,6 +101,7 @@ export class DiscordService {
               'This is an automatically generated voice channel for Cytokine lobbies.',
             topic:
               '**This is a temporary channel for lobby voice.** This will be deleted after the lobby has been completed.',
+            rtcRegion,
           },
         );
 
@@ -116,7 +119,10 @@ export class DiscordService {
    * Creates team specific channels, both Text and Voice.
    * This should be done after LOBBY_READY status is sent.
    */
-  async createTeamChannels(categoryId: string): Promise<{
+  async createTeamChannels(
+    categoryId: string,
+    region?: string,
+  ): Promise<{
     teamA: {
       text: TextChannel;
       voice: VoiceChannel;
@@ -127,19 +133,118 @@ export class DiscordService {
     };
   }> {
     // Create one for Team A
-    const teamA = await this.createLobbyChannels(0, {
-        name: 'Team A',
-        category: categoryId,
-        enabled: true,
-      }),
+    const teamA = await this.createLobbyChannels(
+        0,
+        {
+          name: 'Team A',
+          category: categoryId,
+          enabled: true,
+        },
+        region,
+      ),
       // Create one for Team B
-      teamB = await this.createLobbyChannels(0, {
-        name: 'Team B',
-        category: categoryId,
-        enabled: true,
-      });
+      teamB = await this.createLobbyChannels(
+        0,
+        {
+          name: 'Team B',
+          category: categoryId,
+          enabled: true,
+        },
+        region,
+      );
 
     return { teamA, teamB };
+  }
+
+  /**
+   * Deletes all the channels created for a lobby.
+   * @param lobby The internal Lobby document.
+   */
+  async deleteChannels(lobby) {
+    // Delete the channels
+    const channels = [
+      lobby.channels.categoryId,
+      lobby.channels.general.textChannelId,
+      lobby.channels.teamA.textChannelId,
+      lobby.channels.teamB.textChannelId,
+      lobby.channels.general.voiceChannelId,
+      lobby.channels.teamA.voiceChannelId,
+      lobby.channels.teamB.voiceChannelId,
+    ];
+
+    for (const id of channels) {
+      try {
+        // Get the channel with that ID and delete it
+        const channel = await this.bot.channels.fetch(id);
+
+        await channel.delete();
+      } catch (e) {
+        this.logger.error(
+          `Tried to delete channel ${id} from Lobby ${lobby.id}: ${e}.`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Sends the server details to the general lobby channel.
+   */
+  async sendServerDetails(channel: TextChannel, server) {
+    // Create the embed.
+    const embed = new MessageEmbed({
+      title: "Ready or not, let's play!",
+      description:
+        'Be sure to join your respective **voice channels** before joining the server!',
+      color: 0x37ef09,
+      fields: [
+        {
+          name: `✍️ Manual Connect`,
+          value: `Paste this into your game console.\n\n\`\`connect ${
+            server.ip
+          }:${server.port}; ${
+            server.data.password.length > 0
+              ? `password ${server.data.password}`
+              : ''
+          }\`\``,
+          inline: true,
+        },
+        {
+          name: `🔗 Link Connect`,
+          value: `Click to join instantly!\n\nsteam://connect/${server.ip}:${
+            server.port
+          }/${
+            server.data.password.length > 0 ? `${server.data.password}` : ''
+          }`,
+          inline: true,
+        },
+        {
+          name: `📄 Server Details`,
+          value: `**IP:** ${server.ip}:${server.port}\n**Password:** ${
+            server.data.password.length > 0
+              ? `${server.data.password}`
+              : 'No Password'
+          }`,
+          inline: true,
+        },
+        {
+          name: `🎥 SourceTV`,
+          value: `In case you wish to spectate the lobby, these are the **SourceTV** details.\n\n\`\`connect ${
+            server.ip
+          }:${server.data.tvPort}; ${
+            server.data.tvPassword.length > 0
+              ? `password ${server.data.tvPassword}`
+              : ''
+          }\`\``,
+          inline: true,
+        },
+      ],
+    });
+
+    // Send the message
+    return await channel.send({
+      content: '@here',
+      embeds: [embed],
+    });
   }
 
   // Run the bot
@@ -164,6 +269,13 @@ export class DiscordService {
 
       // Load permissions
       await this.bot.initApplicationPermissions(true);
+
+      // Prints out the available voice regions (for debugging)
+      this.logger.debug(
+        `Latest Regions List: ${(await this.bot.fetchVoiceRegions())
+          .map((region) => region.id)
+          .join(', ')}`,
+      );
 
       // Log the bot is ready
       this.logger.log('Discord client initialized successfully.');

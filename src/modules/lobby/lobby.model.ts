@@ -16,6 +16,10 @@ export class Lobby extends Document {
   @Prop({ type: String })
   messageId: string;
 
+  // The region this lobby belongs to.
+  @Prop({ type: String })
+  region: string;
+
   // Discord Channels
   @Prop({ type: Object })
   channels: {

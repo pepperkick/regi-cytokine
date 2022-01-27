@@ -6,6 +6,7 @@ import {
   MessageActionRow,
   MessageButton,
   MessageEmbed,
+  TextChannel,
 } from 'discord.js';
 import { ButtonType } from './objects/buttons/button-types.enum';
 import { LobbyFormat } from './objects/lobby-format.interface';
@@ -25,6 +26,43 @@ export class MessagingService {
   constructor() {}
 
   /**
+   * Creates a user list from an array of players.
+   * @param lobby The Lobby object from Cytokine.
+   * @param params Optional parameters.
+   * @returns A string with the user list from the Lobby.
+   */
+  generateUserList(
+    lobby,
+    params?: {
+      classes?: boolean;
+      perTeam?: boolean;
+    },
+  ) {
+    // Return 2 different objects for each team if params.perTeam is set
+    // Cooooould have a different approach but meh
+    if (params) {
+      if (params.perTeam) {
+        const A = lobby.queuedPlayers.filter((user: Player) =>
+            user.roles.includes('team_a'),
+          ),
+          B = lobby.queuedPlayers.filter((user: Player) =>
+            user.roles.includes('team_b'),
+          );
+
+        return { A, B };
+      }
+    }
+
+    // Else return the default list
+    return lobby.queuedPlayers
+      .map((user: Player) => {
+        // TODO: Include classes if params.classes == true
+        return `<@${user.discord}>`;
+      })
+      .join('\n');
+  }
+
+  /**
    * Reply to an interaction with the initial embed format.
    *
    * @param interaction The interaction to reply to.
@@ -33,20 +71,18 @@ export class MessagingService {
    *
    * @return The sent message.
    */
-  async lobbyReply(
+  async lobbyInitialReply(
     interaction: ButtonInteraction | CommandInteraction,
     format: LobbyFormat,
     lobby,
     params: ReplyParameters,
   ): Promise<string> {
     // Make a user list with all Discord tags.
-    const userList = lobby.queuedPlayers
-      .map((user: Player) => `<@${user.discord}>`)
-      .join('\n');
+    const userList = this.generateUserList(lobby);
 
     const embed = new MessageEmbed({
-      title: `Lobby ${params.lobbyNumber}`,
-      description: '',
+      title: `Lobby #${params.lobbyNumber}`,
+      description: `Created by <@${interaction.user.id}>`,
       color: 0x787878,
       fields: [
         {
@@ -118,9 +154,7 @@ export class MessagingService {
     message: Message<true> | Message<boolean>,
   ): Promise<Message<boolean>> {
     // Make a user list with all Discord tags.
-    const userList = lobby.queuedPlayers
-      .map((user: Player) => `<@${user.discord}>`)
-      .join('\n');
+    const userList = this.generateUserList(lobby);
 
     // Update the fields that are outdated
     const embed = message.embeds[0];
@@ -159,5 +193,19 @@ export class MessagingService {
         ? interaction.editReply(reply)
         : interaction.reply(reply))
     );
+  }
+
+  /**
+   * Sends initial message to the general lobby channel.
+   * @param channel The General TextChannel object to send the message to.
+   * @param lobbyNumber The number of the lobby.
+   */
+  async sendInitialMessage(channel: TextChannel, lobbyNumber: number) {
+    return await channel.send(`:wave: **Welcome to Lobby #${lobbyNumber}!**
+      
+:point_right: This channel is meant for a pre-game chat between the lobbys' players.
+:x: Please do not spam or use any language that is not supported by the game.
+          
+:smile: Enjoy your game and happy competition!`);
   }
 }

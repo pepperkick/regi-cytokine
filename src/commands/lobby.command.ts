@@ -35,7 +35,7 @@ export class LobbyCommand {
   // Slash command
   @Slash('create', { description: 'Create a new lobby for a pug.' })
   async create(
-    @SlashChoice(LobbyService.regions)
+    @SlashChoice(LobbyService.regions.names)
     @SlashOption('region', {
       description: 'The region the lobby will be in.',
       required: true,
@@ -86,8 +86,7 @@ export class LobbyCommand {
           requiredPlayers: formatConfig.maxPlayers,
           players: [],
           preference: {
-            // ONLY FOR DEVELOPMENT THIS IS ON FALSE
-            createLighthouseServer: false,
+            createLighthouseServer: true,
           },
         },
       };
@@ -116,23 +115,18 @@ export class LobbyCommand {
       );
 
       // Create the lobby channels.
-      const { text, voice } = await LobbyCommand.service.createChannels(),
+      const { text, voice } = await LobbyCommand.service.createChannels(
+          LobbyService.regions.voiceRegions[region],
+        ),
         lobbyNumber = await LobbyCommand.service.getLobbyCount();
 
       // Send a message to the text channel explaining its purpose.
-      text.send(`:wave: **Welcome to Lobby #${lobbyNumber}!**
-      
-:point_right: This channel is meant for a pre-game chat between the lobbys' players.
-      
-:x: Please do not spam or use any language that is not supported by the game.
-      
-      
-:smile: Enjoy your game and happy competition!`);
+      await LobbyCommand.messaging.sendInitialMessage(text, lobbyNumber);
 
       this.logger.debug(lobby);
 
       // Create the new message to edit the interaction with the lobby's status.
-      const messageId = await LobbyCommand.messaging.lobbyReply(
+      const messageId = await LobbyCommand.messaging.lobbyInitialReply(
         interaction,
         formatConfig,
         lobby,
@@ -149,6 +143,7 @@ export class LobbyCommand {
         lobby._id,
         interaction.user.id,
         messageId,
+        region,
         {
           categoryId: text.parentId,
           general: {
