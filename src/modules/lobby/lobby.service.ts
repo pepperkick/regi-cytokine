@@ -318,4 +318,13 @@ export class LobbyService {
 
     return { names: regions, voiceRegions };
   }
+
+  /**
+   * Returns a region object passed its internal name.
+   * @param region The region name
+   * @returns The region object.
+   */
+  getRegion(region: string) {
+    return config.regions[region];
+  }
 }

@@ -8,6 +8,7 @@
             "continent": "oceania",
             "tags": [ "sydney", "aus", "oceania" ],
             "discordVoiceRegion": "sydney",
+            "valveSdr": true,
             "tiers": {}
         },
         "brazil": {
@@ -16,6 +17,7 @@
             "continent": "south_america",
             "tags": [ "brazil", "sa", "sp", "saopaulo" ],
             "discordVoiceRegion": "brazil",
+            "valveSdr": true,
             "tiers": {}
         },
         "chicago": {
@@ -24,6 +26,7 @@
             "continent": "north_america",
             "tags": [ "na", "usa" ],
             "discordVoiceRegion": "us-central",
+            "valveSdr": true,
             "tiers": {}
         }
     },

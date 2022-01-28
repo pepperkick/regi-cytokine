@@ -200,8 +200,8 @@ export class DiscordService {
         {
           name: `✍️ Manual Connect`,
           value: `Paste this into your game console.\n\n\`\`connect ${
-            server.ip
-          }:${server.port}; ${
+            server.data.sdrEnable ? server.data.sdrIp : server.ip
+          }:${server.data.sdrEnable ? server.data.sdrPort : server.port}; ${
             server.data.password.length > 0
               ? `password ${server.data.password}`
               : ''
@@ -210,9 +210,9 @@ export class DiscordService {
         },
         {
           name: `🔗 Link Connect`,
-          value: `Click to join instantly!\n\nsteam://connect/${server.ip}:${
-            server.port
-          }/${
+          value: `Click to join instantly!\n\nsteam://connect/${
+            server.data.sdrEnable ? server.data.sdrIp : server.ip
+          }:${server.data.sdrEnable ? server.data.sdrPort : server.port}/${
             server.data.password.length > 0 ? `${server.data.password}` : ''
           }`,
           inline: true,
@@ -229,8 +229,10 @@ export class DiscordService {
         {
           name: `🎥 SourceTV`,
           value: `In case you wish to spectate the lobby, these are the **SourceTV** details.\n\n\`\`connect ${
-            server.ip
-          }:${server.data.tvPort}; ${
+            server.data.sdrEnable ? server.data.sdrIp : server.ip
+          }:${
+            server.data.sdrEnable ? server.data.sdrTvPort : server.data.tvPort
+          }; ${
             server.data.tvPassword.length > 0
               ? `password ${server.data.tvPassword}`
               : ''

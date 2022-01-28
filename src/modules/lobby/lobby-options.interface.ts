@@ -36,6 +36,7 @@ export interface LobbyOptions {
     preference?: {
       requiredPlayers?: number;
       createLighthouseServer?: boolean;
+      valveSdr?: boolean;
     };
   };
 }
