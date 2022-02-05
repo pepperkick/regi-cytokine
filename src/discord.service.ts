@@ -163,25 +163,29 @@ export class DiscordService {
   async deleteChannels(lobby) {
     // Delete the channels
     const channels = [
-      lobby.channels.categoryId,
+      lobby.channels.categoryId !== config.lobbies.categoryId
+        ? lobby.channels.categoryId
+        : undefined,
       lobby.channels.general.textChannelId,
-      lobby.channels.teamA.textChannelId,
-      lobby.channels.teamB.textChannelId,
+      lobby.channels.teamA?.textChannelId,
+      lobby.channels.teamB?.textChannelId,
       lobby.channels.general.voiceChannelId,
-      lobby.channels.teamA.voiceChannelId,
-      lobby.channels.teamB.voiceChannelId,
+      lobby.channels.teamA?.voiceChannelId,
+      lobby.channels.teamB?.voiceChannelId,
     ];
 
     for (const id of channels) {
-      try {
-        // Get the channel with that ID and delete it
-        const channel = await this.bot.channels.fetch(id);
+      if (id !== undefined) {
+        try {
+          // Get the channel with that ID and delete it
+          const channel = await this.bot.channels.fetch(id);
 
-        await channel.delete();
-      } catch (e) {
-        this.logger.error(
-          `Tried to delete channel ${id} from Lobby ${lobby.id}: ${e}.`,
-        );
+          await channel.delete();
+        } catch (e) {
+          this.logger.error(
+            `Tried to delete channel ${id} from Lobby ${lobby.id}: ${e}.`,
+          );
+        }
       }
     }
   }

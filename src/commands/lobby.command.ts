@@ -1,4 +1,11 @@
-import { ButtonInteraction, CommandInteraction, Message } from 'discord.js';
+import {
+  ButtonInteraction,
+  CommandInteraction,
+  Message,
+  MessageActionRow,
+  MessageSelectMenu,
+  SelectMenuInteraction,
+} from 'discord.js';
 import {
   Discord,
   SlashGroup,
@@ -6,6 +13,7 @@ import {
   SlashOption,
   SlashChoice,
   ButtonComponent,
+  SelectMenuComponent,
 } from 'discordx';
 import { Logger } from '@nestjs/common';
 import { LobbyService } from '../modules/lobby/lobby.service';
@@ -15,7 +23,7 @@ import { LobbyFormat } from '../objects/lobby-format.interface';
 import { Player } from '../objects/match-player.interface';
 import { Game } from 'src/objects/game.enum';
 import { MessagingService } from 'src/messaging.service';
-import { ButtonType } from '../objects/buttons/button-types.enum';
+import { InteractionType } from '../objects/interactions/interaction-types.enum';
 
 @Discord()
 @SlashGroup('lobby', 'Interact with lobby options.')
@@ -32,7 +40,8 @@ export class LobbyCommand {
     LobbyCommand.messaging = messaging;
   }
 
-  // Slash command
+  // create
+  // Creates a new lobby with the given options.
   @Slash('create', { description: 'Create a new lobby for a pug.' })
   async create(
     @SlashChoice(LobbyService.regions.names)
@@ -165,6 +174,31 @@ export class LobbyCommand {
     }
   }
 
+  // close
+  // Closes a lobby that isn't in a FINISHED, UNKNOWN state.
+  @Slash('close', { description: 'Close a running lobby (Active).' })
+  async close(interaction: CommandInteraction) {
+    // Get the list of matches that have been created by this client AND are active.
+    const { matches } = await LobbyCommand.service.getActiveMatches();
+
+    // If there are no matches, return a message saying so.
+    if (!matches.length)
+      return await LobbyCommand.messaging.replyToInteraction(
+        interaction,
+        ':x: There are no active matches currently.',
+        { ephemeral: true },
+      );
+
+    // If there are lobbies, send a message to the interaction with a list of lobbies in a select menu.
+    const component = LobbyCommand.messaging.createLobbySelectMenu(matches);
+
+    return await LobbyCommand.messaging.replyToInteraction(
+      interaction,
+      `<@${interaction.user.id}> Select a lobby you wish to close.`,
+      { ephemeral: true, components: [component] },
+    );
+  }
+
   /**
    * Gets the Lobby object from the command reply.
    */
@@ -186,7 +220,7 @@ export class LobbyCommand {
   /**
    * Queue button handler
    */
-  @ButtonComponent(ButtonType.QUEUE)
+  @ButtonComponent(InteractionType.QUEUE)
   async handleQueue(interaction: ButtonInteraction) {
     // Get the Lobby ID from the internal Lobby document
     const { lobbyId } = await LobbyCommand.service.getInternalLobbyByMessageId(
@@ -241,7 +275,7 @@ export class LobbyCommand {
   /**
    * Unqueue button handler
    */
-  @ButtonComponent(ButtonType.UNQUEUE)
+  @ButtonComponent(InteractionType.UNQUEUE)
   async handleUnqueue(interaction: ButtonInteraction) {
     // Get the Lobby ID from the internal Lobby document
     const { lobbyId } = await LobbyCommand.service.getInternalLobbyByMessageId(
@@ -282,5 +316,33 @@ export class LobbyCommand {
       interaction,
       `<@${discordId}> You have been removed from the queue.`,
     );
+  }
+
+  /**
+   * Lobby Close Select Handler
+   */
+  @SelectMenuComponent(InteractionType.LOBBY_CLOSE)
+  async handleLobbyCloseSelect(interaction: SelectMenuInteraction) {
+    try {
+      // Sugar syntax
+      const matchId = interaction.values?.[0];
+
+      // Send request to close the match to Cytokine.
+      await LobbyCommand.service.closeMatch(matchId);
+
+      // Edit the interaction and send it back to the user.
+      return await interaction.update({
+        content: `:white_check_mark: Lobby with match ID '**${matchId}**' closed.`,
+        components: [],
+      });
+    } catch (e) {
+      // Edit the interaction to show the error.
+      return interaction
+        ? await interaction.update({
+            content: `:x: An error occurred while closing the lobby: \`\`${e}\`\``,
+            components: [],
+          })
+        : this.logger.error(`Error closing lobby: ${e}`);
+    }
   }
 }

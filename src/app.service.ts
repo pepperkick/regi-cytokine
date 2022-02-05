@@ -251,4 +251,27 @@ export class AppService {
       components: [],
     });
   }
+
+  /**
+   * Does a Lobby Notification for CLOSED
+   */
+  async lobbyNotifyClosed(lobbyId: string) {
+    // Get the Message object for this LobbyID
+    const { message } = await this.getMessage(lobbyId);
+
+    // Update embed color
+    const embed = message.embeds[0];
+    embed.color = color.CLOSED;
+
+    // Delete the channels that were created
+    this.discordService.deleteChannels(
+      await this.lobbyService.getInternalLobbyById(lobbyId),
+    );
+
+    return await message.edit({
+      content: ':x: The lobby has been closed!',
+      embeds: [embed],
+      components: [],
+    });
+  }
 }

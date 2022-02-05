@@ -10,6 +10,7 @@ export enum StatusColors {
   'LIVE' = 0x2c42e8,
   'FINISHED' = 0xeb4034,
 
+  'CLOSED' = 0xeb4034,
   'FAILED' = 0xeb4034,
   'UNKNOWN' = 0xeb4034,
 }

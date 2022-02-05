@@ -6,9 +6,10 @@ import {
   MessageActionRow,
   MessageButton,
   MessageEmbed,
+  MessageSelectMenu,
   TextChannel,
 } from 'discord.js';
-import { ButtonType } from './objects/buttons/button-types.enum';
+import { InteractionType } from './objects/interactions/interaction-types.enum';
 import { LobbyFormat } from './objects/lobby-format.interface';
 import { Player } from './objects/match-player.interface';
 
@@ -119,13 +120,13 @@ export class MessagingService {
       components: [
         new MessageButton({
           label: 'Queue up',
-          customId: ButtonType.QUEUE,
+          customId: InteractionType.QUEUE,
           style: 'SUCCESS',
           emoji: '✍',
         }),
         new MessageButton({
           label: 'Unqueue',
-          customId: ButtonType.UNQUEUE,
+          customId: InteractionType.UNQUEUE,
           style: 'DANGER',
           emoji: '❌',
         }),
@@ -177,9 +178,7 @@ export class MessagingService {
   async replyToInteraction(
     interaction: CommandInteraction | ButtonInteraction,
     content: string,
-    options = {
-      ephemeral: true,
-    },
+    options?,
   ) {
     // Create Reply object
     const reply = {
@@ -193,6 +192,35 @@ export class MessagingService {
         ? interaction.editReply(reply)
         : interaction.reply(reply))
     );
+  }
+
+  /**
+   * Creates a select menu with a list of matches in available state.
+   * @param matches The list of active Match objects to create the select menu from.
+   * @returns The MessageActionRow object with the corresponding select menu.
+   */
+  createLobbySelectMenu(matches): MessageActionRow {
+    // Create an array with all the options available (aka active matches)
+    const options = [];
+    for (const match of matches)
+      options.push({
+        label: `Match #${match._id}`,
+        value: match._id,
+        description: `Created @ ${match.createdAt}`,
+      });
+
+    // Return the MessageActionRow
+    return new MessageActionRow({
+      components: [
+        new MessageSelectMenu({
+          customId: 'lobby-close-select',
+          placeholder: 'Select a match to close...',
+          maxValues: 1,
+          minValues: 1,
+          options,
+        }),
+      ],
+    });
   }
 
   /**

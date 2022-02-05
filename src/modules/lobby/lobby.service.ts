@@ -168,6 +168,44 @@ export class LobbyService {
   }
 
   /**
+   * Gets all matches in a running state (AKA not ended/closed)
+   */
+  async getActiveMatches() {
+    try {
+      const { data } = await axios.get(
+        `${config.cytokine.host}/api/v1/matches`,
+        {
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
+        },
+      );
+
+      return data;
+    } catch (error) {
+      this.logger.error(error.response.data);
+    }
+  }
+
+  /**
+   * Sends a request to Cytokine to close a running match.
+   */
+  async closeMatch(matchId: string) {
+    try {
+      const { data } = await axios.delete(
+        `${config.cytokine.host}/api/v1/matches/${matchId}`,
+        {
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
+        },
+      );
+
+      return data;
+    } catch (error) {
+      this.logger.error(
+        `Failed to close match '${matchId}': ${error.response.data.error}`,
+      );
+    }
+  }
+
+  /**
    * Gets the amount of Lobby documents present in the collection.
    */
   async getLobbyCount(): Promise<number> {

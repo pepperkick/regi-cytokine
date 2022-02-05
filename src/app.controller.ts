@@ -61,6 +61,10 @@ export class AppController {
           await this.appService.lobbyNotifyFailed(lobbyId);
           break;
         }
+        case 'CLOSED': {
+          await this.appService.lobbyNotifyClosed(lobbyId);
+          break;
+        }
       }
 
       return 'ok';
