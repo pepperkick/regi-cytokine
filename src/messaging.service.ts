@@ -16,6 +16,7 @@ import { Player } from './objects/match-player.interface';
 interface ReplyParameters {
   content?: string;
   ephemeral?: true;
+  map?: string;
   region: string;
   userId: string;
   lobbyNumber: number;
@@ -88,7 +89,7 @@ export class MessagingService {
       fields: [
         {
           name: '🗒 Format',
-          value: `${format.name}\n**Max. Players:** ${format.maxPlayers}\n**Distribution:** ${format.distribution}`,
+          value: `${format.name}\n**Max. Players:** ${format.maxPlayers}\n**Distribution:** ${format.distribution}\n\n:map: **Map**: ${params.map}`,
           inline: true,
         },
         {

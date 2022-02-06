@@ -23,6 +23,9 @@ export class LobbyFormat {
   // The maximum amount of players (required players) to start a game with this format
   maxPlayers: number;
 
-  // Types of maps available in this format (Ex: cp_ for 5CP 6s maps, pl_ for Highlander, etcetera)
+  // Types of maps available in this format (Ex: cp for 5CP 6s maps, pl for Highlander, etcetera)
   mapTypes: string[];
+
+  // The pool of maps available this format has.
+  maps: string[];
 }

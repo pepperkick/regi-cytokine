@@ -213,6 +213,23 @@ export class LobbyService {
   }
 
   /**
+   * Selects a random map from the available maps of a format.
+   * @returns The randomly selected map name.
+   */
+  public getRandomMap(format: string, maps?: string[]): string | null {
+    // If maps are passed on, just return a random pick.
+    if (maps) return maps[Math.floor(Math.random() * maps.length)];
+
+    // Find the format with this name.
+    const f: LobbyFormat = LobbyService.formats.formats.find(
+      (f: LobbyFormat) => f.name === format,
+    );
+
+    // If found, return a random map name.
+    return f ? f.maps[Math.floor(Math.random() * f.maps.length)] : null;
+  }
+
+  /**
    * Creates a Discord Text & Voice channel for a lobby.
    */
   async createChannels(voiceRegion?: string) {

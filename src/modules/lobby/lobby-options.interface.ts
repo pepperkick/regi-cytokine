@@ -30,6 +30,9 @@ export interface LobbyOptions {
     // The region this lobby will take place in
     region: string;
 
+    // The map to be played in the lobby
+    map: string;
+
     // Maximum players required for the lobby to start
     requiredPlayers: number;
 

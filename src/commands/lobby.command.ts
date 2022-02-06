@@ -81,6 +81,24 @@ export class LobbyCommand {
         });
       }
 
+      // Reply to the interaction with a message stating that the lobby is being created.
+      await LobbyCommand.messaging.replyToInteraction(
+        interaction,
+        '🕒 Creating a new lobby with your parameters...',
+        { ephemeral: false },
+      );
+
+      // Select a random map from the format's pool of maps to be used in this lobby.
+      const map = LobbyCommand.service.getRandomMap(null, formatConfig.maps);
+
+      // If no map was found, just return an error message.
+      if (!map)
+        return await LobbyCommand.messaging.replyToInteraction(
+          interaction,
+          `:x: Failed to create lobby: \`\`No map found for the format specified\`\`.`,
+          { ephemeral: true },
+        );
+
       // Get player from the Discord initiator
       const player: Player = {
         name: interaction.user.username,
@@ -99,6 +117,7 @@ export class LobbyCommand {
           region: region,
           game: <Game>formatConfig.game,
           requiredPlayers: formatConfig.maxPlayers,
+          map,
           players: [],
           preference: {
             createLighthouseServer: true,
@@ -109,14 +128,6 @@ export class LobbyCommand {
           },
         },
       };
-      this.logger.debug(options);
-
-      // Reply to the interaction with a message stating that the lobby is being created.
-      await LobbyCommand.messaging.replyToInteraction(
-        interaction,
-        '🕒 Creating a new lobby with your parameters...',
-        { ephemeral: false },
-      );
 
       // Send the request to the lobby service (redirects it to Cytokine's API)
       const lobby = await LobbyCommand.service.createLobby(options);
@@ -125,7 +136,8 @@ export class LobbyCommand {
       if (!lobby)
         return await LobbyCommand.messaging.replyToInteraction(
           interaction,
-          `❌ Failed to create lobby.`,
+          `❌ Failed to create lobby: \`\`Request to the main service failed\`\`.`,
+          { ephemeral: true },
         );
 
       // Log lobby creation
@@ -142,8 +154,6 @@ export class LobbyCommand {
       // Send a message to the text channel explaining its purpose.
       await LobbyCommand.messaging.sendInitialMessage(text, lobbyNumber);
 
-      this.logger.debug(lobby);
-
       // Create the new message to edit the interaction with the lobby's status.
       const messageId = await LobbyCommand.messaging.lobbyInitialReply(
         interaction,
@@ -154,6 +164,7 @@ export class LobbyCommand {
           region,
           userId: interaction.user.id,
           lobbyNumber,
+          map,
         },
       );
 
@@ -303,8 +314,6 @@ export class LobbyCommand {
         `<@${discordId}> You cannot unqueue from this lobby: Something went wrong.`,
       );
 
-    this.logger.debug(lobby);
-
     // Do the lobbyReply again, but this time with the updated lobby.
     await LobbyCommand.messaging.updateReply(
       lobby,
@@ -330,19 +339,18 @@ export class LobbyCommand {
       // Send request to close the match to Cytokine.
       await LobbyCommand.service.closeMatch(matchId);
 
+      // Log the closing action
+      this.logger.log(
+        `User ${interaction.user.username}#${interaction.user.discriminator} closed match '${matchId}'`,
+      );
+
       // Edit the interaction and send it back to the user.
       return await interaction.update({
         content: `:white_check_mark: Lobby with match ID '**${matchId}**' closed.`,
         components: [],
       });
     } catch (e) {
-      // Edit the interaction to show the error.
-      return interaction
-        ? await interaction.update({
-            content: `:x: An error occurred while closing the lobby: \`\`${e}\`\``,
-            components: [],
-          })
-        : this.logger.error(`Error closing lobby: ${e}`);
+      this.logger.error(`Error closing lobby: ${e}`);
     }
   }
 }
