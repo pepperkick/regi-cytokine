@@ -197,17 +197,17 @@ export class MessagingService {
 
   /**
    * Creates a select menu with a list of matches in available state.
-   * @param matches The list of active Match objects to create the select menu from.
+   * @param lobbies The list of active Match objects to create the select menu from.
    * @returns The MessageActionRow object with the corresponding select menu.
    */
-  createLobbySelectMenu(matches): MessageActionRow {
+  createLobbySelectMenu(lobbies): MessageActionRow {
     // Create an array with all the options available (aka active matches)
     const options = [];
-    for (const match of matches)
+    for (const lobby of lobbies)
       options.push({
-        label: `Match #${match._id}`,
-        value: match._id,
-        description: `Created @ ${match.createdAt}`,
+        label: `Lobby #${lobby._id}`,
+        value: lobby._id,
+        description: `Created @ ${lobby.createdAt} by ${lobby.client}`,
       });
 
     // Return the MessageActionRow
@@ -215,7 +215,7 @@ export class MessagingService {
       components: [
         new MessageSelectMenu({
           customId: 'lobby-close-select',
-          placeholder: 'Select a match to close...',
+          placeholder: 'Select a lobby to close...',
           maxValues: 1,
           minValues: 1,
           options,

@@ -27,6 +27,10 @@ export class AppController {
           await this.appService.lobbyNotifyDistributed(data);
           break;
         }
+        case 'CLOSED': {
+          await this.appService.lobbyNotifyClosed(data._id);
+          break;
+        }
       }
     } else {
       // We have a match object. We need the lobby ID to work with.
@@ -59,10 +63,6 @@ export class AppController {
         }
         case 'FAILED': {
           await this.appService.lobbyNotifyFailed(lobbyId);
-          break;
-        }
-        case 'CLOSED': {
-          await this.appService.lobbyNotifyClosed(lobbyId);
           break;
         }
       }

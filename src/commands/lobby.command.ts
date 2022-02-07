@@ -186,22 +186,22 @@ export class LobbyCommand {
   }
 
   // close
-  // Closes a lobby that isn't in a FINISHED, UNKNOWN state.
+  // Closes a lobby whose match isn't in a LIVE, FINISHED, UNKNOWN state.
   @Slash('close', { description: 'Close a running lobby (Active).' })
   async close(interaction: CommandInteraction) {
-    // Get the list of matches that have been created by this client AND are active.
-    const { matches } = await LobbyCommand.service.getActiveMatches();
+    // Get the list of lobbies that have been created by this client AND are active.
+    const { lobbies } = await LobbyCommand.service.getActiveLobbies();
 
-    // If there are no matches, return a message saying so.
-    if (!matches.length)
+    // If there are no lobbies, return a message saying so.
+    if (!lobbies.length)
       return await LobbyCommand.messaging.replyToInteraction(
         interaction,
-        ':x: There are no active matches currently.',
+        ':x: There are no active Lobbies currently.',
         { ephemeral: true },
       );
 
     // If there are lobbies, send a message to the interaction with a list of lobbies in a select menu.
-    const component = LobbyCommand.messaging.createLobbySelectMenu(matches);
+    const component = LobbyCommand.messaging.createLobbySelectMenu(lobbies);
 
     return await LobbyCommand.messaging.replyToInteraction(
       interaction,
@@ -334,19 +334,19 @@ export class LobbyCommand {
   async handleLobbyCloseSelect(interaction: SelectMenuInteraction) {
     try {
       // Sugar syntax
-      const matchId = interaction.values?.[0];
+      const lobbyId = interaction.values?.[0];
 
       // Send request to close the match to Cytokine.
-      await LobbyCommand.service.closeMatch(matchId);
+      await LobbyCommand.service.closeLobby(lobbyId);
 
       // Log the closing action
       this.logger.log(
-        `User ${interaction.user.username}#${interaction.user.discriminator} closed match '${matchId}'`,
+        `User ${interaction.user.username}#${interaction.user.discriminator} closed Lobby '${lobbyId}'`,
       );
 
       // Edit the interaction and send it back to the user.
       return await interaction.update({
-        content: `:white_check_mark: Lobby with match ID '**${matchId}**' closed.`,
+        content: `:white_check_mark: Lobby '**${lobbyId}**' closed successfully.`,
         components: [],
       });
     } catch (e) {

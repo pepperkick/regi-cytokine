@@ -168,12 +168,12 @@ export class LobbyService {
   }
 
   /**
-   * Gets all matches in a running state (AKA not ended/closed)
+   * Gets all lobbies in a running state (AKA not ended/closed)
    */
-  async getActiveMatches() {
+  async getActiveLobbies() {
     try {
       const { data } = await axios.get(
-        `${config.cytokine.host}/api/v1/matches`,
+        `${config.cytokine.host}/api/v1/lobbies`,
         {
           headers: { Authorization: `Bearer ${config.cytokine.secret}` },
         },
@@ -186,12 +186,12 @@ export class LobbyService {
   }
 
   /**
-   * Sends a request to Cytokine to close a running match.
+   * Sends a request to Cytokine to close an active Lobby
    */
-  async closeMatch(matchId: string) {
+  async closeLobby(lobbyId: string) {
     try {
       const { data } = await axios.delete(
-        `${config.cytokine.host}/api/v1/matches/${matchId}`,
+        `${config.cytokine.host}/api/v1/lobbies/${lobbyId}`,
         {
           headers: { Authorization: `Bearer ${config.cytokine.secret}` },
         },
@@ -200,7 +200,7 @@ export class LobbyService {
       return data;
     } catch (error) {
       this.logger.error(
-        `Failed to close match '${matchId}': ${error.response.data.error}`,
+        `Failed to close Lobby '${lobbyId}': ${error.response.data.error}`,
       );
     }
   }
