@@ -113,6 +113,7 @@ export class LobbyCommand {
         queuedPlayers: [player],
         requirements: formatConfig.requirements,
         format: formatConfig,
+        userId: interaction.user.id,
         matchOptions: {
           region: region,
           game: <Game>formatConfig.game,
@@ -133,10 +134,10 @@ export class LobbyCommand {
       const lobby = await LobbyCommand.service.createLobby(options);
 
       // If lobby creation was unsuccessful, return an error message.
-      if (!lobby)
+      if (lobby?.error)
         return await LobbyCommand.messaging.replyToInteraction(
           interaction,
-          `❌ Failed to create lobby: \`\`Request to the main service failed\`\`.`,
+          `❌ Failed to create lobby: \`\`Request to the main service failed: ${lobby?.message}\`\`.`,
           { ephemeral: true },
         );
 
@@ -269,6 +270,14 @@ export class LobbyCommand {
     // Add the player to the queue.
     lobby = await LobbyCommand.service.addPlayer(player, lobbyId);
 
+    // Error handling
+    if (lobby?.error)
+      return await LobbyCommand.messaging.replyToInteraction(
+        interaction,
+        `❌ Failed to add you to this lobby: \`\`${lobby?.message}\`\`.`,
+        { ephemeral: true },
+      );
+
     // Do the lobbyReply again, but this time with the updated lobby.
     await LobbyCommand.messaging.updateReply(
       lobby,
@@ -302,6 +311,7 @@ export class LobbyCommand {
       return await LobbyCommand.messaging.replyToInteraction(
         interaction,
         `<@${discordId}> You cannot unqueue from this lobby: You're not queued!`,
+        { ephemeral: true },
       );
 
     // Remove the player from the lobby's queue.
@@ -312,6 +322,7 @@ export class LobbyCommand {
       return await LobbyCommand.messaging.replyToInteraction(
         interaction,
         `<@${discordId}> You cannot unqueue from this lobby: Something went wrong.`,
+        { ephemeral: true },
       );
 
     // Do the lobbyReply again, but this time with the updated lobby.
@@ -324,6 +335,7 @@ export class LobbyCommand {
     return await LobbyCommand.messaging.replyToInteraction(
       interaction,
       `<@${discordId}> You have been removed from the queue.`,
+      { ephemeral: true },
     );
   }
 

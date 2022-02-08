@@ -60,7 +60,9 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      this.logger.error(error.response.data);
+      if (!error.response.data?.error) this.logger.error(error.response.data);
+
+      return error.response.data;
     }
   }
 
@@ -121,7 +123,9 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      this.logger.error(error.response.data);
+      if (!error.response.data?.error) this.logger.error(error.response.data);
+
+      return error.response.data;
     }
   }
 

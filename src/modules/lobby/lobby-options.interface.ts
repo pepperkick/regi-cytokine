@@ -17,6 +17,9 @@ export interface LobbyOptions {
   // Role requirements to be filled to start the match
   requirements: FormatRequirement[];
 
+  // The Discord ID of the user creating this lobby
+  userId: string;
+
   // The format of the lobby
   format?: LobbyFormat;
 
