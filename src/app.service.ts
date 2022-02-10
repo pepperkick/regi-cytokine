@@ -85,6 +85,17 @@ export class AppService {
         discord.region,
       );
 
+    // Check for the team specific channels being successfully created
+    if (!teamA || !teamB) {
+      // Edit the message
+      await message.edit({
+        content: `:warning: Couldn't create team channels due to a permissions error.\n\n:x: Closing lobby...`,
+      });
+
+      // Close the lobby
+      return await this.lobbyService.closeLobby(lobby._id);
+    }
+
     // Update the Internal Lobby document
     this.lobbyService.updateLobbyChannels(lobby._id, { A: teamA, B: teamB });
 
@@ -241,13 +252,16 @@ export class AppService {
     embed.color = color.FAILED;
 
     // Delete the channels that were created
-    this.discordService.deleteChannels(
+    const e = await this.discordService.deleteChannels(
       await this.lobbyService.getInternalLobbyById(lobbyId),
     );
 
     return await message.edit({
-      content:
-        ':x: The server failed to start! Contact the Qixalite administration team to troubleshoot this issue.\n\n:x: This lobby is now closed.',
+      content: `${
+        e
+          ? `:warning: Lobby failed to start: \`\`Channels could not be deleted: ${e}\`\`\n\n`
+          : ''
+      }:x: The server failed to start! Contact the Qixalite administration team to troubleshoot this issue.\n\n:x: This lobby is now closed.`,
       embeds: [embed],
       components: [],
     });
@@ -265,12 +279,17 @@ export class AppService {
     embed.color = color.CLOSED;
 
     // Delete the channels that were created
-    this.discordService.deleteChannels(
+    const e = await this.discordService.deleteChannels(
       await this.lobbyService.getInternalLobbyById(lobbyId),
     );
 
+    // Was there an error?
     return await message.edit({
-      content: ':x: The lobby has been closed!',
+      content: `${
+        e
+          ? `:warning: The lobby couldn't be closed completely: \`\`Channels could not be deleted: ${e}\`\`\n\n`
+          : ''
+      }:x: The lobby has been closed!`,
       embeds: [embed],
       components: [],
     });

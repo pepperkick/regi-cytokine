@@ -1,6 +1,7 @@
 { 
     "mongodbUri": "",
     "localhost": "",
+    "kaiendToken": "",
     "regions": {
         "sydney": {
             "name": "Sydney",
@@ -37,7 +38,8 @@
     "discord": {
         "guild": "",
         "channel": "",
-        "token": ""
+        "token": "",
+        "admins": []
     },
     "lobbies": {
         "categoryId": "",

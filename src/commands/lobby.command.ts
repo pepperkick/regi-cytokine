@@ -97,10 +97,24 @@ export class LobbyCommand {
           { ephemeral: true },
         );
 
+      // Get Kaiend data for this Discord user
+      const kaiend = await LobbyCommand.service.getKaiendAccount(
+        interaction.user.id,
+      );
+
+      // If not found, tell the user to link them.
+      if (kaiend?.error)
+        return await LobbyCommand.messaging.replyToInteraction(
+          interaction,
+          `:x: Failed to create lobby: \`\`${kaiend.message}\`\`\n\nPlease link your **Steam** and **Discord** accounts here to proceed: <https://api.qixalite.com/accounts/login/discord>`,
+          { ephemeral: true },
+        );
+
       // Get player from the Discord initiator
       const player: Player = {
         name: interaction.user.username,
         discord: interaction.user.id,
+        steam: kaiend.steam,
         roles: ['creator', 'player'],
       };
 
@@ -162,6 +176,18 @@ export class LobbyCommand {
         LobbyService.regions.voiceRegions[region],
       );
 
+      // Check the channels have been created correctly
+      if (!text || !voice) {
+        // Close the lobby
+        await LobbyCommand.service.closeLobby(lobby._id);
+
+        return await LobbyCommand.messaging.replyToInteraction(
+          interaction,
+          `:x: Failed to create lobby: \`\`Couldn't create channels: Missing permissions / Discord API error\`\`.`,
+          { ephemeral: true },
+        );
+      }
+
       // Send a message to the text channel explaining its purpose.
       await LobbyCommand.messaging.sendInitialMessage(text, name);
 
@@ -199,15 +225,33 @@ export class LobbyCommand {
   // close
   // Closes a lobby whose match isn't in a LIVE, FINISHED, UNKNOWN state.
   @Slash('close', { description: 'Close a running lobby (Active).' })
-  async close(interaction: CommandInteraction) {
+  async close(
+    @SlashOption('admin', {
+      description:
+        'Whether to use Admin mode or not. Admin mode will list all lobbies regardless of creator.',
+      required: false,
+    })
+    admin: boolean,
+    interaction: CommandInteraction,
+  ) {
     // Get the list of lobbies that have been created by this client AND are active.
-    const { lobbies } = await LobbyCommand.service.getActiveLobbies();
+    let { lobbies } = await LobbyCommand.service.getActiveLobbies();
+
+    // Is this user not an admin?
+    const adminMode =
+      admin && config.discord.admins.includes(interaction.user.id);
+    if (!adminMode) {
+      // Filter lobbies out from the list that this user hasn't created.
+      lobbies = lobbies.filter(
+        (lobby) => lobby.createdBy === interaction.user.id,
+      );
+    }
 
     // If there are no lobbies, return a message saying so.
     if (!lobbies.length)
       return await LobbyCommand.messaging.replyToInteraction(
         interaction,
-        ':x: There are no active Lobbies currently.',
+        ":x: There are no active Lobbies currently, or you don't own one.",
         { ephemeral: true },
       );
 
@@ -216,7 +260,13 @@ export class LobbyCommand {
 
     return await LobbyCommand.messaging.replyToInteraction(
       interaction,
-      `<@${interaction.user.id}> Select a lobby you wish to close.`,
+      `${
+        admin && !adminMode
+          ? ':warning: You are not an admin. Opening default close menu...\n\n'
+          : ''
+      }<@${interaction.user.id}> Select a lobby you wish to close. ${
+        adminMode ? '**[Admin Mode]**' : ''
+      }`,
       { ephemeral: true, components: [component] },
     );
   }
@@ -252,10 +302,24 @@ export class LobbyCommand {
     // Get the Lobby object, player object and lobbyId
     let lobby = await this.getLobbyFromInteraction(interaction, lobbyId);
 
+    // Get Kaiend data for this Discord user
+    const kaiend = await LobbyCommand.service.getKaiendAccount(
+      interaction.user.id,
+    );
+
+    // If not found, tell the user to link them.
+    if (kaiend?.error)
+      return await LobbyCommand.messaging.replyToInteraction(
+        interaction,
+        `<@${interaction.user.id}> You cannot queue into this lobby: You haven't linked your Steam and Discord accounts.\n\nPlease do so by visiting <https://api.qixalite.com/accounts/login/discord>`,
+        { ephemeral: true },
+      );
+
     // Declare player object to add/remove from the queue.
     const player = {
       name: interaction.user.username,
       discord: interaction.user.id,
+      steam: kaiend.steam,
       roles: ['player'],
     };
 
@@ -274,8 +338,6 @@ export class LobbyCommand {
         `<@${player.discord}> You cannot queue into this lobby: The lobby is full.`,
         { ephemeral: true },
       );
-
-    // TODO: Verify the SteamID of the player trying to join (check if their Discord<->Steam are linked)
 
     // Add the player to the queue.
     lobby = await LobbyCommand.service.addPlayer(player, lobbyId);

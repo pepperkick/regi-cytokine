@@ -190,6 +190,28 @@ export class LobbyService {
   }
 
   /**
+   * Gets the Kaiend document for a user.
+   * @param discordId The Discord ID of the user.
+   * @returns The Kaiend document corresponding to this user.
+   */
+  async getKaiendAccount(discordId: string): Promise<any> {
+    try {
+      const { data } = await axios.get(
+        `https://api.qixalite.com/accounts/discord/${discordId}`,
+        {
+          headers: { Authorization: `Bearer ${config.kaiendToken}` },
+        },
+      );
+
+      return data;
+    } catch (e) {
+      if (!e.response.data?.error) this.logger.error(e.response.data);
+
+      return e.response.data;
+    }
+  }
+
+  /**
    * Sends a request to Cytokine to close an active Lobby
    */
   async closeLobby(lobbyId: string) {

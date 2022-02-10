@@ -112,6 +112,7 @@ export class DiscordService {
     } catch (e) {
       // Probably missing permissions when creating channels.
       console.error(e);
+      return { text: undefined, voice: undefined };
     }
   }
 
@@ -186,6 +187,7 @@ export class DiscordService {
           this.logger.error(
             `Tried to delete channel ${id} from Lobby ${lobby.id}: ${e}.`,
           );
+          return e;
         }
       }
     }
