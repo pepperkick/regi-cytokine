@@ -2,8 +2,6 @@ import {
   ButtonInteraction,
   CommandInteraction,
   Message,
-  MessageActionRow,
-  MessageSelectMenu,
   SelectMenuInteraction,
 } from 'discord.js';
 import {
@@ -106,10 +104,22 @@ export class LobbyCommand {
         roles: ['creator', 'player'],
       };
 
+      // Get a random name from the name pool
+      // let name = LobbyCommand.service.getRandomName(config.lobbies.nameWords);
+      const name = await LobbyCommand.service.getNewLobbyName();
+
+      // Check there isn't a name conflict with other active lobbies
+      // If there is, re-roll another name
+      // const active = await LobbyCommand.service.getActiveLobbies();
+      // while (active.lobbies.find((lobby) => lobby.name === name)) {
+      //   name = LobbyCommand.service.getRandomName(config.lobbies.nameWords);
+      // }
+
       // Declare the LobbyOptions object to send over the request.
       const options: LobbyOptions = {
         distribution: formatConfig.distribution,
         callbackUrl: config.localhost,
+        name,
         queuedPlayers: [player],
         requirements: formatConfig.requirements,
         format: formatConfig,
@@ -148,12 +158,12 @@ export class LobbyCommand {
 
       // Create the lobby channels.
       const { text, voice } = await LobbyCommand.service.createChannels(
-          LobbyService.regions.voiceRegions[region],
-        ),
-        lobbyNumber = await LobbyCommand.service.getLobbyCount();
+        name,
+        LobbyService.regions.voiceRegions[region],
+      );
 
       // Send a message to the text channel explaining its purpose.
-      await LobbyCommand.messaging.sendInitialMessage(text, lobbyNumber);
+      await LobbyCommand.messaging.sendInitialMessage(text, name);
 
       // Create the new message to edit the interaction with the lobby's status.
       const messageId = await LobbyCommand.messaging.lobbyInitialReply(
@@ -164,7 +174,7 @@ export class LobbyCommand {
           content: ':white_check_mark: Successfully created lobby.',
           region,
           userId: interaction.user.id,
-          lobbyNumber,
+          lobbyName: name,
           map,
         },
       );

@@ -41,12 +41,15 @@
     },
     "lobbies": {
         "categoryId": "",
-        "lobbyTextPrefix": "lobby-#",
-        "lobbyVoicePrefix": "Lobby #",
-        "names": {
-            "textChannel": "chat",
-            "voiceChannel": "voice"
-        },
+        "lobbyTextPrefix": "lobby-",
+        "lobbyVoicePrefix": "Lobby ",
+        "names": [
+            "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda", "Mu", "Nu", "Xi", "Omicron", "Pi", "Rho", "Sigma", "Tau", "Upsilon", "Phi", "Chi", "Psi", "Omega",
+            "Scout", "Soldier", "Pyro", "Demo", "Heavy", "Engineer", "Medic", "Sniper", "Spy",
+            "Pepper", "Kick", "MGE", "Chilly", "Punch",
+            "Sentry", "Dispenser", "Teleporter",
+            "Weapon", "Rocket", "Launcher", "Sticky", "Bomb", "Rifle", "Shotgun", "Flame", "Explosive"
+        ],
         "teams": {
             "AName": "team-a",
             "BName": "team-b"

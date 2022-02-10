@@ -211,6 +211,7 @@ export class LobbyService {
 
   /**
    * Gets the amount of Lobby documents present in the collection.
+   * @deprecated Not needed anymore for its original purpose, left in if required for other uses.
    */
   async getLobbyCount(): Promise<number> {
     return <number>await this.repo.count();
@@ -234,11 +235,82 @@ export class LobbyService {
   }
 
   /**
+   * Generates an available name for a Lobby from the pool of names.
+   * @returns An available, randomly generated Lobby name.
+   */
+  async getNewLobbyName(): Promise<string> {
+    // Get active lobbies
+    const { lobbies } = await this.getActiveLobbies();
+
+    // Compare against the pool of names in the config to get one that isn't being used.
+    const available = config.lobbies.names.filter((name) =>
+      lobbies.every((lobby) => lobby.name !== name),
+    );
+
+    // If there are no available names, do a combination
+    if (available.length === 0) {
+      // Define combination amount and the desired name if the pool is empty
+      let combinations = 2,
+        name = '';
+
+      // Will break once there are no lobbies with that name
+      while (true) {
+        // Get a random name with the amount of combinations needed
+        name = this.getRandomName(combinations);
+
+        // If a lobby has this name already, increase the amount of combinations and continue the loop
+        if (lobbies.some((lobby) => lobby.name == name)) {
+          combinations++;
+          continue;
+        }
+
+        // The above condition did not pass, so the name is available.
+        // Return the available name we got.
+        return name;
+      }
+    }
+
+    // Return a random name from the available pool.
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  /**
+   * Gets a random name from the list of names available for a lobby.
+   * @param n The amount of words to use for the name.
+   * @returns The randomly selected name.
+   */
+  public getRandomName(n: number): string {
+    // If there is a higher amount of combinations than there are elements, allow repetition
+    if (n > config.lobbies.names.length) {
+      // Declare an array of names
+      const name: string[] = [];
+
+      // Loop through the amount of combinations
+      for (let i = 0; i < n; i++)
+        // Add a random name from the pool to the array
+        name.push(
+          config.lobbies.names[
+            Math.floor(Math.random() * config.lobbies.names.length)
+          ],
+        );
+
+      // Return the joined array of names
+      return name.join('');
+    }
+
+    // If not, just return a normal random name from a subset of the pool.
+    return config.lobbies.names
+      .sort(() => 0.5 - Math.random())
+      .slice(0, n)
+      .join('');
+  }
+
+  /**
    * Creates a Discord Text & Voice channel for a lobby.
    */
-  async createChannels(voiceRegion?: string) {
+  async createChannels(name: string, voiceRegion?: string) {
     return await LobbyService.discord.createLobbyChannels(
-      await this.getLobbyCount(),
+      name,
       { enabled: false },
       voiceRegion,
     );

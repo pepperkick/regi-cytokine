@@ -49,7 +49,7 @@ export class DiscordService {
    * Creates general Text & Voice channel for a lobby.
    */
   async createLobbyChannels(
-    count: number,
+    name: string,
     team?,
     rtcRegion?: string,
   ): Promise<{
@@ -65,7 +65,7 @@ export class DiscordService {
       let category: CategoryChannel = undefined;
 
       if (config.lobbies.categoryId.length < 1 && !team.enabled)
-        category = await guild.channels.create(`Lobby #${count}`, {
+        category = await guild.channels.create(`Lobby ${name}`, {
           type: 'GUILD_CATEGORY',
           reason:
             'This is an automatically generated category for Cytokine lobbies.',
@@ -81,7 +81,7 @@ export class DiscordService {
       // TODO: More an idea than a TODO, but this could use permissions where the lobby players are the only ones that can see the channels.
       const gTextChannel = await category.createChannel(
           `${team.enabled ? team.name : config.lobbies.lobbyTextPrefix}${
-            team.enabled ? '' : count
+            team.enabled ? '' : name
           }`,
           {
             type: 'GUILD_TEXT',
@@ -93,7 +93,7 @@ export class DiscordService {
         ),
         gVoiceChannel = await category.createChannel(
           `${team.enabled ? team.name : config.lobbies.lobbyVoicePrefix}${
-            team.enabled ? '' : count
+            team.enabled ? '' : name
           }`,
           {
             type: 'GUILD_VOICE',
@@ -120,6 +120,7 @@ export class DiscordService {
    * This should be done after LOBBY_READY status is sent.
    */
   async createTeamChannels(
+    name: string,
     categoryId: string,
     region?: string,
   ): Promise<{
@@ -134,7 +135,7 @@ export class DiscordService {
   }> {
     // Create one for Team A
     const teamA = await this.createLobbyChannels(
-        0,
+        name,
         {
           name: 'Team A',
           category: categoryId,
@@ -144,7 +145,7 @@ export class DiscordService {
       ),
       // Create one for Team B
       teamB = await this.createLobbyChannels(
-        0,
+        name,
         {
           name: 'Team B',
           category: categoryId,

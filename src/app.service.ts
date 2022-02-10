@@ -80,6 +80,7 @@ export class AppService {
       }),
       // Create the team specific channels.
       { teamA, teamB } = await this.discordService.createTeamChannels(
+        lobby.name,
         discord.channels.categoryId,
         discord.region,
       );

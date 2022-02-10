@@ -19,7 +19,7 @@ interface ReplyParameters {
   map?: string;
   region: string;
   userId: string;
-  lobbyNumber: number;
+  lobbyName: string;
 }
 
 export class MessagingService {
@@ -83,7 +83,7 @@ export class MessagingService {
     const userList = this.generateUserList(lobby);
 
     const embed = new MessageEmbed({
-      title: `Lobby #${params.lobbyNumber}`,
+      title: `Lobby **${params.lobbyName}**`,
       description: `Created by <@${interaction.user.id}>`,
       color: 0x787878,
       fields: [
@@ -205,9 +205,9 @@ export class MessagingService {
     const options = [];
     for (const lobby of lobbies)
       options.push({
-        label: `Lobby #${lobby._id}`,
+        label: `Lobby ${lobby.name}`,
         value: lobby._id,
-        description: `Created @ ${lobby.createdAt} by ${lobby.client}`,
+        description: `Created @ ${lobby.createdAt} | Status: ${lobby.status}`,
       });
 
     // Return the MessageActionRow
@@ -227,10 +227,10 @@ export class MessagingService {
   /**
    * Sends initial message to the general lobby channel.
    * @param channel The General TextChannel object to send the message to.
-   * @param lobbyNumber The number of the lobby.
+   * @param lobbyName The name of the lobby.
    */
-  async sendInitialMessage(channel: TextChannel, lobbyNumber: number) {
-    return await channel.send(`:wave: **Welcome to Lobby #${lobbyNumber}!**
+  async sendInitialMessage(channel: TextChannel, lobbyName) {
+    return await channel.send(`:wave: **Welcome to Lobby ${lobbyName}!**
       
 :point_right: This channel is meant for a pre-game chat between the lobbys' players.
 :x: Please do not spam or use any language that is not supported by the game.
