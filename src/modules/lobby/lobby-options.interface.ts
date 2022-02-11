@@ -42,6 +42,9 @@ export interface LobbyOptions {
     // Maximum players required for the lobby to start
     requiredPlayers: number;
 
+    // Callback URL for status updates.
+    callbackUrl?: string;
+
     preference?: {
       requiredPlayers?: number;
       createLighthouseServer?: boolean;

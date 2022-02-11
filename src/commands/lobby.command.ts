@@ -132,7 +132,7 @@ export class LobbyCommand {
       // Declare the LobbyOptions object to send over the request.
       const options: LobbyOptions = {
         distribution: formatConfig.distribution,
-        callbackUrl: config.localhost,
+        callbackUrl: `${config.localhost}/lobbies/callback`,
         name,
         queuedPlayers: [player],
         requirements: formatConfig.requirements,
@@ -144,6 +144,7 @@ export class LobbyCommand {
           requiredPlayers: formatConfig.maxPlayers,
           map,
           players: [],
+          callbackUrl: `${config.localhost}/matches/callback`,
           preference: {
             createLighthouseServer: true,
             valveSdr:
