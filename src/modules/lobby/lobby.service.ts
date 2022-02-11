@@ -197,9 +197,9 @@ export class LobbyService {
   async getKaiendAccount(discordId: string): Promise<any> {
     try {
       const { data } = await axios.get(
-        `https://api.qixalite.com/accounts/discord/${discordId}`,
+        `${config.kaiend.host}/accounts/discord/${discordId}`,
         {
-          headers: { Authorization: `Bearer ${config.kaiendToken}` },
+          headers: { Authorization: `Bearer ${config.kaiend.secret}` },
         },
       );
 
