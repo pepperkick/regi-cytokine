@@ -11,9 +11,11 @@
     },
     "discord": {
         "guild": "",
-        "channel": "",
-        "token": "",
-        "admins": []
+        "channels": {
+            "create": "",
+            "admin": ""
+        },
+        "token": ""
     },
     "lobbies": {
         "categoryId": "",
@@ -32,12 +34,30 @@
         }
     },
     "regions": {
-        "dummy": {
-            "name": "",
-            "alias": [],
-            "continent": "",
-            "tags": [],
-            "discordVoiceRegion": "",
+        "sydney": {
+            "name": "Sydney",
+            "alias": [ "sy", "syd" ],
+            "continent": "oceania",
+            "tags": [ "sydney", "aus", "oceania" ],
+            "discordVoiceRegion": "sydney",
+            "valveSdr": true,
+            "tiers": {}
+        },
+        "brazil": {
+            "name": "Brazil",
+            "alias": [ "sp", "saopaulo" ],
+            "continent": "south_america",
+            "tags": [ "brazil", "sa", "sp", "saopaulo" ],
+            "discordVoiceRegion": "brazil",
+            "valveSdr": true,
+            "tiers": {}
+        },
+        "chicago": {
+            "name": "Chicago",
+            "alias": [ "ch", "chi" ],
+            "continent": "north_america",
+            "tags": [ "na", "usa" ],
+            "discordVoiceRegion": "us-central",
             "valveSdr": true,
             "tiers": {}
         }

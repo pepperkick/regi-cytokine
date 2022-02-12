@@ -38,7 +38,7 @@ export class DiscordService {
     const guild = await this.bot.guilds.fetch(config.discord.guild);
 
     // Search for the channel inside the guild
-    const channel = await guild.channels.fetch(config.discord.channel);
+    const channel = await guild.channels.fetch(config.discord.channels.create);
 
     // Get the message from the channel
     if (channel instanceof TextChannel)
@@ -262,7 +262,6 @@ export class DiscordService {
     this.bot = new Client({
       intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
       botGuilds: [config.discord.guild],
-      silent: true,
     });
 
     // Event Handling
@@ -271,10 +270,14 @@ export class DiscordService {
     // ready
     this.bot.once('ready', async () => {
       // Load all commands available
-      await this.bot.initApplicationCommands({
-        guild: { log: true, disable: { delete: true } },
-        global: { log: true, disable: { delete: true } },
-      });
+      try {
+        await this.bot.initApplicationCommands({
+          guild: { log: true },
+          global: { log: true },
+        });
+      } catch (e) {
+        this.logger.error(e);
+      }
 
       // Load permissions
       await this.bot.initApplicationPermissions(true);

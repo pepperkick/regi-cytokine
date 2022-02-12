@@ -45,14 +45,12 @@ export class LobbyCommand {
     @SlashChoice(LobbyService.regions.names)
     @SlashOption('region', {
       description: 'The region the lobby will be in.',
-      required: true,
     })
     region: string,
     // Supported parsed formats as an option
     @SlashChoice(LobbyService.formats.names)
     @SlashOption('format', {
       description: 'The format of the lobby.',
-      required: true,
     })
     format: string,
     @SlashOption('valve-sdr', {
@@ -66,6 +64,14 @@ export class LobbyCommand {
     // Check for the interaction being of type CommandInteraction
     // This way we can reply to the user once the command has been executed, and get corresponding Discord data.
     if (interaction instanceof CommandInteraction) {
+      // Check we're on the right channel for lobby creation
+      if (interaction.channel.id !== config.discord.channels.create)
+        return await LobbyCommand.messaging.replyToInteraction(
+          interaction,
+          `:x: You can only create lobbies in <#${config.discord.channels.create}>`,
+          { ephemeral: true },
+        );
+
       // Check validity of format sent by user.
       const formatConfig = config.formats.filter(
         (item) => item.name === format,
@@ -226,21 +232,12 @@ export class LobbyCommand {
   // close
   // Closes a lobby whose match isn't in a LIVE, FINISHED, UNKNOWN state.
   @Slash('close', { description: 'Close a running lobby (Active).' })
-  async close(
-    @SlashOption('admin', {
-      description:
-        'Whether to use Admin mode or not. Admin mode will list all lobbies regardless of creator.',
-      required: false,
-    })
-    admin: boolean,
-    interaction: CommandInteraction,
-  ) {
+  async close(interaction: CommandInteraction) {
     // Get the list of lobbies that have been created by this client AND are active.
     let { lobbies } = await LobbyCommand.service.getActiveLobbies();
 
     // Is this user not an admin?
-    const adminMode =
-      admin && config.discord.admins.includes(interaction.user.id);
+    const adminMode = config.discord.channels.admin === interaction.channel.id;
     if (!adminMode) {
       // Filter lobbies out from the list that this user hasn't created.
       lobbies = lobbies.filter(
@@ -261,11 +258,7 @@ export class LobbyCommand {
 
     return await LobbyCommand.messaging.replyToInteraction(
       interaction,
-      `${
-        admin && !adminMode
-          ? ':warning: You are not an admin. Opening default close menu...\n\n'
-          : ''
-      }<@${interaction.user.id}> Select a lobby you wish to close. ${
+      `<@${interaction.user.id}> Select a lobby you wish to close. ${
         adminMode ? '**[Admin Mode]**' : ''
       }`,
       { ephemeral: true, components: [component] },
