@@ -21,8 +21,8 @@ Discord client functionality to implement **Cytokine** communication.
 | ``lobbies.lobbyVoicePrefix`` | The prefix for Lobby voice channels (Ex: ``Lobby `` => ``Lobby somename``) | ``Lobby `` |
 | ``lobbies.names`` | Array of names used by Regi-Cytokine to generate an unique name for each Lobby | N/A |
 | ``lobbies.teams`` | Names for each team's text channel name | N/A
-| ``regions`` | List of supported regions to book servers from | [See ``regions``](https://github.com/Qixalite/regi-cytokine/edit/main/README.md#regions) |
-| ``formats`` | List of supported formats for each game | [See ``formats``](https://github.com/Qixalite/regi-cytokine/edit/main/README.md#formats) |
+| ``regions`` | List of supported regions to book servers from | [See ``regions``](https://github.com/Qixalite/regi-cytokine#regions) |
+| ``formats`` | List of supported formats for each game | [See ``formats``](https://github.com/Qixalite/regi-cytokine#formats) |
 
 ### ``regions``
 - ``name``: The name this region is displayed to users.
