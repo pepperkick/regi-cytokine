@@ -33,7 +33,7 @@ Discord client functionality to implement **Cytokine** communication.
 - ``valveSdr``: If not specified in ``/lobby create``, Valve SDR will be enabled/disabled depending on region.
 - ``tiers``
 
-```
+```json
 "sydney": {
     "name": "Sydney",
     "alias": [ "sy", "syd" ],
@@ -54,7 +54,7 @@ Discord client functionality to implement **Cytokine** communication.
 - ``maxPlayers``: Required amount of players for this format.
 - ``requirements``: Array of ``FormatRequirement``s for this specific format.
     - ``requirements.FormatRequirement``: ``{ name: RequirementName, count: number, overfill?: boolean }``
-```
+```json
 {
     "name": "6vs6",
     "game": "tf2",
@@ -82,7 +82,7 @@ Discord client functionality to implement **Cytokine** communication.
 Handles status changes for **Lobby** documents. Body consists of an updated ``Lobby`` document.
 
 #### Body
-```
+```json
 {
   "_id": "620ac5f455b7b0479401748e",
   "match": "620ac5f355b7b0479401748c",
@@ -130,7 +130,7 @@ Handles status changes for **Lobby** documents. Body consists of an updated ``Lo
 Handles status changes for **Match** documents. Body consists of an updated ``Match`` document.
 
 #### Body
-```
+```json
 {
   "_id": "620ac5f355b7b0479401748c",
   "players": [
