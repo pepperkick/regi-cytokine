@@ -64,6 +64,14 @@ export class LobbyCommand {
     // Check for the interaction being of type CommandInteraction
     // This way we can reply to the user once the command has been executed, and get corresponding Discord data.
     if (interaction instanceof CommandInteraction) {
+      // Check if the creation channel was set on the config
+      if (!config.discord.channels.create.length)
+        return await LobbyCommand.messaging.replyToInteraction(
+          interaction,
+          `:x: Can't create Lobbies: \`\`The Lobby creation channel is not set in the config.\`\``,
+          { ephemeral: true },
+        );
+
       // Check we're on the right channel for lobby creation
       if (interaction.channel.id !== config.discord.channels.create)
         return await LobbyCommand.messaging.replyToInteraction(
@@ -154,7 +162,7 @@ export class LobbyCommand {
           preference: {
             createLighthouseServer: true,
             valveSdr:
-              valveSdr === undefined
+              valveSdr === undefined || null
                 ? LobbyCommand.service.getRegion(region).valveSdr
                 : valveSdr,
           },
@@ -254,6 +262,7 @@ export class LobbyCommand {
       );
 
     // If there are lobbies, send a message to the interaction with a list of lobbies in a select menu.
+    // TODO: If not in Admin mode, do not create the select menu and just close the only Lobby created by this user (if any)
     const component = LobbyCommand.messaging.createLobbySelectMenu(lobbies);
 
     return await LobbyCommand.messaging.replyToInteraction(

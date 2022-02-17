@@ -187,12 +187,16 @@ export class MessagingService {
       ...options,
     };
 
-    // Edit or reply if not replied already
-    return <Message | void>(
-      await (interaction.replied
-        ? interaction.editReply(reply)
-        : interaction.reply(reply))
-    );
+    try {
+      // Edit or reply if not replied already
+      return <Message | void>(
+        await (interaction.replied
+          ? interaction.editReply(reply)
+          : interaction.reply(reply))
+      );
+    } catch (e) {
+      this.logger.error(e);
+    }
   }
 
   /**

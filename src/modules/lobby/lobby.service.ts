@@ -172,6 +172,25 @@ export class LobbyService {
   }
 
   /**
+   * Gets info from Hatch
+   * @param ip The IP of the server to get info from.
+   * @param port The Hatch port
+   * @param password Hatch password
+   * @returns The Hatch document
+   */
+  async getHatchInfo(ip: string, port: number, password: string) {
+    try {
+      const { data } = await axios.get(
+        `http://${ip}${port}/status?password=${password}`,
+      );
+
+      return data;
+    } catch (error) {
+      this.logger.error(error.response.data);
+    }
+  }
+
+  /**
    * Gets all lobbies in a running state (AKA not ended/closed)
    */
   async getActiveLobbies() {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Message, TextChannel } from 'discord.js';
 import { DiscordService } from './discord.service';
 import { MessagingService } from './messaging.service';
@@ -9,6 +9,8 @@ import { StatusColors as color } from './objects/status-colors.enum';
 
 @Injectable()
 export class AppService {
+  private readonly logger: Logger = new Logger(AppService.name);
+
   constructor(
     private lobbyService: LobbyService,
     private messagingService: MessagingService,
@@ -53,8 +55,9 @@ export class AppService {
     // And update the last field message, removing the queue up reminder.
     const embed = message.embeds[0];
     embed.color = color.DISTRIBUTING;
-    embed.fields[embed.fields.length - 1].value =
-      ':x: You cannot queue up at this point.';
+
+    // Remove the queue up message
+    embed.fields.splice(embed.fields.length - 1, 1);
 
     return await message.edit({
       content: ':hourglass: Distributing players randomly...',
@@ -201,7 +204,7 @@ export class AppService {
   /**
    * Does a Lobby Notification for LIVE
    */
-  async lobbyNotifyLive(lobbyId: string) {
+  async lobbyNotifyLive(lobbyId: string, match: any) {
     // Get the Message object for this LobbyID
     const { message } = await this.getMessage(lobbyId);
 
@@ -209,19 +212,35 @@ export class AppService {
     const embed = message.embeds[0];
     embed.color = color.LIVE;
 
+    // Add the STV connection string to the embed
+    // Get the Server info from the server ID
+    const server = await this.lobbyService.getServerInfo(match._id);
+
+    embed.fields.push({
+      name: ':tv: STV Connection',
+      value: `If you wish to spectate the match connect to the **STV** with: \`\`connect ${
+        server.data.sdrEnable ? server.data.sdrIp : server.ip
+      }:${
+        server.data.sdrEnable ? server.data.sdrTvPort : server.data.tvPort
+      }; ${
+        server.data.tvPassword.length > 0
+          ? `password ${server.data.tvPassword}`
+          : ''
+      }\`\``,
+      inline: false,
+    });
+
     return await message.edit({
       content:
-        ":white_check_mark: Lobby is ready!\n\n:point_right: Join your respective team channels below.\n:white_check_mark: It's game time! Server details have been posted below.",
+        ":busts_in_silhouette: All players have joined the server!\n\n:crossed_swords: **It's game time! Good luck and happy competition!**",
+      embeds: [embed],
     });
   }
 
   /**
    * Does a Lobby Notification for FINISHED
    */
-  async lobbyNotifyFinished(lobbyId: string) {
-    // TODO: Add logs and demos links to send into the general channel / in the embed.
-    // This would probably require another state from Lighthouse such as "UPLOADS_FINISHED" or something different as its not Qix dependent but 3rd party.
-
+  async lobbyNotifyFinished(lobbyId: string, match: any) {
     // Get the Message object for this LobbyID
     const { message, discord } = await this.getMessage(lobbyId);
 
@@ -229,14 +248,51 @@ export class AppService {
     const embed = message.embeds[0];
     embed.color = color.FINISHED;
 
+    // Add links to logs and demos from Hatch
+    // First get the server from the match
+    const server = await this.lobbyService.getServerInfo(match._id);
+
+    // Connect to linked Hatch service for data
+    try {
+      const hatch = await this.lobbyService.getHatchInfo(
+          server.ip,
+          server.data.hatchAddress,
+          server.data.hatchPassword,
+        ),
+        {
+          logstfUrl: logs,
+          demostfUrl: demo,
+          teamScore: scores,
+        } = hatch.matches[0];
+
+      embed.fields.push(
+        {
+          name: ':clipboard: Logs',
+          value: `[Click to view the log](${logs})`,
+          inline: true,
+        },
+        {
+          name: ':trophy: Results',
+          value: `:red_circle: **${scores.Red}** - **${scores.Blue}** :blue_circle:`,
+          inline: true,
+        },
+        {
+          name: ':film_frames: STV Demo',
+          value: `[Click to view the demo](${demo})`,
+          inline: true,
+        },
+      );
+    } catch (e) {
+      this.logger.error(e);
+    }
+
     // Delete the channels that were created
     // (to be discussed on what's said above)
-    this.discordService.deleteChannels(
-      await this.lobbyService.getInternalLobbyById(lobbyId),
-    );
+    this.discordService.deleteChannels(discord);
 
     return await message.edit({
-      content: `:lock: The lobby has been locked\n\nThank you all for playing! Logs and Demos will be posted in <#${discord.channels.general.textChannelId}>.`,
+      content: `:lock: The lobby has been locked\n\nThank you all for playing! Logs and Demos have been posted.`,
+      embeds: [embed],
     });
   }
 
