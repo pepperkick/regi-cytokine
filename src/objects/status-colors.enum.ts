@@ -13,4 +13,5 @@ export enum StatusColors {
   'CLOSED' = 0xeb4034,
   'FAILED' = 0xeb4034,
   'UNKNOWN' = 0xeb4034,
+  'EXPIRED' = 0xe6800b,
 }

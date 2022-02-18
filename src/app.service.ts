@@ -301,16 +301,14 @@ export class AppService {
    */
   async lobbyNotifyFailed(lobbyId: string) {
     // Get the Message object for this LobbyID
-    const { message } = await this.getMessage(lobbyId);
+    const { message, discord: internalLobby } = await this.getMessage(lobbyId);
 
     // Update embed color
     const embed = message.embeds[0];
     embed.color = color.FAILED;
 
     // Delete the channels that were created
-    const e = await this.discordService.deleteChannels(
-      await this.lobbyService.getInternalLobbyById(lobbyId),
-    );
+    const e = await this.discordService.deleteChannels(internalLobby);
 
     return await message.edit({
       content: `${
@@ -328,16 +326,14 @@ export class AppService {
    */
   async lobbyNotifyClosed(lobbyId: string) {
     // Get the Message object for this LobbyID
-    const { message } = await this.getMessage(lobbyId);
+    const { message, discord: internalLobby } = await this.getMessage(lobbyId);
 
     // Update embed color
     const embed = message.embeds[0];
     embed.color = color.CLOSED;
 
     // Delete the channels that were created
-    const e = await this.discordService.deleteChannels(
-      await this.lobbyService.getInternalLobbyById(lobbyId),
-    );
+    const e = await this.discordService.deleteChannels(internalLobby);
 
     // Was there an error?
     return await message.edit({
@@ -346,6 +342,32 @@ export class AppService {
           ? `:warning: The lobby couldn't be closed completely: \`\`Channels could not be deleted: ${e}\`\`\n\n`
           : ''
       }:x: The lobby has been closed!`,
+      embeds: [embed],
+      components: [],
+    });
+  }
+
+  /**
+   * Does a Lobby Notification for EXPIRED
+   */
+  async lobbyNotifyExpired(lobbyId: string) {
+    // Get the Message object for this LobbyID
+    const { message, discord: internalLobby } = await this.getMessage(lobbyId);
+
+    // Update embed color
+    const embed = message.embeds[0];
+    embed.color = color.EXPIRED;
+
+    // Delete the channels that were created
+    const e = await this.discordService.deleteChannels(internalLobby);
+
+    // Was there an error?
+    return await message.edit({
+      content: `${
+        e
+          ? `:warning: The lobby couldn't be closed completely: \`\`Channels could not be deleted: ${e}\`\`\n\n`
+          : ''
+      }:hourglass: This lobby has expired... \`\`Lobby was waiting for players for too long.\`\``,
       embeds: [embed],
       components: [],
     });

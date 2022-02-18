@@ -88,18 +88,18 @@ export class MessagingService {
       color: 0x787878,
       fields: [
         {
-          name: '🗒 Format',
-          value: `${format.name}\n**Max. Players:** ${format.maxPlayers}\n**Distribution:** ${format.distribution}\n\n:map: **Map**: ${params.map}`,
+          name: 'Format & Info',
+          value: `🗒 **Format**: ${format.name}\n:bust_in_silhouette: **Max. Players**: ${format.maxPlayers}\n:cyclone: **Distribution**: ${format.distribution}\n:map: **Map**: ${params.map}`,
           inline: true,
         },
         {
-          name: '📍 Region',
-          value: `**${params.region}**`,
+          name: 'Region',
+          value: `📍 **${params.region}**`,
           inline: true,
         },
         {
-          name: '🎮 Game',
-          value: `${format.game}`,
+          name: 'Game',
+          value: `🎮 ${format.game}`,
           inline: true,
         },
         {
