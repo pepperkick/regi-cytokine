@@ -248,37 +248,22 @@ export class AppService {
     const embed = message.embeds[0];
     embed.color = color.FINISHED;
 
-    // Add links to logs and demos from Hatch
-    // First get the server from the match
-    const server = await this.lobbyService.getServerInfo(match._id);
-
     // Connect to linked Hatch service for data
     try {
-      const hatch = await this.lobbyService.getHatchInfo(
-          server.ip,
-          server.data.hatchAddress,
-          server.data.hatchPassword,
-        ),
-        {
-          logstfUrl: logs,
-          demostfUrl: demo,
-          teamScore: scores,
-        } = hatch.matches[0];
-
       embed.fields.push(
         {
           name: ':clipboard: Logs',
-          value: `[Click to view the log](${logs})`,
+          value: `[Click to view the log](${match.data.logstfUrl})`,
           inline: true,
         },
         {
           name: ':trophy: Results',
-          value: `:red_circle: **${scores.Red}** - **${scores.Blue}** :blue_circle:`,
+          value: `:red_circle: **${match.data.teamScore.Red}** - **${match.data.teamScore.Blue}** :blue_circle:`,
           inline: true,
         },
         {
           name: ':film_frames: STV Demo',
-          value: `[Click to view the demo](${demo})`,
+          value: `[Click to view the demo](${match.data.demostfUrl})`,
           inline: true,
         },
       );
