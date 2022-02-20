@@ -26,6 +26,9 @@ export class LobbyFormat {
   // Types of maps available in this format (Ex: cp for 5CP 6s maps, pl for Highlander, etcetera)
   mapTypes: string[];
 
+  // Game config path to execute for this format
+  config: string;
+
   // The pool of maps available this format has.
   maps: string[];
 }

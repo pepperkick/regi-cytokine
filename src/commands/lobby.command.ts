@@ -161,6 +161,7 @@ export class LobbyCommand {
           callbackUrl: `${config.localhost}/matches/callback`,
           preference: {
             createLighthouseServer: true,
+            gameConfig: formatConfig.config,
             valveSdr:
               valveSdr === undefined || null
                 ? LobbyCommand.service.getRegion(region).valveSdr
