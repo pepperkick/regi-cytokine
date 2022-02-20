@@ -262,17 +262,36 @@ export class LobbyCommand {
         { ephemeral: true },
       );
 
-    // If there are lobbies, send a message to the interaction with a list of lobbies in a select menu.
-    // TODO: If not in Admin mode, do not create the select menu and just close the only Lobby created by this user (if any)
-    const component = LobbyCommand.messaging.createLobbySelectMenu(lobbies);
+    if (adminMode) {
+      // If there are lobbies, send a message to the interaction with a list of lobbies in a select menu.
+      const component = LobbyCommand.messaging.createLobbySelectMenu(lobbies);
 
-    return await LobbyCommand.messaging.replyToInteraction(
-      interaction,
-      `<@${interaction.user.id}> Select a lobby you wish to close. ${
-        adminMode ? '**[Admin Mode]**' : ''
-      }`,
-      { ephemeral: true, components: [component] },
-    );
+      return await LobbyCommand.messaging.replyToInteraction(
+        interaction,
+        `<@${interaction.user.id}> Select a lobby you wish to close. ${
+          adminMode ? '**[Admin Mode]**' : ''
+        }`,
+        { ephemeral: true, components: [component] },
+      );
+    } else {
+      // Close the user's lobby
+      const lobbyId = lobbies[0]._id;
+
+      // TODO: Reduce duplicate code
+      await LobbyCommand.service.closeLobby(lobbyId);
+
+      // Log the closing action
+      this.logger.log(
+        `User ${interaction.user.username}#${interaction.user.discriminator} closed Lobby '${lobbyId}'`,
+      );
+
+      // Edit the interaction and send it back to the user.
+      return await LobbyCommand.messaging.replyToInteraction(
+        interaction,
+        `:white_check_mark: Lobby '**${lobbyId}**' closed successfully.`,
+        { ephemeral: true, components: [] },
+      );
+    }
   }
 
   /**
