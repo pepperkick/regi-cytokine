@@ -19,6 +19,7 @@ Discord client functionality to implement **Cytokine** communication.
 | ``lobbies.categoryId`` | If set, Regi-Cytokine will create lobby channels under this category instead of creating new ones for each lobby. | ``518061282633711616`` |
 | ``lobbies.lobbyTextPrefix`` | The prefix for Lobby text channels (Ex: ``lobby-`` => ``lobby-somename``) | ``lobby-`` |
 | ``lobbies.lobbyVoicePrefix`` | The prefix for Lobby voice channels (Ex: ``Lobby `` => ``Lobby somename``) | ``Lobby `` |
+| ``lobbies.defaultExpiry`` | The amount of time (in minutes) in which a Lobby will expire if their config type does not have a set override. See [``formats``](https://github.com/Qixalite/regi-cytokine#formats) | ``30`` |
 | ``lobbies.names`` | Array of names used by Regi-Cytokine to generate an unique name for each Lobby | N/A |
 | ``lobbies.teams`` | Names for each team's text channel name | N/A
 | ``regions`` | List of supported regions to book servers from | [See ``regions``](https://github.com/Qixalite/regi-cytokine#regions) |
@@ -48,7 +49,10 @@ Discord client functionality to implement **Cytokine** communication.
 ### ``formats``
 - ``name``: The name this format is displayed to users.
 - ``game``: The game this format is compatible with.
-- ``mapTypes``: List of map suffixes this format supports in-game (Ex: For 6vs6 it's ``cp`` and ``koth`` maps)
+- ``mapTypes``: Array of map types this format supports, along with their respective configuration. Example Map Type object structure:
+    - ``name``: The suffix this map type has (example: ``"cp"`` for 5CP maps)
+    - ``config``: The config path (relative to ``tf/cfg/``) for this type of map and format.
+    - ``expires``: **Optional**. If set this is the time (in minutes) a Lobby with this type of format and map type will expire in, overriding the default setting.
 - ``maps``: Array of map names this format has available.
 - ``distribution``: Type of distribution the format has by default.
 - ``maxPlayers``: Required amount of players for this format.
@@ -58,9 +62,11 @@ Discord client functionality to implement **Cytokine** communication.
 {
     "name": "6vs6",
     "game": "tf2",
-    "mapTypes": ["cp", "koth"],
+    "mapTypes": [
+        { "name": "cp", "config": "etf2l/6s_base.cfg" }, { "name": "koth", "config": "etf2l/6s_koth.cfg", "expires": 45 }
+    ],
     "maps": [
-        "cp_badlands", "cp_gullywash_f3", "cp_process_final", "cp_snakewater_final1"
+        "cp_badlands", "cp_gullywash_f3", "cp_process_final", "cp_snakewater_final1", "koth_product_rcx", "koth_bagel_rc3", "koth_clearcut_b15d"
     ],
     "distribution": "RANDOM",
     "maxPlayers": 12,
@@ -79,7 +85,7 @@ Discord client functionality to implement **Cytokine** communication.
 
 ## API
 ### POST /lobbies/callback
-Handles status changes for **Lobby** documents. Body consists of an updated ``Lobby`` document.
+Handles status changes for **Lobby** documents. Body consists of an updated [``Lobby``](https://github.com/Qixalite/cytokine#lobby) document that needs handling.
 
 #### Body
 ```json
@@ -127,7 +133,7 @@ Handles status changes for **Lobby** documents. Body consists of an updated ``Lo
 ```
 
 ### POST /matches/callback
-Handles status changes for **Match** documents. Body consists of an updated ``Match`` document.
+Handles status changes for **Match** documents. Body consists of an updated [``Match``](https://github.com/Qixalite/cytokine#match) document that needs handling.
 
 #### Body
 ```json
