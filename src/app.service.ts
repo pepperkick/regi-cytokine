@@ -35,6 +35,16 @@ export class AppService {
   }
 
   /**
+   * Updates the status of an internal Lobby document.
+   * @param lobbyId The Lobby ID we're updating the status of.
+   * @param status The status to set.
+   * @noretun
+   */
+  async updateInternalLobby(lobbyId: string, status: string) {
+    await this.lobbyService.updateLobbyStatus(lobbyId, status);
+  }
+
+  /**
    * Gets the Lobby object from a Match ID.
    * @param matchId The Match ID sent from Cytokine
    * @returns The lobby object that's linked with the provided matchId, if found.
@@ -273,7 +283,7 @@ export class AppService {
 
     // Delete the channels that were created
     // (to be discussed on what's said above)
-    this.discordService.deleteChannels(discord);
+    await this.discordService.deleteChannels(discord);
 
     return await message.edit({
       content: `:lock: The lobby has been locked\n\nThank you all for playing! Logs and Demos have been posted.`,
@@ -293,14 +303,10 @@ export class AppService {
     embed.color = color.FAILED;
 
     // Delete the channels that were created
-    const e = await this.discordService.deleteChannels(internalLobby);
+    await this.discordService.deleteChannels(internalLobby);
 
     return await message.edit({
-      content: `${
-        e
-          ? `:warning: Lobby failed to start: \`\`Channels could not be deleted: ${e}\`\`\n\n`
-          : ''
-      }:x: The server failed to start! Contact the Qixalite administration team to troubleshoot this issue.\n\n:x: This lobby is now closed.`,
+      content: `:x: The server failed to start! Contact the Qixalite administration team to troubleshoot this issue.\n\n:x: This lobby is now closed.`,
       embeds: [embed],
       components: [],
     });
@@ -318,41 +324,11 @@ export class AppService {
     embed.color = color.CLOSED;
 
     // Delete the channels that were created
-    const e = await this.discordService.deleteChannels(internalLobby);
+    await this.discordService.deleteChannels(internalLobby);
 
     // Was there an error?
     return await message.edit({
-      content: `${
-        e
-          ? `:warning: The lobby couldn't be closed completely: \`\`Channels could not be deleted: ${e}\`\`\n\n`
-          : ''
-      }:x: The lobby has been closed!`,
-      embeds: [embed],
-      components: [],
-    });
-  }
-
-  /**
-   * Does a Lobby Notification for EXPIRED
-   */
-  async lobbyNotifyExpired(lobbyId: string) {
-    // Get the Message object for this LobbyID
-    const { message, discord: internalLobby } = await this.getMessage(lobbyId);
-
-    // Update embed color
-    const embed = message.embeds[0];
-    embed.color = color.EXPIRED;
-
-    // Delete the channels that were created
-    const e = await this.discordService.deleteChannels(internalLobby);
-
-    // Was there an error?
-    return await message.edit({
-      content: `${
-        e
-          ? `:warning: The lobby couldn't be closed completely: \`\`Channels could not be deleted: ${e}\`\`\n\n`
-          : ''
-      }:hourglass: This lobby has expired... \`\`Lobby was waiting for players for too long.\`\``,
+      content: `:x: The lobby has been closed!`,
       embeds: [embed],
       components: [],
     });

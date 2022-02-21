@@ -180,9 +180,16 @@ export class DiscordService {
       if (id !== undefined) {
         try {
           // Get the channel with that ID and delete it
-          const channel = await this.bot.channels.fetch(id);
+          try {
+            const channel = await this.bot.channels.fetch(id);
 
-          await channel.delete();
+            if (channel) await channel.delete();
+          } catch (e) {
+            this.logger.error(
+              `Could not find channel with ID ${id}. Skipping...`,
+            );
+            continue;
+          }
         } catch (e) {
           this.logger.error(
             `Tried to delete channel ${id} from Lobby ${lobby.id}: ${e}.`,
