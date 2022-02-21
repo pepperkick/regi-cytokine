@@ -14,6 +14,9 @@ export class AppController {
       `Received POST request with status '${status}' for lobby ${lobbyId}`,
     );
 
+    // Update internal lobby document's status
+    await this.appService.updateInternalLobby(lobbyId, status);
+
     switch (status) {
       case 'DISTRIBUTING': {
         await this.appService.lobbyNotifyDistributing(lobbyId);
@@ -68,7 +71,7 @@ export class AppController {
         break;
       }
       case 'FAILED': {
-        await this.appService.lobbyNotifyFailed(matchId);
+        await this.appService.lobbyNotifyFailed(lobbyId);
         break;
       }
     }

@@ -7,8 +7,10 @@ import {
   MessageButton,
   MessageEmbed,
   MessageSelectMenu,
+  SelectMenuInteraction,
   TextChannel,
 } from 'discord.js';
+import { Lobby } from './modules/lobby/lobby.model';
 import { InteractionType } from './objects/interactions/interaction-types.enum';
 import { LobbyFormat } from './objects/lobby-format.interface';
 import { Player } from './objects/match-player.interface';
@@ -177,7 +179,7 @@ export class MessagingService {
    * @param options Optional parameters.
    */
   async replyToInteraction(
-    interaction: CommandInteraction | ButtonInteraction,
+    interaction: CommandInteraction | ButtonInteraction | SelectMenuInteraction,
     content: string,
     options?,
   ) {
@@ -190,7 +192,7 @@ export class MessagingService {
     try {
       // Edit or reply if not replied already
       return <Message | void>(
-        await (interaction.replied
+        await (interaction.replied || interaction.deferred
           ? interaction.editReply(reply)
           : interaction.reply(reply))
       );
@@ -200,12 +202,150 @@ export class MessagingService {
   }
 
   /**
-   * Creates a select menu with a list of matches in available state.
-   * @param lobbies The list of active Match objects to create the select menu from.
+   * Builds the status of a Lobby on an Embed.
+   * @param all If true, it lists all active lobbies. Only needs the 'lobbies' parameter to be sent.
+   * @param lobbies An array of Cytokine Lobby documents to list. Not needed if parsing a specific lobby.
+   * @param lobby The Cytokine Lobby document.
+   * @param iLobby The Internal Regi-Cytokine Lobby document.
+   * @param match The Cytokine Match document.
+   * @param server The Lighthouse Server document.
+   * @returns The Message with the status of the Lobby built.
+   */
+  async buildLobbyStatusEmbed(
+    all: boolean,
+    lobbies?,
+    lobby?,
+    iLobby?: Lobby,
+    match?,
+    server?,
+  ): Promise<object> {
+    const message = {
+      embeds: [],
+    };
+
+    // Get all lobbies
+    if (all) {
+      // Loop through all lobbies and build a list of them for the embed.
+      const lobbyList = lobbies
+        .map((lobby) => `${lobby._id} (Created by ${lobby.createdBy})`)
+        .join('\n');
+
+      // Construct the embed
+      message.embeds.push(
+        new MessageEmbed({
+          title: `Status for all Lobbies`,
+          description: `\`\`\`${lobbyList}\`\`\``,
+          color: 0x408ecf,
+          fields: [
+            {
+              name: 'Active',
+              value: `${lobbies.length ?? 'N/A'}`,
+            },
+          ],
+        }),
+      );
+    } else {
+      // Specific Lobby
+      // Destructure the Lobby document (Cytokine)
+      const {
+          _id: lobbyId,
+          status: lobbyStatus,
+          distribution,
+          createdAt,
+          createdBy,
+          match: matchId,
+        } = lobby,
+        // Destructure the Internal Lobby document (Regi-Cytokine)
+        { name, channels, messageId } = iLobby,
+        // Destructure the Match document.
+        { game, region, map, status: matchStatus, preferences } = match;
+
+      // Build a channel string
+      const channelList = `1. Category: ${
+        channels.categoryId ?? 'Not set'
+      }\n2. General:\n- ${channels.general.textChannelId ?? 'Not set'}\n- ${
+        channels.general.voiceChannelId ?? 'Not set'
+      }\n3. Team A:\n- ${channels.teamA?.textChannelId ?? 'Not set'}\n- ${
+        channels.teamA?.voiceChannelId ?? 'Not set'
+      }\n4. Team B:\n- ${channels.teamB?.textChannelId ?? 'Not set'}\n- ${
+        channels.teamB?.voiceChannelId ?? 'Not set'
+      }`;
+
+      // Create the embed
+      const embed = new MessageEmbed({
+        title: `Status for Lobby ${lobbyId} (${name})`,
+        color: 0x408ecf,
+        description: `\`\`\`
+Lobby Information
+ID:              ${lobbyId}
+Discord ID:      ${createdBy}
+Created:         ${new Date(createdAt).toUTCString()}
+Expires:         ${lobby.data.expiryTime}
+Status:          ${lobbyStatus}
+Distribution:    ${distribution}
+Message ID:      ${messageId}
+Channels Linked:
+${channelList}
+
+Match Information
+ID:           ${matchId}
+Region:       ${region}
+Game:         ${game}
+Map:          ${map}
+Status:       ${matchStatus}
+Config File:  ${preferences.gameConfig}
+Use SDR?:     ${preferences.valveSdr}
+`,
+      });
+
+      // If there is a valid server, add it to the embed
+      // Destructure the Server document.
+      if (server) {
+        const {
+          provider,
+          data: sv,
+          status: svStatus,
+          image,
+          ip,
+          port,
+          createdAt: svCreatedAt,
+        } = server;
+
+        embed.description += `\nServer Information
+Hostname:          ${sv.servername}
+Provider:          ${provider}
+Status:            ${svStatus}
+Image:             ${image}
+Started:           ${new Date(svCreatedAt).toUTCString()}
+
+Connection String: connect ${sv.sdrEnable ? sv.sdrIp : ip}:${
+          sv.sdrEnable ? sv.sdrPort : port
+        };${sv.password.length > 0 ? ` password ${sv.password}` : ''}
+RCON Password:     ${sv.rconPassword}
+
+Hatch URI:         http://${ip}${sv.hatchAddress}/status?password=${
+          sv.hatchPassword
+        }`;
+      }
+
+      // End the code block
+      embed.description += '```';
+
+      // Now build the status message and send it
+      message.embeds.push(embed);
+    }
+
+    // Return the built Message template object.
+    return message;
+  }
+
+  /**
+   * Creates a select menu with a list of lobbies in available state.
+   * @param lobbies The list of active Lobby objects to create the select menu from.
    * @returns The MessageActionRow object with the corresponding select menu.
    */
   createLobbySelectMenu(lobbies): MessageActionRow {
-    // Create an array with all the options available (aka active matches)
+    // Create an array with all the options available (aka active lobbies)
     const options = [];
     for (const lobby of lobbies)
       options.push({

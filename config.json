@@ -21,6 +21,7 @@
         "categoryId": "",
         "lobbyTextPrefix": "lobby-",
         "lobbyVoicePrefix": "Lobby ",
+        "defaultExpiry": 1800,
         "names": [
             "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda", "Mu", "Nu", "Xi", "Omicron", "Pi", "Rho", "Sigma", "Tau", "Upsilon", "Phi", "Chi", "Psi", "Omega",
             "Scout", "Soldier", "Pyro", "Demo", "Heavy", "Engineer", "Medic", "Sniper", "Spy",
@@ -66,7 +67,13 @@
         {
             "name": "Test",
             "game": "tf2",
-            "mapTypes": ["cp"],
+            "mapTypes": [
+                {
+                    "name": "cp",
+                    "config": "etf2l/6s_base.cfg",
+                    "expires": 60
+                }
+            ],
             "maps": [
                 "cp_badlands", "cp_gullywash_f3", "cp_process_final", "cp_snakewater_final1"
             ],
@@ -77,13 +84,47 @@
             ]
         },
         {
+            "name": "6vs6 (Random)",
+            "game": "tf2",
+            "mapTypes": [
+                {
+                    "name": "cp",
+                    "config": "etf2l/6s_base.cfg",
+                    "expires": 1800
+                },
+                {
+                    "name": "koth",
+                    "config": "etf2l/6s_koth.cfg",
+                    "expires": 1800
+                }
+            ],
+            "maps": [
+                "cp_badlands", "cp_gullywash_f3", "cp_process_final", "cp_snakewater_final1", "koth_product_rcx", "koth_bagel_rc3", "koth_clearcut_b15d"
+            ],
+            "distribution": "RANDOM",
+            "maxPlayers": 12,
+            "requirements": [
+                { "name": "player", "count": 12 }
+            ]
+        },
+        {
             "name": "6vs6",
             "game": "tf2",
-            "mapTypes": ["cp", "koth"],
-            "maps": [
-                "cp_badlands", "cp_gullywash_f3", "cp_process_final", "cp_snakewater_final1"
+            "mapTypes": [
+                {
+                    "name": "cp",
+                    "config": "etf2l/6s_base.cfg",
+                    "expires": 1800
+                },
+                {
+                    "name": "koth",
+                    "config": "etf2l/6s_koth.cfg",
+                    "expires": 1800
+                }
             ],
-            "config": "ozf/6s_standard",
+            "maps": [
+                "cp_badlands", "cp_gullywash_f3", "cp_process_final", "cp_snakewater_final1", "koth_product_rcx", "koth_bagel_rc3", "koth_clearcut_b15d"
+            ],
             "distribution": "RANDOM",
             "maxPlayers": 12,
             "requirements": [
@@ -100,7 +141,18 @@
         {
             "name": "9vs9",
             "game": "tf2",
-            "mapTypes": ["koth", "pl"],
+            "mapTypes": [
+                {
+                    "name": "koth",
+                    "config": "etf2l/hl_koth.cfg",
+                    "expires": 3600
+                },
+                {
+                    "name": "pl",
+                    "config": "etf2l/hl_stopwatch.cfg",
+                    "expires": 3600
+                }
+            ],
             "distribution": "TEAM_ROLE_BASED",
             "maxPlayers": 18,
             "requirements": [
@@ -125,7 +177,12 @@
         {
             "name": "4vs4",
             "game": "tf2",
-            "mapTypes": ["koth"],
+            "mapTypes": [
+                {
+                    "name": "koth",
+                    "config": "ugc/4s_koth.cfg"
+                }
+            ],
             "distribution": "TEAM_ROLE_BASED",
             "maxPlayers": 8,
             "requirements": [
@@ -140,14 +197,38 @@
             ]
         },
         {
-            "name": "Ultiduo",
+            "name": "Ultiduo (Random)",
             "game": "tf2",
-            "mapTypes": ["ultiduo"],
+            "mapTypes": [
+                {
+                    "name": "ultiduo",
+                    "config": "etf2l/ud_ultiduo",
+                    "expires": 900
+                }
+            ],
             "maps": [
                 "ultiduo_baloo_v2"
             ],
-            "config": "etf2l/ud_ultiduo",
             "distribution": "RANDOM",
+            "maxPlayers": 4,
+            "requirements": [
+                { "name": "player", "count": 4 }
+            ]
+        },
+        {
+            "name": "Ultiduo)",
+            "game": "tf2",
+            "mapTypes": [
+                {
+                    "name": "ultiduo",
+                    "config": "etf2l/ud_ultiduo",
+                    "expires": 900
+                }
+            ],
+            "maps": [
+                "ultiduo_baloo_v2"
+            ],
+            "distribution": "TEAM_ROLE_BASED",
             "maxPlayers": 4,
             "requirements": [
                 { "name": "red-soldier", "count": 1 },

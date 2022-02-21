@@ -7,6 +7,13 @@ import { Game } from './game.enum';
  * Allows administrators to add custom formats with custom requirements and playability to the system.
  *
  */
+
+interface FormatMapType {
+  name: string;
+  config: string;
+  expires?: number;
+}
+
 export class LobbyFormat {
   // Name of the format to be disputed (Ex: "6vs6", "2v2", "3v3")
   name: string;
@@ -24,7 +31,7 @@ export class LobbyFormat {
   maxPlayers: number;
 
   // Types of maps available in this format (Ex: cp for 5CP 6s maps, pl for Highlander, etcetera)
-  mapTypes: string[];
+  mapTypes: FormatMapType[];
 
   // Game config path to execute for this format
   config: string;

@@ -8,9 +8,6 @@ export interface LobbyOptions {
   // Distribution logic type to follow for this lobby
   distribution: DistributionType;
 
-  // The name of the lobby (used for display purposes)
-  name: string;
-
   // Callback URL for status updates.
   callbackUrl: string;
 
@@ -25,6 +22,11 @@ export interface LobbyOptions {
 
   // The format of the lobby
   format?: LobbyFormat;
+
+  // Data for lobby
+  data?: {
+    expiryTime: number;
+  };
 
   // Options for match
   matchOptions: {

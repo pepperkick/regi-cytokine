@@ -31,14 +31,11 @@ export class LobbyService {
   private readonly logger = new Logger(LobbyService.name);
   static formats = LobbyService.parseLobbyFormats();
   static regions = LobbyService.parseRegions();
-  static discord: DiscordService;
 
   constructor(
     @InjectModel('Lobby') private readonly repo: Model<Lobby>,
     private readonly discord: DiscordService,
-  ) {
-    LobbyService.discord = discord;
-  }
+  ) {}
 
   /**
    * Sends a request to Cytokine to create a new lobby with asked requirements.
@@ -103,6 +100,26 @@ export class LobbyService {
       return data;
     } catch (error) {
       this.logger.error(error.response.data);
+    }
+  }
+
+  /**
+   * Does a GET request to Cytokine to obtain the Match object that belongs to a Lobby.
+   * @param matchId The Match ID we're looking for.
+   * @returns The Match document from Cytokine if found.
+   */
+  async getMatchById(matchId: string) {
+    try {
+      const { data } = await axios.get(
+        `${config.cytokine.host}/api/v1/matches/${matchId}`,
+        {
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
+        },
+      );
+
+      return data;
+    } catch (e) {
+      this.logger.error(e.response.data);
     }
   }
 
@@ -177,6 +194,7 @@ export class LobbyService {
    * @param port The Hatch port
    * @param password Hatch password
    * @returns The Hatch document
+   * @deprecated No longer utilized by Regi-Cytokine.
    */
   async getHatchInfo(ip: string, port: number, password: string) {
     try {
@@ -247,6 +265,7 @@ export class LobbyService {
       this.logger.error(
         `Failed to close Lobby '${lobbyId}': ${error.response.data.error}`,
       );
+      return error.response.data;
     }
   }
 
@@ -347,10 +366,30 @@ export class LobbyService {
   }
 
   /**
+   * Gets the config set on this Format for this specific type of map.
+   * @param map The Map name.
+   * @param format The LobbyFormat object.
+   * @returns An object containing the configuration for this format & map type.
+   */
+  public getMapTypeConfig(map: string, format) {
+    // Find the map type.
+    const mType = map.match(/([^_]+)+?/)[0];
+
+    // Find the config for this map type
+    const cfg = format.mapTypes.find((m) => m.name === mType);
+
+    // Set the default expiry time if not set
+    if (!cfg.expires) cfg.expires = config.lobbies.defaultExpiry;
+
+    // Return the config
+    return cfg;
+  }
+
+  /**
    * Creates a Discord Text & Voice channel for a lobby.
    */
   async createChannels(name: string, voiceRegion?: string) {
-    return await LobbyService.discord.createLobbyChannels(
+    return await this.discord.createLobbyChannels(
       name,
       { enabled: false },
       voiceRegion,
@@ -365,14 +404,19 @@ export class LobbyService {
     creatorId: string,
     messageId: string,
     region: string,
+    name: string,
+    expires: number,
+    status: string,
     channels?: LobbyChannels,
   ) {
     // Create new Lobby document
     const info = await new this.repo({
       lobbyId,
+      status,
       creatorId,
       messageId,
       region,
+      name,
       channels,
     });
 
@@ -416,6 +460,27 @@ export class LobbyService {
         `Lobby '${lobbyId}' was requested for internal update but failed: ${e}.`,
       );
     }
+  }
+
+  /**
+   * Updates an Internal Lobby's status
+   * @param lobbyId The Lobby we're updating.
+   * @param status The status to set.
+   * @returns The newly updated Lobby document.
+   */
+  async updateLobbyStatus(lobbyId: string, status: string): Promise<Lobby> {
+    // Get the Lobby
+    const lobby = await this.repo.findOne({ lobbyId });
+
+    // If the lobby doesn't exist, return null
+    if (!lobby) return null;
+
+    // Update the status
+    lobby.status = status;
+
+    // Mark as modified and save it
+    lobby.markModified('status');
+    return await lobby.save();
   }
 
   /**

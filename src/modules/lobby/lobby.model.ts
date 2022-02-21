@@ -7,6 +7,10 @@ export class Lobby extends Document {
   @Prop({ type: String })
   lobbyId: string;
 
+  // The name of this Lobby
+  @Prop({ type: String })
+  name: string;
+
   // The Discord user ID of the user who created the lobby.
   @Prop({ type: String })
   creatorId: string;
@@ -15,6 +19,10 @@ export class Lobby extends Document {
   // This is to obtain the message statessly.
   @Prop({ type: String })
   messageId: string;
+
+  // Status of this Lobby
+  @Prop({ type: String })
+  status: string;
 
   // The region this lobby belongs to.
   @Prop({ type: String })
@@ -54,18 +62,6 @@ export class Lobby extends Document {
       voiceChannelId?: string;
     };
   };
-
-  // Discord Text Channel created by this lobby instance.
-  @Prop({ type: String })
-  channelId: string;
-
-  // Discord Voice Channel created by this lobby instance (Team A / 1)
-  @Prop({ type: String })
-  voiceChannelTeamA: string;
-
-  // Discord Voice Channel created by this lobby instance (Team B / 2)
-  @Prop({ type: String })
-  voiceChannelTeamB: string;
 }
 
 export const LobbySchema = SchemaFactory.createForClass(Lobby);
