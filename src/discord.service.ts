@@ -185,7 +185,7 @@ export class DiscordService {
 
             if (channel) await channel.delete();
           } catch (e) {
-            this.logger.error(
+            this.logger.warn(
               `Could not find channel with ID ${id}. Skipping...`,
             );
             continue;

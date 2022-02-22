@@ -12,9 +12,9 @@ export class AppService {
   private readonly logger: Logger = new Logger(AppService.name);
 
   constructor(
-    private lobbyService: LobbyService,
-    private messagingService: MessagingService,
-    private discordService: DiscordService,
+    private readonly lobbyService: LobbyService,
+    private readonly messagingService: MessagingService,
+    private readonly discordService: DiscordService,
   ) {}
 
   /**
@@ -307,6 +307,33 @@ export class AppService {
 
     return await message.edit({
       content: `:x: The server failed to start! Contact the Qixalite administration team to troubleshoot this issue.\n\n:x: This lobby is now closed.`,
+      embeds: [embed],
+      components: [],
+    });
+  }
+
+  /**
+   * Does a Lobby Notification for EXPIRED
+   */
+  async lobbyNotifyExpired(lobbyId: string) {
+    // Get the Message object for this LobbyID
+    const { message, discord: internalLobby } = await this.getMessage(lobbyId);
+
+    // Update embed color
+    const embed = message.embeds[0];
+    embed.color = color.EXPIRED;
+
+    // Delete the channels that were created
+    const e = await this.discordService.deleteChannels(internalLobby);
+    await this.discordService.deleteChannels(internalLobby);
+
+    // Was there an error?
+    return await message.edit({
+      content: `${
+        e
+          ? `:warning: The lobby couldn't be closed completely: \`\`Channels could not be deleted: ${e}\`\`\n\n`
+          : ''
+      }:hourglass: This lobby has expired... \`\`Lobby was waiting for players for too long.\`\``,
       embeds: [embed],
       components: [],
     });

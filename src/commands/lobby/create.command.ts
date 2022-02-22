@@ -122,6 +122,9 @@ export class CreateSubCommand {
         map,
         formatConfig,
       );
+      this.logger.debug(
+        `Creating lobby ${name} with expiry ${expires} config ${cfg}`,
+      );
 
       // Declare the LobbyOptions object to send over the request.
       const options: LobbyOptions = {
@@ -131,6 +134,9 @@ export class CreateSubCommand {
         requirements: formatConfig.requirements,
         format: formatConfig,
         userId: interaction.user.id,
+        data: {
+          expiryTime: expires,
+        },
         matchOptions: {
           region: region,
           game: <Game>formatConfig.game,
@@ -148,6 +154,7 @@ export class CreateSubCommand {
           },
         },
       };
+      this.logger.debug(`Lobby options: ${JSON.stringify(options)}`);
 
       // Send the request to the lobby service (redirects it to Cytokine's API)
       const lobby = await LobbyCommand.service.createLobby(options);

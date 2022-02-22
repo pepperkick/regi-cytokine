@@ -20,10 +20,6 @@ export class Lobby extends Document {
   @Prop({ type: String })
   messageId: string;
 
-  // Expiry Date for the Lobby
-  @Prop({ type: Date })
-  expiryDate: Date;
-
   // Status of this Lobby
   @Prop({ type: String })
   status: string;

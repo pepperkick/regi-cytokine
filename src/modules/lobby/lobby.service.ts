@@ -32,19 +32,11 @@ export class LobbyService {
   private readonly logger = new Logger(LobbyService.name);
   static formats = LobbyService.parseLobbyFormats();
   static regions = LobbyService.parseRegions();
-  static discord: DiscordService;
 
   constructor(
     @InjectModel('Lobby') private readonly repo: Model<Lobby>,
     private readonly discord: DiscordService,
-  ) {
-    LobbyService.discord = discord;
-
-    // Monitor every 7 seconds
-    setInterval(async () => {
-      await this.monitor();
-    }, 7000);
-  }
+  ) {}
 
   /**
    * Sends a request to Cytokine to create a new lobby with asked requirements.
@@ -398,7 +390,7 @@ export class LobbyService {
    * Creates a Discord Text & Voice channel for a lobby.
    */
   async createChannels(name: string, voiceRegion?: string) {
-    return await LobbyService.discord.createLobbyChannels(
+    return await this.discord.createLobbyChannels(
       name,
       { enabled: false },
       voiceRegion,
@@ -430,7 +422,6 @@ export class LobbyService {
       messageId,
       region,
       name,
-      expiryDate,
       channels,
     });
 
@@ -584,7 +575,7 @@ export class LobbyService {
    * @noparams
    * @noreturn
    */
-  async monitor(): Promise<void> {
+  /* async monitor(): Promise<void> {
     // Find all active lobbies
     const lobbies: Lobby[] = await this.repo.find({
       status: 'WAITING_FOR_REQUIRED_PLAYERS',
@@ -600,12 +591,12 @@ export class LobbyService {
         if (lobby.expiryDate < new Date()) await this.handleLobbyExpiry(lobby);
       }, 100);
     }
-  }
+  }*/
 
   /**
    * Handles an expired Lobby and closes it.
    */
-  async handleLobbyExpiry(lobby: Lobby) {
+  /*async handleLobbyExpiry(lobby: Lobby) {
     try {
       // Get the Message object for this LobbyID
       const message = await LobbyService.discord.getMessage(lobby.messageId);
@@ -651,5 +642,5 @@ export class LobbyService {
         `Failed to handle expired lobby ${lobby.lobbyId}: ${e.response.data}`,
       );
     }
-  }
+  }*/
 }

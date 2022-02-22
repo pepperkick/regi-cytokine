@@ -23,6 +23,11 @@ export interface LobbyOptions {
   // The format of the lobby
   format?: LobbyFormat;
 
+  // Data for lobby
+  data?: {
+    expiryTime: number;
+  };
+
   // Options for match
   matchOptions: {
     players: Player[];

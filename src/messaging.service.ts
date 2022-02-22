@@ -256,7 +256,7 @@ export class MessagingService {
           match: matchId,
         } = lobby,
         // Destructure the Internal Lobby document (Regi-Cytokine)
-        { name, channels, messageId, expiryDate } = iLobby,
+        { name, channels, messageId } = iLobby,
         // Destructure the Match document.
         { game, region, map, status: matchStatus, preferences } = match;
 
@@ -280,7 +280,7 @@ Lobby Information
 ID:              ${lobbyId}
 Discord ID:      ${createdBy}
 Created:         ${new Date(createdAt).toUTCString()}
-Expires:         ${new Date(expiryDate).toUTCString()}
+Expires:         ${lobby.data.expiryTime}
 Status:          ${lobbyStatus}
 Distribution:    ${distribution}
 Message ID:      ${messageId}
