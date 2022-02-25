@@ -9,4 +9,7 @@ export class FormatRequirement {
 
   // Allow overfill for this role
   overfill?: boolean;
+
+  // Optional emoji to use for this requirement
+  emoji?: string;
 }

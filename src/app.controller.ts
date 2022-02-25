@@ -30,6 +30,10 @@ export class AppController {
         await this.appService.lobbyNotifyClosed(lobbyId);
         break;
       }
+      case 'EXPIRED': {
+        await this.appService.lobbyNotifyExpired(lobbyId);
+        break;
+      }
     }
 
     return 'ok';

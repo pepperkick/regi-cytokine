@@ -6,11 +6,18 @@ import { MessagingService } from 'src/messaging.service';
 import { CreateSubCommand } from './lobby/create.command';
 import { CloseSubCommand } from './lobby/close.command';
 import { StatusSubCommand } from './lobby/status.command';
+import { TeamRoleBasedHandler } from './lobby/distribution-handlers/team-role-based.handler';
 
 @Discord()
 @SlashGroup('lobby', 'Interact with lobby options.')
 @Module({
-  exports: [CreateSubCommand, CloseSubCommand, StatusSubCommand],
+  exports: [
+    CreateSubCommand,
+    CloseSubCommand,
+    StatusSubCommand,
+
+    TeamRoleBasedHandler,
+  ],
 })
 export class LobbyCommand {
   private readonly logger = new Logger(LobbyCommand.name);

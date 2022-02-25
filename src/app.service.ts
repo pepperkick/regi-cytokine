@@ -7,6 +7,9 @@ import { Player } from './objects/match-player.interface';
 
 import { StatusColors as color } from './objects/status-colors.enum';
 
+import * as config from '../config.json';
+import { DistributionType } from './objects/distribution.enum';
+
 @Injectable()
 export class AppService {
   private readonly logger: Logger = new Logger(AppService.name);
@@ -29,7 +32,10 @@ export class AppService {
     const discord = await this.lobbyService.getInternalLobbyById(lobbyId);
 
     // Update the message.
-    const message = await this.discordService.getMessage(discord.messageId);
+    const message = await this.discordService.getMessage(
+      discord.messageId,
+      discord.channels.general.textChannelId,
+    );
 
     return { message, discord };
   }
@@ -66,9 +72,6 @@ export class AppService {
     const embed = message.embeds[0];
     embed.color = color.DISTRIBUTING;
 
-    // Remove the queue up message
-    embed.fields.splice(embed.fields.length - 1, 1);
-
     return await message.edit({
       content: ':hourglass: Distributing players randomly...',
       embeds: [embed],
@@ -88,9 +91,13 @@ export class AppService {
     embed.color = color.DISTRIBUTED;
 
     // Get the user lists
-    const players = await this.messagingService.generateUserList(lobby, {
-        perTeam: true,
-      }),
+    const players = await this.messagingService.generateUserList(
+        lobby,
+        {
+          distributed: true,
+        },
+        lobby.distribution as DistributionType,
+      ),
       // Create the team specific channels.
       { teamA, teamB } = await this.discordService.createTeamChannels(
         lobby.name,
@@ -112,7 +119,7 @@ export class AppService {
     // Update the Internal Lobby document
     this.lobbyService.updateLobbyChannels(lobby._id, { A: teamA, B: teamB });
 
-    // Create the embed fields with the team, classes (TODO) and channels displayed.
+    // Create the embed fields with the team and channels displayed.
     // Remove queued players from the embed fields.
     delete embed.fields[3];
 
@@ -252,15 +259,18 @@ export class AppService {
    */
   async lobbyNotifyFinished(lobbyId: string, match: any) {
     // Get the Message object for this LobbyID
-    const { message, discord } = await this.getMessage(lobbyId);
+    const { discord } = await this.getMessage(lobbyId);
 
-    // Update embed color
-    const embed = message.embeds[0];
-    embed.color = color.FINISHED;
+    // Get the lobbies creation channel to notify about the expiry.
+    const channel = (await this.discordService
+      .getClient()
+      .channels.fetch(config.discord.channels.create)) as TextChannel;
 
     // Connect to linked Hatch service for data
-    try {
-      embed.fields.push(
+    const embed = {
+      title: `Lobby ${discord.name} has finished!`,
+      description: `:tada: Thanks to all participants for playing! Hope you enjoyed your game!\n\n:point_down: Results are listed below.`,
+      fields: [
         {
           name: ':clipboard: Logs',
           value: `[Click to view the log](${match.data.logstfUrl})`,
@@ -276,17 +286,15 @@ export class AppService {
           value: `[Click to view the demo](${match.data.demostfUrl})`,
           inline: true,
         },
-      );
-    } catch (e) {
-      this.logger.error(e);
-    }
+      ],
+    };
 
     // Delete the channels that were created
     // (to be discussed on what's said above)
     await this.discordService.deleteChannels(discord);
 
-    return await message.edit({
-      content: `:lock: The lobby has been locked\n\nThank you all for playing! Logs and Demos have been posted.`,
+    return await channel.send({
+      content: `:lock: <@${discord.creatorId}> Your Lobby **${discord.name}** has been locked.`,
       embeds: [embed],
     });
   }
@@ -296,19 +304,18 @@ export class AppService {
    */
   async lobbyNotifyFailed(lobbyId: string) {
     // Get the Message object for this LobbyID
-    const { message, discord: internalLobby } = await this.getMessage(lobbyId);
-
-    // Update embed color
-    const embed = message.embeds[0];
-    embed.color = color.FAILED;
+    const { discord: internalLobby } = await this.getMessage(lobbyId);
 
     // Delete the channels that were created
     await this.discordService.deleteChannels(internalLobby);
 
-    return await message.edit({
-      content: `:x: The server failed to start! Contact the Qixalite administration team to troubleshoot this issue.\n\n:x: This lobby is now closed.`,
-      embeds: [embed],
-      components: [],
+    // Get the lobbies creation channel to notify about the expiry.
+    const channel = (await this.discordService
+      .getClient()
+      .channels.fetch(config.discord.channels.create)) as TextChannel;
+
+    return await channel.send({
+      content: `:x: The server failed to start! Contact the Qixalite administration team to troubleshoot this issue.\n\n:x: <@${internalLobby.creatorId}> Your Lobby **${internalLobby.name}** is now closed.`,
     });
   }
 
@@ -317,25 +324,18 @@ export class AppService {
    */
   async lobbyNotifyExpired(lobbyId: string) {
     // Get the Message object for this LobbyID
-    const { message, discord: internalLobby } = await this.getMessage(lobbyId);
-
-    // Update embed color
-    const embed = message.embeds[0];
-    embed.color = color.EXPIRED;
+    const { discord: internalLobby } = await this.getMessage(lobbyId);
 
     // Delete the channels that were created
-    const e = await this.discordService.deleteChannels(internalLobby);
     await this.discordService.deleteChannels(internalLobby);
 
-    // Was there an error?
-    return await message.edit({
-      content: `${
-        e
-          ? `:warning: The lobby couldn't be closed completely: \`\`Channels could not be deleted: ${e}\`\`\n\n`
-          : ''
-      }:hourglass: This lobby has expired... \`\`Lobby was waiting for players for too long.\`\``,
-      embeds: [embed],
-      components: [],
+    // Get the lobbies creation channel to notify about the expiry.
+    const channel = (await this.discordService
+      .getClient()
+      .channels.fetch(config.discord.channels.create)) as TextChannel;
+
+    return await channel.send({
+      content: `:hourglass: <@${internalLobby.creatorId}> Your Lobby **${internalLobby.name}** was closed automatically due to it expiring.`,
     });
   }
 
@@ -344,20 +344,19 @@ export class AppService {
    */
   async lobbyNotifyClosed(lobbyId: string) {
     // Get the Message object for this LobbyID
-    const { message, discord: internalLobby } = await this.getMessage(lobbyId);
-
-    // Update embed color
-    const embed = message.embeds[0];
-    embed.color = color.CLOSED;
+    const { discord: internalLobby } = await this.getMessage(lobbyId);
 
     // Delete the channels that were created
     await this.discordService.deleteChannels(internalLobby);
 
+    // Get the lobbies creation channel to notify about the expiry.
+    const channel = (await this.discordService
+      .getClient()
+      .channels.fetch(config.discord.channels.create)) as TextChannel;
+
     // Was there an error?
-    return await message.edit({
-      content: `:x: The lobby has been closed!`,
-      embeds: [embed],
-      components: [],
+    return await channel.send({
+      content: `:x: <@${internalLobby.creatorId}> Your Lobby **${internalLobby.name}** has been closed!`,
     });
   }
 }

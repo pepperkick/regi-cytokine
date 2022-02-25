@@ -127,12 +127,12 @@ export class LobbyService {
   /**
    * Adds a player to a lobby's queue.
    * @param player The player to add.
-   * @param lobby The lobby to add the player to.
+   * @param lobbyId The lobby to add the player to.
    */
-  async addPlayer(player: Player, lobby) {
+  async addPlayer(player: Player, lobbyId) {
     try {
       const { data } = await axios.post(
-        `${config.cytokine.host}/api/v1/lobbies/${lobby}/join`,
+        `${config.cytokine.host}/api/v1/lobbies/${lobbyId}/join`,
         player,
         {
           headers: { Authorization: `Bearer ${config.cytokine.secret}` },
@@ -148,8 +148,31 @@ export class LobbyService {
   }
 
   /**
+   * Adds a role to a player in a Lobby
+   * @param lobbyId The Cytokine Lobby ID.
+   * @param discordId The Discord ID of the player we're adding a role to.
+   * @param role The role we're adding.
+   * @returns The updated Lobby document or error if role does not exist.
+   */
+  async addRole(lobbyId: string, discordId: string, role: string) {
+    try {
+      const { data } = await axios.post(
+        `${config.cytokine.host}/api/v1/lobbies/${lobbyId}/players/discord/${discordId}/roles/${role}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
+        },
+      );
+
+      return data;
+    } catch (e) {
+      this.logger.error(e.response.data);
+    }
+  }
+
+  /**
    * Removes a player from a lobby's queue.
-   * @param player The player Discord ID to remove from the queue.
+   * @param playerId The player Discord ID to remove from the queue.
    * @param lobby The lobby to remove the player from.
    */
   async removePlayer(playerId: string, lobby) {
@@ -574,8 +597,9 @@ export class LobbyService {
    * Monitors active lobbies.
    * @noparams
    * @noreturn
+   * @deprecated
    */
-  /* async monitor(): Promise<void> {
+  async monitor(): Promise<void> {
     // Find all active lobbies
     const lobbies: Lobby[] = await this.repo.find({
       status: 'WAITING_FOR_REQUIRED_PLAYERS',
@@ -588,25 +612,30 @@ export class LobbyService {
     // Loop through obtained lobbies to monitor for their expiry date (if reached, handle them)
     for (const lobby of lobbies) {
       setTimeout(async () => {
-        if (lobby.expiryDate < new Date()) await this.handleLobbyExpiry(lobby);
+        //if (lobby.expiryDate < new Date()) await this.handleLobbyExpiry(lobby);
       }, 100);
     }
-  }*/
+  }
 
   /**
    * Handles an expired Lobby and closes it.
+   * @deprecated
    */
-  /*async handleLobbyExpiry(lobby: Lobby) {
+  async handleLobbyExpiry(lobby: Lobby) {
     try {
       // Get the Message object for this LobbyID
-      const message = await LobbyService.discord.getMessage(lobby.messageId);
+      const iLobby = await this.getInternalLobbyById(lobby._id);
+      const message = await this.discord.getMessage(
+        lobby.messageId,
+        iLobby.channels.general.textChannelId,
+      );
 
       // Update embed color
       const embed = message.embeds[0];
       embed.color = color.EXPIRED;
 
       // Delete the channels that were created
-      const e = await LobbyService.discord.deleteChannels(lobby);
+      const e = await this.discord.deleteChannels(lobby);
 
       // Was there an error?
       await message.edit({
@@ -642,5 +671,5 @@ export class LobbyService {
         `Failed to handle expired lobby ${lobby.lobbyId}: ${e.response.data}`,
       );
     }
-  }*/
+  }
 }

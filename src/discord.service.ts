@@ -33,12 +33,13 @@ export class DiscordService {
    */
   async getMessage(
     messageId: string,
+    channelId: string,
   ): Promise<Message<true> | Message<boolean>> {
     // Get the Guild first
     const guild = await this.bot.guilds.fetch(config.discord.guild);
 
     // Search for the channel inside the guild
-    const channel = await guild.channels.fetch(config.discord.channels.create);
+    const channel = await guild.channels.fetch(channelId);
 
     // Get the message from the channel
     if (channel instanceof TextChannel)
@@ -224,9 +225,9 @@ export class DiscordService {
         },
         {
           name: `🔗 Link Connect`,
-          value: `Click to join instantly!\n\nsteam://connect/${
-            server.data.sdrEnable ? server.data.sdrIp : server.ip
-          }:${server.data.sdrEnable ? server.data.sdrPort : server.port}/${
+          value: `Click to join instantly!\n\nsteam://connect/${server.ip}:${
+            server.port
+          }/${
             server.data.password.length > 0 ? `${server.data.password}` : ''
           }`,
           inline: true,
@@ -255,6 +256,9 @@ export class DiscordService {
         },
       ],
     });
+
+    // If SDR is enabled, remove the Steam Web API Connect URI option.
+    if (server.data.sdrEnable) embed.fields.splice(1);
 
     // Send the message
     return await channel.send({

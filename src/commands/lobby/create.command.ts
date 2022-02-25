@@ -14,8 +14,10 @@ import { Game } from 'src/objects/game.enum';
 import { LobbyFormat } from 'src/objects/lobby-format.interface';
 import { Player } from 'src/objects/match-player.interface';
 import { LobbyCommand } from '../lobby.command';
-import { Logger } from '@nestjs/common';
+import { Logger, Req } from '@nestjs/common';
 import { InteractionType } from 'src/objects/interactions/interaction-types.enum';
+import { RequirementName } from 'src/objects/requirement-names.enum';
+import { DistributionType } from 'src/objects/distribution.enum';
 
 @Discord()
 @SlashGroup('lobby')
@@ -46,6 +48,9 @@ export class CreateSubCommand {
     // Check for the interaction being of type CommandInteraction
     // This way we can reply to the user once the command has been executed, and get corresponding Discord data.
     if (interaction instanceof CommandInteraction) {
+      // Defer reply
+      await interaction.deferReply({ ephemeral: true });
+
       // Check if the creation channel was set on the config
       if (!config.discord.channels.create.length)
         return await LobbyCommand.messaging.replyToInteraction(
@@ -70,7 +75,7 @@ export class CreateSubCommand {
       // If the format is invalid, reply with an error message.
       if (!formatConfig) {
         return await interaction.reply({
-          content: 'Unknown format',
+          content: ':x: Failed to create Lobby: ``Unknown format``',
           ephemeral: true,
         });
       }
@@ -111,7 +116,7 @@ export class CreateSubCommand {
         name: interaction.user.username,
         discord: interaction.user.id,
         steam: kaiend.steam,
-        roles: ['creator', 'player'],
+        roles: [RequirementName.CREATOR, RequirementName.PLAYER],
       };
 
       // Get a random name from the name pool
@@ -130,7 +135,7 @@ export class CreateSubCommand {
       const options: LobbyOptions = {
         distribution: formatConfig.distribution,
         callbackUrl: `${config.localhost}/lobbies/callback`,
-        queuedPlayers: [player],
+        queuedPlayers: [],
         requirements: formatConfig.requirements,
         format: formatConfig,
         userId: interaction.user.id,
@@ -154,6 +159,11 @@ export class CreateSubCommand {
           },
         },
       };
+
+      // Only add the player if the distribution method is RANDOM
+      if (formatConfig.distribution === DistributionType.RANDOM)
+        options.queuedPlayers.push(player);
+
       this.logger.debug(`Lobby options: ${JSON.stringify(options)}`);
 
       // Send the request to the lobby service (redirects it to Cytokine's API)
@@ -205,6 +215,7 @@ export class CreateSubCommand {
           lobbyName: name,
           map,
         },
+        text,
       );
 
       // Save Lobby into MongoDB
@@ -264,7 +275,7 @@ export class CreateSubCommand {
       name: interaction.user.username,
       discord: interaction.user.id,
       steam: kaiend.steam,
-      roles: ['player'],
+      roles: [RequirementName.PLAYER],
     };
 
     // Check if the player is already in the queue to deny their entry.
