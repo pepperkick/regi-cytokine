@@ -128,7 +128,7 @@ export class CreateSubCommand {
         formatConfig,
       );
       this.logger.debug(
-        `Creating lobby ${name} with expiry ${expires} config ${cfg}`,
+        `Creating lobby ${name} with expiry ${expires} and config ${cfg}`,
       );
 
       // Declare the LobbyOptions object to send over the request.

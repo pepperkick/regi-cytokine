@@ -455,7 +455,7 @@ export class LobbyService {
   /**
    * Updates a Lobby document in the database saving the new channels.
    * @param lobbyId The Lobby ID linked to the document.
-   * @param channels The team channels to save.
+   * @param teamChannels The team channels to save.
    * @returns The new internal Lobby document.
    */
   async updateLobbyChannels(lobbyId, teamChannels: { A; B }) {
@@ -515,14 +515,14 @@ export class LobbyService {
    * Gets the Lobby document for a lobby by its ID.
    */
   async getInternalLobbyById(lobbyId: string): Promise<Lobby> {
-    return await this.repo.findOne({ lobbyId });
+    return this.repo.findOne({ lobbyId });
   }
 
   /**
    * Gets the Lobby document for a lobby by its Discord Message ID.
    */
   async getInternalLobbyByMessageId(messageId: string) {
-    return await this.repo.findOne({ messageId });
+    return this.repo.findOne({ messageId });
   }
 
   /**
@@ -591,85 +591,5 @@ export class LobbyService {
    */
   getRegion(region: string) {
     return config.regions[region];
-  }
-
-  /**
-   * Monitors active lobbies.
-   * @noparams
-   * @noreturn
-   * @deprecated
-   */
-  async monitor(): Promise<void> {
-    // Find all active lobbies
-    const lobbies: Lobby[] = await this.repo.find({
-      status: 'WAITING_FOR_REQUIRED_PLAYERS',
-    });
-
-    this.logger.debug(
-      `Found ${lobbies.length} unfilled lobbies (no requirements met).`,
-    );
-
-    // Loop through obtained lobbies to monitor for their expiry date (if reached, handle them)
-    for (const lobby of lobbies) {
-      setTimeout(async () => {
-        //if (lobby.expiryDate < new Date()) await this.handleLobbyExpiry(lobby);
-      }, 100);
-    }
-  }
-
-  /**
-   * Handles an expired Lobby and closes it.
-   * @deprecated
-   */
-  async handleLobbyExpiry(lobby: Lobby) {
-    try {
-      // Get the Message object for this LobbyID
-      const iLobby = await this.getInternalLobbyById(lobby._id);
-      const message = await this.discord.getMessage(
-        lobby.messageId,
-        iLobby.channels.general.textChannelId,
-      );
-
-      // Update embed color
-      const embed = message.embeds[0];
-      embed.color = color.EXPIRED;
-
-      // Delete the channels that were created
-      const e = await this.discord.deleteChannels(lobby);
-
-      // Was there an error?
-      await message.edit({
-        content: `${
-          e
-            ? `:warning: The lobby couldn't be closed completely: \`\`Channels could not be deleted: ${e}\`\`\n\n`
-            : ''
-        }:hourglass: This lobby has expired... \`\`Lobby was waiting for players for too long.\`\``,
-        embeds: [embed],
-        components: [],
-      });
-
-      // Do the request to close the lobby on the server due to it being expired.
-      const { data } = await axios.delete(
-        `${config.cytokine.host}/api/v1/lobbies/${lobby.lobbyId}/true`,
-        {
-          headers: {
-            Authorization: `Bearer ${config.cytokine.secret}`,
-          },
-        },
-      );
-
-      this.logger.debug(
-        `Lobby ${lobby.lobbyId} was closed due to reaching its expiry date.`,
-      );
-
-      // If axios was successful, update the Internal Lobby to its new status.
-      lobby.status = data.status;
-      lobby.markModified('status');
-      await lobby.save();
-    } catch (e) {
-      this.logger.error(
-        `Failed to handle expired lobby ${lobby.lobbyId}: ${e.response.data}`,
-      );
-    }
   }
 }
