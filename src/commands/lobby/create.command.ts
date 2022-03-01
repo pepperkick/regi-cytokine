@@ -294,16 +294,17 @@ export class CreateSubCommand {
         { ephemeral: true },
       );
 
-    // Add the player to the queue.
-    lobby = await LobbyCommand.service.addPlayer(player, lobbyId);
-
-    // Error handling
-    if (lobby?.error)
+    try {
+      // Add the player to the queue.
+      lobby = await LobbyCommand.service.addPlayer(player, lobbyId);
+    } catch (e) {
+      // Error handling
       return await LobbyCommand.messaging.replyToInteraction(
         interaction,
-        `❌ Failed to add you to this lobby: \`\`${lobby?.message}\`\`.`,
+        `❌ Failed to add you to this lobby: \`\`${e}\`\`.`,
         { ephemeral: true },
       );
+    }
 
     // Do the lobbyReply again, but this time with the updated lobby.
     await LobbyCommand.messaging.updateReply(

@@ -263,18 +263,24 @@ export class MessagingService {
             };
           });
 
-        return [
-          new MessageActionRow({
-            components: [
-              new MessageSelectMenu({
-                placeholder: 'Select a class & team...',
-                customId: InteractionType.TEAM_ROLE_SELECT,
-                minValues: 1,
-                maxValues: 1,
-                options,
-              }),
-            ],
-          }),
+        // If there are no options, do not return a MessageSelectMenu
+        const actionRows = [];
+        if (options.length > 0)
+          actionRows.push(
+            new MessageActionRow({
+              components: [
+                new MessageSelectMenu({
+                  placeholder: 'Select a class & team...',
+                  customId: InteractionType.TEAM_ROLE_SELECT,
+                  minValues: 1,
+                  maxValues: 1,
+                  options,
+                }),
+              ],
+            }),
+          );
+
+        actionRows.push(
           new MessageActionRow({
             components: [
               new MessageButton({
@@ -285,7 +291,9 @@ export class MessagingService {
               }),
             ],
           }),
-        ];
+        );
+
+        return actionRows;
       }
     }
   }

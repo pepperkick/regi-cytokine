@@ -30,8 +30,14 @@
             "Weapon", "Rocket", "Launcher", "Sticky", "Bomb", "Rifle", "Shotgun", "Flame", "Explosive"
         ],
         "teams": {
-            "AName": "team-a",
-            "BName": "team-b"
+            "A": {
+                "text": "team-red",
+                "voice": "Team RED"
+            },
+            "B": {
+                "text": "team-blu",
+                "voice": "Team BLU"
+            }
         }
     },
     "regions": {

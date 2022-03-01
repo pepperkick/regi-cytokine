@@ -141,9 +141,7 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      if (!error.response.data?.error) this.logger.error(error.response.data);
-
-      return error.response.data;
+      this.logger.error(error.response.data);
     }
   }
 
@@ -278,7 +276,7 @@ export class LobbyService {
   async closeLobby(lobbyId: string) {
     try {
       const { data } = await axios.delete(
-        `${config.cytokine.host}/api/v1/lobbies/${lobbyId}/false`,
+        `${config.cytokine.host}/api/v1/lobbies/${lobbyId}`,
         {
           headers: { Authorization: `Bearer ${config.cytokine.secret}` },
         },

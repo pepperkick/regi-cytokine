@@ -81,7 +81,7 @@ export class DiscordService {
       // Now that we have a category, create the General Text & Voice Channels.
       // TODO: More an idea than a TODO, but this could use permissions where the lobby players are the only ones that can see the channels.
       const gTextChannel = await category.createChannel(
-          `${team.enabled ? team.name : config.lobbies.lobbyTextPrefix}${
+          `${team.enabled ? team.text : config.lobbies.lobbyTextPrefix}${
             team.enabled ? '' : name
           }`,
           {
@@ -93,7 +93,7 @@ export class DiscordService {
           },
         ),
         gVoiceChannel = await category.createChannel(
-          `${team.enabled ? team.name : config.lobbies.lobbyVoicePrefix}${
+          `${team.enabled ? team.voice : config.lobbies.lobbyVoicePrefix}${
             team.enabled ? '' : name
           }`,
           {
@@ -139,7 +139,8 @@ export class DiscordService {
     const teamA = await this.createLobbyChannels(
         name,
         {
-          name: 'Team A',
+          voice: config.lobbies.teams.A.voice,
+          text: config.lobbies.teams.A.text,
           category: categoryId,
           enabled: true,
         },
@@ -149,7 +150,8 @@ export class DiscordService {
       teamB = await this.createLobbyChannels(
         name,
         {
-          name: 'Team B',
+          voice: config.lobbies.teams.B.voice,
+          text: config.lobbies.teams.B.text,
           category: categoryId,
           enabled: true,
         },

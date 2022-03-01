@@ -67,6 +67,7 @@ export class TeamRoleBasedHandler {
         content: `<@${interaction.user.id}> You've been added to the queue.`,
       });
     } catch (e) {
+      this.logger.error(e);
       return await interaction.editReply({
         content: `<@${interaction.user.id}> Failed to queue you into the Lobby: Either this role is full or something went wrong with the service.`,
       });
