@@ -13,6 +13,7 @@
         "guild": "",
         "channels": {
             "create": "",
+            "results": "",
             "admin": ""
         },
         "token": ""

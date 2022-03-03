@@ -7,6 +7,7 @@ import { CreateSubCommand } from './lobby/create.command';
 import { CloseSubCommand } from './lobby/close.command';
 import { StatusSubCommand } from './lobby/status.command';
 import { TeamRoleBasedHandler } from './lobby/distribution-handlers/team-role-based.handler';
+import { KickSubCommand } from './lobby/kick.command';
 
 @Discord()
 @SlashGroup('lobby', 'Interact with lobby options.')
@@ -15,6 +16,7 @@ import { TeamRoleBasedHandler } from './lobby/distribution-handlers/team-role-ba
     CreateSubCommand,
     CloseSubCommand,
     StatusSubCommand,
+    KickSubCommand,
 
     TeamRoleBasedHandler,
   ],

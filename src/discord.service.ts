@@ -209,9 +209,9 @@ export class DiscordService {
   async sendServerDetails(channel: TextChannel, server) {
     // Create the embed.
     const embed = new MessageEmbed({
-      title: "Ready or not, let's play!",
+      title: 'Cytokine Match Details',
       description:
-        'Be sure to join your respective **voice channels** before joining the server!',
+        'Be sure to join your respective **voice channels** before joining the server.',
       color: 0x37ef09,
       fields: [
         {
@@ -260,7 +260,7 @@ export class DiscordService {
     });
 
     // If SDR is enabled, remove the Steam Web API Connect URI option.
-    if (server.data.sdrEnable) embed.fields.splice(1);
+    if (server.data.sdrEnable) embed.fields.splice(1, 1);
 
     // Send the message
     return await channel.send({

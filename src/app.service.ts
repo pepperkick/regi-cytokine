@@ -285,10 +285,14 @@ export class AppService {
     // Get the Message object for this LobbyID
     const { discord } = await this.getMessage(lobbyId);
 
-    // Get the lobbies creation channel to notify about the expiry.
+    // Get the lobby results channel to send into
     const channel = (await this.discordService
       .getClient()
-      .channels.fetch(config.discord.channels.create)) as TextChannel;
+      .channels.fetch(
+        config.discord.channels.results.length > 0
+          ? config.discord.channels.results
+          : config.discord.channels.create,
+      )) as TextChannel;
 
     // Connect to linked Hatch service for data
     const embed = {
