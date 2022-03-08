@@ -10,7 +10,10 @@ import { TeamRoleBasedHandler } from './lobby/distribution-handlers/team-role-ba
 import { KickSubCommand } from './lobby/kick.command';
 
 @Discord()
-@SlashGroup('lobby', 'Interact with lobby options.')
+@SlashGroup({
+  name: 'lobby',
+  description: 'Interact with lobby options.',
+})
 @Module({
   exports: [
     CreateSubCommand,

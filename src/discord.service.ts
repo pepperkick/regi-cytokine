@@ -285,8 +285,8 @@ export class DiscordService {
       // Load all commands available
       try {
         await this.bot.initApplicationCommands({
-          guild: { log: true },
-          global: { log: true },
+          guild: { log: true, disable: { delete: true } },
+          global: { log: true, disable: { delete: true } },
         });
       } catch (e) {
         this.logger.error(e);
