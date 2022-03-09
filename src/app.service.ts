@@ -60,6 +60,85 @@ export class AppService {
   }
 
   /**
+   * Does a Lobby Notification for WAITING_FOR_AFK
+   * Temporarily locks down Queueing at this instance.
+   * At this point:
+   *  - All required players have queued up.
+   *  - We require confirmation from them to start the game.
+   */
+  async lobbyNotifyWaitingForAfk(lobbyId: string, lobby: any) {
+    // Get the Message object for this LobbyID
+    const { message } = await this.getMessage(lobbyId);
+
+    // Update embed color
+    // And update the last field message, removing the queue up reminder.
+    const embed = message.embeds[0];
+    embed.color = color.WAITING_FOR_AFK;
+
+    // Create the AFK check message, and set a timeout for it to expire.
+    const afkMessage = await this.messagingService.sendAFKCheck(
+      lobby,
+      message.channel as TextChannel,
+    );
+
+    setTimeout(async () => {
+      // Get the AFK status saved on MongoDB
+      const iLobby = await this.lobbyService.getInternalLobbyById(lobbyId);
+
+      if (
+        iLobby.status == 'CLOSED' ||
+        iLobby.status == 'FAILED' ||
+        iLobby.status == 'EXPIRED'
+      )
+        return;
+
+      this.logger.debug(
+        `Lobby ${lobbyId}'s AFK check expired. Checking if action is needed...`,
+      );
+
+      // Cancel the AFK status check if all players aren't AFK when this timeout reaches
+      if (iLobby.afk.filter((player) => player.afk).length === 0) return;
+
+      // Send the request to Cytokine to see how the check went.
+      const result = await this.lobbyService.sendAfkStatus(lobbyId, iLobby.afk);
+
+      if (result.status) return;
+
+      this.logger.debug(
+        `Lobby ${lobbyId}'s AFK check failed. Lobby is now waiting for required players again.`,
+      );
+
+      // Delete the AFK check message if it hasn't been deleted yet.
+      if (!afkMessage.deleted) await afkMessage.delete();
+
+      // Update the message embed color and content
+      const failedAfk = iLobby.afk.filter((player) => player.afk);
+      await message.edit({
+        content: `:x: The previous AFK check has failed.\n\nThe following players failed to respond in time (or has been kicked) and have been removed from the queue:${failedAfk
+          .map((player) => `\n:x: <@${player.discord}> (${player.name})`)
+          .join('')}`,
+      });
+      await this.messagingService.updateReply(result.lobby, message);
+
+      // Update the internal Lobby to reset every player to a true AFK status and keep current players.
+      iLobby.afk = iLobby.afk.filter((player) => {
+        if (!player.afk) {
+          player.afk = true;
+          return player;
+        }
+      });
+
+      await iLobby.save();
+    }, config.lobbies.afkCheckTimeout * 1000);
+
+    return await message.edit({
+      content: `:hourglass: Waiting on players to confirm they're ready...`,
+      embeds: [embed],
+      components: [],
+    });
+  }
+
+  /**
    * Does a Lobby Notification for DISTRIBUTING
    * Locks down queueing at this instance.
    */

@@ -1,10 +1,11 @@
 export enum RequirementName {
   // Generic roles
-  CAPTAIN = 'captain',
   PLAYER = 'player',
   CREATOR = 'creator',
 
-  // TF2Center & TF2Pickup Lobby Type (Player picks their team and class)
+  // Roles for:
+  //  - Team-Role Based Distribution
+  // TF2Center Lobby Type (Player picks their team and class)
   TEAM_A = 'team_a',
   TEAM_B = 'team_b',
   RED_SCOUT = 'red-scout',
@@ -26,5 +27,19 @@ export enum RequirementName {
   RED_SPY = 'red-spy',
   BLU_SPY = 'blu-spy',
 
-  // TODO: Add more lobby type requirement names (PugChamp and Asia pug styles)
+  // Roles for:
+  //  - Captain Based Distribution
+  //  - Random Distribution (excludes CAPTAIN)
+  // TF2Pickup/PugChamp Lobby Type (Players can select their role, but not the team they desire to be in)
+  CAPTAIN_A = 'captain-a',
+  CAPTAIN_B = 'captain-b',
+  SCOUT = 'scout',
+  SOLDIER = 'soldier',
+  PYRO = 'pyro',
+  DEMOMAN = 'demoman',
+  HEAVY = 'heavy',
+  ENGINEER = 'engineer',
+  MEDIC = 'medic',
+  SNIPER = 'sniper',
+  SPY = 'spy',
 }

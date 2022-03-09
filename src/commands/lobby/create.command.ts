@@ -1,4 +1,9 @@
-import { ButtonInteraction, CommandInteraction, Message } from 'discord.js';
+import {
+  AutocompleteInteraction,
+  ButtonInteraction,
+  CommandInteraction,
+  Message,
+} from 'discord.js';
 import {
   ButtonComponent,
   Discord,
@@ -29,25 +34,96 @@ export class CreateSubCommand {
     @SlashChoice(LobbyService.regions.names)
     @SlashOption('region', {
       description: 'The region the lobby will be in.',
+      required: true,
     })
     region: string,
-    // Supported parsed formats as an option
-    @SlashChoice(LobbyService.formats.names)
+    @SlashOption('distribution', {
+      description: 'The Distribution Type the Lobby will have.',
+      required: true,
+      autocomplete: true,
+      type: 'STRING',
+    })
+    distribution: DistributionType,
     @SlashOption('format', {
-      description: 'The format of the lobby.',
+      description: 'The Format for this Lobby.',
+      required: true,
+      autocomplete: true,
+      type: 'STRING',
     })
     format: string,
+    @SlashOption('map', {
+      description: '[OPTIONAL] Manually set the map for this Lobby',
+      required: false,
+      autocomplete: true,
+      type: 'STRING',
+    })
+    manualMap: string,
     @SlashOption('valve-sdr', {
       description:
         '[OPTIONAL] Whether or not Valve SDR will be enabled on the server.',
       required: false,
     })
     valveSdr: boolean,
-    interaction: CommandInteraction,
+    interaction: CommandInteraction | AutocompleteInteraction,
   ) {
+    // Autocomplete? Time to give options!
+    if (interaction instanceof AutocompleteInteraction) {
+      // Get the focused option
+      switch (interaction.options.getFocused(true).name) {
+        case 'distribution': {
+          // Get available distribution types based on listed formats in the config.
+          const available = [];
+          config.formats.forEach((format) => {
+            // If the Distribution method is not in the array, push it.
+            (format as any).distribution.forEach((dist) => {
+              if (!available.find((d) => d.value === dist.type))
+                available.push({
+                  name: LobbyCommand.getDistributionTypeName(dist.type),
+                  value: dist.type,
+                });
+            });
+          });
+
+          // Return the available options
+          return await interaction.respond(available);
+        }
+        case 'format': {
+          // Get available formats based on the distribution type selected.
+          const available = [];
+          config.formats.forEach((format) => {
+            // If it supports this distribution method, list it.
+            if (
+              format.distribution.some((dist) => dist.type == distribution) &&
+              !format.hidden
+            )
+              available.push({
+                name: format.name,
+                value: format.name,
+              });
+          });
+
+          // Return the available options
+          return await interaction.respond(available);
+        }
+        case 'map': {
+          // Get available maps based on the format selected.
+          const available = config.formats
+            .find((f) => f.name === format)
+            .maps.map((map) => {
+              return {
+                name: map,
+                value: map,
+              };
+            });
+
+          // Return the available options
+          return await interaction.respond(available);
+        }
+      }
+    }
     // Check for the interaction being of type CommandInteraction
     // This way we can reply to the user once the command has been executed, and get corresponding Discord data.
-    if (interaction instanceof CommandInteraction) {
+    else if (interaction instanceof CommandInteraction) {
       // Defer reply
       await interaction.deferReply({ ephemeral: true });
 
@@ -88,7 +164,10 @@ export class CreateSubCommand {
       );
 
       // Select a random map from the format's pool of maps to be used in this lobby.
-      const map = LobbyCommand.service.getRandomMap(null, formatConfig.maps);
+      const map =
+        manualMap?.length > 0
+          ? manualMap
+          : LobbyCommand.service.getRandomMap(null, formatConfig.maps);
 
       // If no map was found, just return an error message.
       if (!map)
@@ -111,14 +190,6 @@ export class CreateSubCommand {
           { ephemeral: true },
         );
 
-      // Get player from the Discord initiator
-      const player: Player = {
-        name: interaction.user.username,
-        discord: interaction.user.id,
-        steam: kaiend.steam,
-        roles: [RequirementName.CREATOR, RequirementName.PLAYER],
-      };
-
       // Get a random name from the name pool
       const name = await LobbyCommand.service.getNewLobbyName();
 
@@ -132,11 +203,15 @@ export class CreateSubCommand {
       );
 
       // Declare the LobbyOptions object to send over the request.
+      const requirements = formatConfig.distribution.find(
+        (dist) => dist.type === distribution,
+      ).requirements;
+
       const options: LobbyOptions = {
-        distribution: formatConfig.distribution,
+        distribution,
         callbackUrl: `${config.localhost}/lobbies/callback`,
         queuedPlayers: [],
-        requirements: formatConfig.requirements,
+        requirements,
         format: formatConfig,
         userId: interaction.user.id,
         data: {
@@ -159,10 +234,6 @@ export class CreateSubCommand {
           },
         },
       };
-
-      // Only add the player if the distribution method is RANDOM
-      if (formatConfig.distribution === DistributionType.RANDOM)
-        options.queuedPlayers.push(player);
 
       this.logger.debug(`Lobby options: ${JSON.stringify(options)}`);
 
@@ -216,6 +287,7 @@ export class CreateSubCommand {
           map,
         },
         text,
+        LobbyCommand.getDistributionTypeName(distribution),
       );
 
       // Save Lobby into MongoDB
@@ -227,6 +299,7 @@ export class CreateSubCommand {
         name,
         expires,
         lobby.status,
+        [],
         {
           categoryId: text.parentId,
           general: {

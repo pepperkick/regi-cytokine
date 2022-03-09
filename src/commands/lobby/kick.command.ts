@@ -45,22 +45,27 @@ export class KickSubCommand {
         lobby = await LobbyCommand.service.removePlayer(user.id, lobby._id);
 
         // Get the Lobby's attached message
-        const { messageId, channels, name } =
-          await LobbyCommand.service.getInternalLobbyById(lobby._id);
+        const iLobby = await LobbyCommand.service.getInternalLobbyById(
+          lobby._id,
+        );
+
+        // Mark them as AFK on the list.
+        iLobby.afk.find((player) => player.discord === user.id).afk = true;
+        await iLobby.save();
 
         const channel = (await interaction.guild.channels.fetch(
-            channels.general.textChannelId,
+            iLobby.channels.general.textChannelId,
           )) as TextChannel,
-          message = await channel.messages.fetch(messageId);
+          message = await channel.messages.fetch(iLobby.messageId);
 
         // Update the Lobby's embed
         await LobbyCommand.messaging.updateReply(lobby, message);
 
         // Send a success message to the kicker and one telling the kicked player.
         await channel.send({
-          content: `<@${user.id}> has been kicked from Lobby **${name}**. ${
-            reason ? `Reason: \`\`${reason}\`\`` : ''
-          }`,
+          content: `<@${user.id}> has been kicked from Lobby **${
+            iLobby.name
+          }**. ${reason ? `Reason: \`\`${reason}\`\`` : ''}`,
         });
 
         return await interaction.editReply({

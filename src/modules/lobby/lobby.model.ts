@@ -1,5 +1,6 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { Player } from 'src/objects/match-player.interface';
 
 @Schema()
 export class Lobby extends Document {
@@ -23,6 +24,10 @@ export class Lobby extends Document {
   // Status of this Lobby
   @Prop({ type: String })
   status: string;
+
+  // AFK Status of Players inside this Lobby
+  @Prop({ type: Array })
+  afk: Player[];
 
   // The region this lobby belongs to.
   @Prop({ type: String })

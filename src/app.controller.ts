@@ -18,6 +18,10 @@ export class AppController {
     await this.appService.updateInternalLobby(lobbyId, status);
 
     switch (status) {
+      case 'WAITING_FOR_AFK': {
+        await this.appService.lobbyNotifyWaitingForAfk(lobbyId, data);
+        break;
+      }
       case 'DISTRIBUTING': {
         await this.appService.lobbyNotifyDistributing(lobbyId);
         break;

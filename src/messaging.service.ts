@@ -11,12 +11,15 @@ import {
   TextChannel,
 } from 'discord.js';
 import { RawEmojiData } from 'discord.js/typings/rawDataTypes';
+import { LobbyCommand } from './commands/lobby.command';
+import { LobbyStatus } from './modules/lobby/lobby-status.enum';
 import { Lobby } from './modules/lobby/lobby.model';
 import { DistributionType } from './objects/distribution.enum';
 import { InteractionType } from './objects/interactions/interaction-types.enum';
 import { LobbyFormat } from './objects/lobby-format.interface';
 import { Player } from './objects/match-player.interface';
 import { RequirementName } from './objects/requirement-names.enum';
+import * as color from './objects/status-colors.enum';
 
 interface ReplyParameters {
   content?: string;
@@ -115,6 +118,34 @@ export class MessagingService {
   }
 
   /**
+   * Sends a message to the Lobby's general channel for players to confirm their non-AFK status.
+   * @param lobby The Cytokine Lobby document we're doing the AFK check for.
+   * @param channel The TextChannel we're sending the message to.
+   * @noreturn
+   */
+  async sendAFKCheck(lobby, channel: TextChannel) {
+    // Get the Lobby's player information.
+    const players = lobby.queuedPlayers
+      .map((player) => `:hourglass: <@${player.discord}> (${player.name})`)
+      .join('\n');
+
+    return channel.send({
+      content: `:hourglass: **AFK Check**\n\nPlease confirm that you are not AFK by clicking on the button below.\n${players}`,
+      components: [
+        new MessageActionRow({
+          components: [
+            new MessageButton({
+              label: 'I am not AFK',
+              style: 'SUCCESS',
+              customId: 'afk-check',
+            }),
+          ],
+        }),
+      ],
+    });
+  }
+
+  /**
    * Gets the display name of a requirement.
    * @param requirement The requirement name.
    * @returns The display name of a requirement.
@@ -124,8 +155,10 @@ export class MessagingService {
     switch (requirement) {
       case 'player':
         return 'Player';
-      case 'captain':
-        return 'Captain';
+      case 'captain-a':
+        return 'Captain (Team A)';
+      case 'captain-b':
+        return 'Captain (Team B)';
       case 'creator':
         return 'Lobby Owner';
       case 'team_a':
@@ -168,6 +201,26 @@ export class MessagingService {
         return 'Sniper (BLU)';
       case 'blu-spy':
         return 'Spy (BLU)';
+      case 'scout':
+        return 'Scout';
+      case 'soldier':
+        return 'Soldier';
+      case 'pyro':
+        return 'Pyro';
+      case 'demoman':
+        return 'Demoman';
+      case 'heavy':
+        return 'Heavy';
+      case 'engineer':
+        return 'Engineer';
+      case 'medic':
+        return 'Medic';
+      case 'sniper':
+        return 'Sniper';
+      case 'spy':
+        return 'Spy';
+      default:
+        return 'Unknown Role';
     }
   }
 
@@ -175,35 +228,45 @@ export class MessagingService {
    * Gets the RawEmoji of a requirement.
    * @param requirement The requirement name.
    * @returns The RawEmoji object of that requirement.
+   * @deprecated This will be switched with a highly configurable method on Regi-Cytokine's config file. For now this suffices.
    */
   getRequirementEmoji(requirement: string): RawEmojiData {
     switch (requirement as RequirementName) {
       case RequirementName.RED_SCOUT:
       case RequirementName.BLU_SCOUT:
+      case RequirementName.SCOUT:
         return { id: '946860689409056819', name: 'Scout', animated: false };
       case RequirementName.RED_SOLDIER:
       case RequirementName.BLU_SOLDIER:
+      case RequirementName.SOLDIER:
         return { id: '946860689522307083', name: 'Soldier', animated: false };
       case RequirementName.RED_PYRO:
       case RequirementName.BLU_PYRO:
+      case RequirementName.PYRO:
         return { id: '946860689694285945', name: 'Pyro', animated: false };
       case RequirementName.RED_DEMOMAN:
       case RequirementName.BLU_DEMOMAN:
+      case RequirementName.DEMOMAN:
         return { id: '946860690063380550', name: 'Demo', animated: false };
       case RequirementName.RED_HEAVY:
       case RequirementName.BLU_HEAVY:
+      case RequirementName.HEAVY:
         return { id: '946860689534890124', name: 'Heavy', animated: false };
       case RequirementName.RED_ENGINEER:
       case RequirementName.BLU_ENGINEER:
+      case RequirementName.ENGINEER:
         return { id: '946860689488760842', name: 'Engineer', animated: false };
       case RequirementName.RED_SNIPER:
       case RequirementName.BLU_SNIPER:
+      case RequirementName.SNIPER:
         return { id: '946860690033999910', name: 'Sniper', animated: false };
       case RequirementName.RED_MEDIC:
       case RequirementName.BLU_MEDIC:
+      case RequirementName.MEDIC:
         return { id: '946860689815900250', name: 'Medic', animated: false };
       case RequirementName.RED_SPY:
       case RequirementName.BLU_SPY:
+      case RequirementName.SPY:
         return { id: '946860689794932757', name: 'Spy', animated: false };
     }
   }
@@ -220,6 +283,13 @@ export class MessagingService {
     format: LobbyFormat | any,
     lobby,
   ): Promise<MessageActionRow[]> {
+    // If the Lobby's status is not in a component generation state, don't return anything.
+    if (
+      lobby.status != LobbyStatus.WAITING_FOR_REQUIRED_PLAYERS &&
+      lobby.status != LobbyStatus.PICKING
+    )
+      return [];
+
     switch (distribution) {
       case DistributionType.RANDOM:
         return [
@@ -242,7 +312,15 @@ export class MessagingService {
         ];
       case DistributionType.TEAM_ROLE_BASED: {
         // Format all the requirements into a menu keeping in mind missing requirements.
-        const options = format.requirements
+        let requirements;
+        if (format?.distribution instanceof Array)
+          requirements = format?.distribution.find(
+            (d) => d.type === distribution,
+          ).requirements;
+        // If it failed, it's because a Lobby object was passed in instead of a LobbyFormat object.
+        else requirements = format.requirements;
+
+        const options = requirements
           .filter((req) => {
             // Count how many players have filled this requirement on the lobby
             const filled = lobby.queuedPlayers.filter((player) =>
@@ -314,9 +392,14 @@ export class MessagingService {
     lobby,
     params: ReplyParameters,
     general: TextChannel,
+    distributionName?: string,
   ): Promise<string> {
+    const distribution = format.distribution.find(
+      (dist) => dist.type == lobby.distribution,
+    ).type as DistributionType;
+
     // Make a user list with all Discord tags.
-    const userList = this.generateUserList(lobby, {}, format.distribution);
+    const userList = this.generateUserList(lobby, {}, distribution);
 
     const embed = new MessageEmbed({
       title: `Lobby **${params.lobbyName}**`,
@@ -325,7 +408,7 @@ export class MessagingService {
       fields: [
         {
           name: 'Format & Info',
-          value: `🗒 **Format**: ${format.name}\n:bust_in_silhouette: **Max. Players**: ${format.maxPlayers}\n:cyclone: **Distribution**: ${format.distribution}\n:map: **Map**: ${params.map}`,
+          value: `🗒 **Format**: ${format.name}\n:bust_in_silhouette: **Max. Players**: ${format.maxPlayers}\n:cyclone: **Distribution**: ${distributionName}\n:map: **Map**: ${params.map}`,
           inline: true,
         },
         {
@@ -341,19 +424,18 @@ export class MessagingService {
         {
           name: '👥 Queued Players',
           value: `${lobby.queuedPlayers.length}/${format.maxPlayers}\n\n${
-            format.distribution === DistributionType.RANDOM ? userList : ''
+            distribution === DistributionType.RANDOM ? userList : ''
           }`,
           inline: false,
         },
       ],
     });
 
-    if (format.distribution !== DistributionType.RANDOM)
-      embed.fields.push(...userList);
+    if (distribution != DistributionType.RANDOM) embed.fields.push(...userList);
 
     // Create a Button row to queue up or leave the queue.
     const btnRows = await this.createDistributionComponent(
-      format.distribution,
+      distribution,
       format,
       lobby,
     );
@@ -393,6 +475,7 @@ export class MessagingService {
 
     // Update the fields that are outdated
     const embed = message.embeds[0];
+    embed.color = color[lobby.status];
 
     embed.fields[3] = {
       name: '👥 Queued Players',
@@ -413,7 +496,7 @@ export class MessagingService {
     // Create the new Select menu with full roles omitted
     const btnRows = await this.createDistributionComponent(
       lobby.distribution as DistributionType,
-      lobby, // Passing Lobby as format because both share the "requirements" property
+      lobby,
       lobby,
     );
 

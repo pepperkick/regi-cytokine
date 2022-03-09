@@ -1,8 +1,11 @@
 export enum LobbyStatus {
   UNKNOWN = 'UNKNOWN', // Match is in unknown status
   WAITING_FOR_REQUIRED_PLAYERS = 'WAITING_FOR_REQUIRED_PLAYERS', // Waiting for required players to join the match
-  CREATING_SERVER = 'CREATING_SERVER', // Server for this match is being created
-  WAITING = 'WAITING', // Waiting for players to join
-  LIVE = 'LIVE', // Match is live
-  FAILED = 'FAILED', // An error occurred during processing of the match
+  PICKING = 'PICKING', // Only on Captain based lobbies: Captains are picking players
+  WAITING_FOR_AFK = 'WAITING_FOR_AFK', // Waiting for the AFK check to finish
+  AFK_PASSED = 'AFK_PASSED', // AFK check passed
+  DISTRIBUTING = 'DISTRIBUTING', // Distributing the players among teams
+  DISTRIBUTED = 'DISTRIBUTED', // Distribution has completed
+  EXPIRED = 'EXPIRED', // The Lobby has expired
+  CLOSED = 'CLOSED', // Lobby has been closed by an admin/other
 }

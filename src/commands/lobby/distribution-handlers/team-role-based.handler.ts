@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Message, SelectMenuInteraction } from 'discord.js';
-import { Discord, SelectMenuComponent, SlashGroup } from 'discordx';
+import { Discord, SelectMenuComponent } from 'discordx';
 import { LobbyCommand } from 'src/commands/lobby.command';
 import { InteractionType } from 'src/objects/interactions/interaction-types.enum';
 import { Player } from 'src/objects/match-player.interface';

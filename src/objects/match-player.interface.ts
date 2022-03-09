@@ -5,4 +5,5 @@ export class Player {
   discord?: string;
   steam?: string;
   roles?: RequirementName[];
+  afk?: boolean;
 }
