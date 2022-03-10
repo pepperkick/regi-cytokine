@@ -139,9 +139,6 @@ export class LobbyService {
         },
       );
 
-      // Add the player to the Lobby's AFK status array
-      await this.addAfkPlayer(lobbyId, player);
-
       return data;
     } catch (error) {
       this.logger.error(error.response.data);
@@ -291,90 +288,6 @@ export class LobbyService {
         `Failed to close Lobby '${lobbyId}': ${error.response.data.error}`,
       );
       return error.response.data;
-    }
-  }
-
-  /**
-   * Sends a request to Cytokine with the results for the AFK check.
-   * @param lobbyId The ID of the Lobby the AFK check was done for.
-   * @param players The AFK status of the players in the Lobby.
-   * @returns An object with the status of the check and the newly updated Cytokine Lobby document.
-   */
-  async sendAfkStatus(lobbyId: string, players: Player[]): Promise<any> {
-    try {
-      const { data } = await axios.post(
-        `${config.cytokine.host}/api/v1/lobbies/${lobbyId}/afk`,
-        {
-          players,
-        },
-        {
-          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
-        },
-      );
-
-      return data;
-    } catch (e) {
-      this.logger.error(`Failed to send AFK status report: ${e}`);
-    }
-  }
-
-  /**
-   * Updates a player's AFK status inside the Internal Lobby document.
-   * @param lobbyId The Lobby we're updating the AFK status in.
-   * @param discord The Discord ID of the user.
-   * @param status Their new AFK status.
-   * @returns The updated Internal Lobby document.
-   */
-  async updateAfkStatus(
-    lobbyId: string,
-    discord: string,
-    status: boolean,
-  ): Promise<Lobby> {
-    // Get the Internal Lobby document
-    const lobby = await this.getInternalLobbyById(lobbyId);
-
-    if (!lobby) {
-      this.logger.error(
-        `Couldn't find internal lobby with ID ${lobbyId}: ${lobby}`,
-      );
-      return lobby;
-    }
-
-    // Find the player's AFK status and update it
-    lobby.afk.find((player) => player.discord === discord).afk = status;
-    lobby.markModified('afk');
-    return await lobby.save();
-  }
-
-  /**
-   * Adds a new player to the Internal Lobby document's AFK status.
-   * @param lobbyId The Lobby we're adding the AFK status in.
-   * @param player The Player object.
-   * @param remove Optional. If true, removes the player from the AFK status if found.
-   * @returns The updated Internal Lobby document.
-   */
-  async addAfkPlayer(lobbyId: string, player: Player | any): Promise<Lobby> {
-    // Get the Internal Lobby document
-    const lobby = await this.getInternalLobbyById(lobbyId);
-
-    if (!lobby) {
-      this.logger.error(
-        `Couldn't find internal lobby with ID ${lobbyId}: ${lobby}`,
-      );
-      return lobby;
-    }
-
-    // Add the player to the AFK status if he's not in already.
-    try {
-      if (!lobby.afk.find((p) => p.discord === player.discord)) {
-        player.afk = true;
-        lobby.afk.push(player);
-        lobby.markModified('afk');
-        return await lobby.save();
-      }
-      return lobby;
-    } catch (e) {
-      this.logger.error(`Failed to add AFK player from array: ${e}`);
     }
   }
 

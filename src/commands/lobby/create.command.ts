@@ -17,9 +17,8 @@ import { LobbyOptions } from 'src/modules/lobby/lobby-options.interface';
 import { LobbyService } from 'src/modules/lobby/lobby.service';
 import { Game } from 'src/objects/game.enum';
 import { LobbyFormat } from 'src/objects/lobby-format.interface';
-import { Player } from 'src/objects/match-player.interface';
 import { LobbyCommand } from '../lobby.command';
-import { Logger, Req } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { InteractionType } from 'src/objects/interactions/interaction-types.enum';
 import { RequirementName } from 'src/objects/requirement-names.enum';
 import { DistributionType } from 'src/objects/distribution.enum';
@@ -58,6 +57,12 @@ export class CreateSubCommand {
       type: 'STRING',
     })
     manualMap: string,
+    @SlashOption('afk-check', {
+      description:
+        '[OPTIONAL] Toggles the AFK check done after a Lobby has all required players. Default is true.',
+      required: false,
+    })
+    afkCheck: boolean,
     @SlashOption('valve-sdr', {
       description:
         '[OPTIONAL] Whether or not Valve SDR will be enabled on the server.',
@@ -227,6 +232,7 @@ export class CreateSubCommand {
           preference: {
             createLighthouseServer: true,
             gameConfig: cfg,
+            afkCheck: afkCheck === undefined || null ? true : afkCheck,
             valveSdr:
               valveSdr === undefined || null
                 ? LobbyCommand.service.getRegion(region).valveSdr
@@ -280,7 +286,7 @@ export class CreateSubCommand {
         formatConfig,
         lobby,
         {
-          content: ':white_check_mark: Successfully created lobby.',
+          content: ':hourglass: Waiting for players to queue up...',
           region,
           userId: interaction.user.id,
           lobbyName: name,

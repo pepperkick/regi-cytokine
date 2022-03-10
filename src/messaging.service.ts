@@ -11,7 +11,6 @@ import {
   TextChannel,
 } from 'discord.js';
 import { RawEmojiData } from 'discord.js/typings/rawDataTypes';
-import { LobbyCommand } from './commands/lobby.command';
 import { LobbyStatus } from './modules/lobby/lobby-status.enum';
 import { Lobby } from './modules/lobby/lobby.model';
 import { DistributionType } from './objects/distribution.enum';
@@ -20,7 +19,7 @@ import { LobbyFormat } from './objects/lobby-format.interface';
 import { Player } from './objects/match-player.interface';
 import { RequirementName } from './objects/requirement-names.enum';
 import * as color from './objects/status-colors.enum';
-
+import * as config from '../config.json';
 interface ReplyParameters {
   content?: string;
   ephemeral?: true;
@@ -130,7 +129,11 @@ export class MessagingService {
       .join('\n');
 
     return channel.send({
-      content: `:hourglass: **AFK Check**\n\nPlease confirm that you are not AFK by clicking on the button below.\n${players}`,
+      content: `:hourglass: **AFK Check** (:alarm_clock: ${(
+        config.lobbies.afkCheckTimeout / 60
+      ).toFixed(
+        2,
+      )} minute(s))\n\nPlease confirm that you are not AFK by clicking on the button below.\n${players}`,
       components: [
         new MessageActionRow({
           components: [
@@ -284,11 +287,7 @@ export class MessagingService {
     lobby,
   ): Promise<MessageActionRow[]> {
     // If the Lobby's status is not in a component generation state, don't return anything.
-    if (
-      lobby.status != LobbyStatus.WAITING_FOR_REQUIRED_PLAYERS &&
-      lobby.status != LobbyStatus.PICKING
-    )
-      return [];
+    if (lobby.status != LobbyStatus.WAITING_FOR_REQUIRED_PLAYERS) return [];
 
     switch (distribution) {
       case DistributionType.RANDOM:

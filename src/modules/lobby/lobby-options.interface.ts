@@ -50,6 +50,7 @@ export interface LobbyOptions {
     preference?: {
       requiredPlayers?: number;
       createLighthouseServer?: boolean;
+      afkCheck?: boolean;
       valveSdr?: boolean;
       gameConfig?: string;
     };

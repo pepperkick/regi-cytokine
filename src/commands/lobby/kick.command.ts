@@ -49,10 +49,6 @@ export class KickSubCommand {
           lobby._id,
         );
 
-        // Mark them as AFK on the list.
-        iLobby.afk.find((player) => player.discord === user.id).afk = true;
-        await iLobby.save();
-
         const channel = (await interaction.guild.channels.fetch(
             iLobby.channels.general.textChannelId,
           )) as TextChannel,

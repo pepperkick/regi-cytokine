@@ -53,6 +53,7 @@ export class TeamRoleBasedHandler {
 
     if (lobby.createdBy === interaction.user.id)
       player.roles.unshift(RequirementName.CREATOR);
+    if (!lobby.data.afkCheck) player.roles.unshift(RequirementName.ACTIVE);
 
     try {
       lobby = await LobbyCommand.service.addPlayer(player, lobbyId);

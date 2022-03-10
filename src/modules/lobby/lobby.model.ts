@@ -25,10 +25,6 @@ export class Lobby extends Document {
   @Prop({ type: String })
   status: string;
 
-  // AFK Status of Players inside this Lobby
-  @Prop({ type: Array })
-  afk: Player[];
-
   // The region this lobby belongs to.
   @Prop({ type: String })
   region: string;

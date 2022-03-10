@@ -59,8 +59,23 @@ export class AppService {
     return await this.lobbyService.getLobbyByMatchId(matchId);
   }
 
+  async lobbyNotifyWaitingForRequiredPlayers(lobby: any) {
+    // Get the Message object for this LobbyID
+    const { message } = await this.getMessage(lobby._id);
+
+    // If no message is found, do not do anything.
+    if (!message) return;
+
+    // Update the message embed color and content
+    await message.edit({
+      content: `:hourglass: Waiting for players to queue up...`,
+    });
+
+    return await this.messagingService.updateReply(lobby, message);
+  }
+
   /**
-   * Does a Lobby Notification for WAITING_FOR_AFK
+   * Does a Lobby Notification for WAITING_FOR_AFK_CHECK
    * Temporarily locks down Queueing at this instance.
    * At this point:
    *  - All required players have queued up.
@@ -82,13 +97,14 @@ export class AppService {
     );
 
     setTimeout(async () => {
-      // Get the AFK status saved on MongoDB
-      const iLobby = await this.lobbyService.getInternalLobbyById(lobbyId);
+      // Get the latest Lobby document for when the expiry moment is reached.
+      const lobby = await this.lobbyService.getLobbyById(lobbyId);
 
+      // Do not do anything if the Lobby has died on this time-span.
       if (
-        iLobby.status == 'CLOSED' ||
-        iLobby.status == 'FAILED' ||
-        iLobby.status == 'EXPIRED'
+        lobby.status == 'CLOSED' ||
+        lobby.status == 'FAILED' ||
+        lobby.status == 'EXPIRED'
       )
         return;
 
@@ -96,39 +112,32 @@ export class AppService {
         `Lobby ${lobbyId}'s AFK check expired. Checking if action is needed...`,
       );
 
-      // Cancel the AFK status check if all players aren't AFK when this timeout reaches
-      if (iLobby.afk.filter((player) => player.afk).length === 0) return;
-
-      // Send the request to Cytokine to see how the check went.
-      const result = await this.lobbyService.sendAfkStatus(lobbyId, iLobby.afk);
-
-      if (result.status) return;
-
-      this.logger.debug(
-        `Lobby ${lobbyId}'s AFK check failed. Lobby is now waiting for required players again.`,
+      // If there are AFK players, list them and remove them.
+      const afk = lobby.queuedPlayers.filter(
+        (p) => !p.roles.includes('active'),
       );
 
-      // Delete the AFK check message if it hasn't been deleted yet.
-      if (!afkMessage.deleted) await afkMessage.delete();
+      if (afk.length > 0) {
+        // Delete the original AFK check message.
+        if (!afkMessage.deleted) await afkMessage.delete();
 
-      // Update the message embed color and content
-      const failedAfk = iLobby.afk.filter((player) => player.afk);
-      await message.edit({
-        content: `:x: The previous AFK check has failed.\n\nThe following players failed to respond in time (or has been kicked) and have been removed from the queue:${failedAfk
-          .map((player) => `\n:x: <@${player.discord}> (${player.name})`)
-          .join('')}`,
-      });
-      await this.messagingService.updateReply(result.lobby, message);
-
-      // Update the internal Lobby to reset every player to a true AFK status and keep current players.
-      iLobby.afk = iLobby.afk.filter((player) => {
-        if (!player.afk) {
-          player.afk = true;
-          return player;
+        for (const player of afk) {
+          this.logger.debug(
+            `Removing AFK player ${player.discord} from lobby ${lobby._id}`,
+          );
+          await this.lobbyService.removePlayer(player.discord, lobby._id);
         }
-      });
 
-      await iLobby.save();
+        // Create a user list with AFK players.
+        const players = afk
+          .map((p) => `:x: <@${p.discord}> (${p.name})`)
+          .join('\n');
+
+        // Send a message to the Lobby's general channel saying which players have been removed from the queue for being AFK.
+        await (message.channel as TextChannel).send({
+          content: `@here\nThe following players have failed to confirm their AFK status in time and have been removed from the Lobby:\n${players}`,
+        });
+      }
     }, config.lobbies.afkCheckTimeout * 1000);
 
     return await message.edit({

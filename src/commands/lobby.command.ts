@@ -11,6 +11,8 @@ import { InteractionType } from 'src/objects/interactions/interaction-types.enum
 import { ButtonInteraction, Message } from 'discord.js';
 import { DistributionType } from 'src/objects/distribution.enum';
 
+import * as config from '../../config.json';
+
 @Discord()
 @SlashGroup({
   name: 'lobby',
@@ -40,8 +42,8 @@ export class LobbyCommand {
   }
 
   @ButtonComponent(InteractionType.AFK_CHECK)
-  async handleAFK(interaction: ButtonInteraction) {
-    // Defer reply
+  async handleAfk(interaction: ButtonInteraction) {
+    // Defer the reply
     await interaction.deferReply({ ephemeral: true });
 
     // Check in which Lobby this player is queued in.
@@ -51,60 +53,70 @@ export class LobbyCommand {
         (player) => player.discord === interaction.user.id,
       ),
     );
+    const player = lobby.queuedPlayers.find(
+      (p) => p.discord === interaction.user.id,
+    );
 
-    if (!lobby)
+    if (!lobby || !player)
       return await interaction.editReply({
         content: `:x: You are not queued in this Lobby.`,
       });
 
-    // If they've already marked they're not AFK, do not do anything.
-    const oldiLobby = await LobbyCommand.service.getInternalLobbyById(
-      lobby._id,
-    );
-    if (
-      oldiLobby.afk.find(
-        (player) => player.discord === interaction.user.id && !player.afk,
-      )
-    )
+    // Are they already non-AFK?
+    if (player.roles.includes('active'))
       return await interaction.editReply({
-        content: `:x: You've already marked you're not AFK!`,
+        content: `:x: You've already been marked as not AFK!`,
       });
 
-    // Update the message with the new content.
-    const iLobby = await LobbyCommand.service.updateAfkStatus(
-      lobby._id,
-      interaction.user.id,
-      false,
-    );
+    // Add their active role.
+    try {
+      const nLobby = await LobbyCommand.service.addRole(
+        lobby._id,
+        interaction.user.id,
+        'active',
+      );
 
-    const message = iLobby.afk
-      .map(
-        (afk) =>
-          `${afk.afk ? ':hourglass:' : ':white_check_mark:'} <@${
-            afk.discord
-          }> (${afk.name})`,
-      )
-      .join('\n');
+      // Generate a player list string based on 'active' and non-active status.
+      const playerList = nLobby.queuedPlayers
+          .map(
+            (p) =>
+              `${
+                p.roles.includes('active')
+                  ? ':white_check_mark:'
+                  : ':hourglass:'
+              } <@${p.discord}> (${p.name})`,
+          )
+          .join('\n'),
+        noAfk =
+          nLobby.queuedPlayers.filter((p) => !p.roles.includes('active'))
+            .length === 0;
 
-    const passed = iLobby.afk.filter((player) => player.afk).length === 0;
+      const message = {
+        content: `:hourglass: **AFK Check** (:alarm_clock: ${(
+          config.lobbies.afkCheckTimeout / 60
+        ).toFixed(2)} minute(s))\n\n${
+          noAfk
+            ? "All players have confirmed they're here!"
+            : 'Please confirm that you are not AFK by clicking on the button below.'
+        }.\n${playerList}`,
+      };
 
-    const params = {
-      content: passed
-        ? `:white_check_mark: All players have passed the AFK check!\n${message}`
-        : `:hourglass: **AFK Check**\n\nPlease confirm that you are not AFK by clicking on the button below.\n${message}`,
-    };
+      // If all players are active, remove the I am not AFK button (a.k.a. the message's components).
+      if (noAfk) message['components'] = [];
 
-    if (passed) {
-      await LobbyCommand.service.sendAfkStatus(lobby._id, iLobby.afk);
-      params['components'] = [];
+      // Edit the original message.
+      await (interaction.message as Message).edit(message);
+
+      // Send a confirmation one for the user who interacted.
+      return await interaction.editReply({
+        content: `:white_check_mark: Thanks for confirming! You may close this message.`,
+      });
+    } catch (e) {
+      this.logger.error(e);
+      return await interaction.editReply({
+        content: `:x: Something went wrong while marking you as not AFK: ${e}`,
+      });
     }
-
-    await (interaction.message as Message).edit(params);
-
-    // Tell the user they've successfully passed the AFK check.
-    return await interaction.editReply({
-      content: `:white_check_mark: Thanks for confirming!\nYou can close this message.`,
-    });
   }
 
   /**

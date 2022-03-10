@@ -2,6 +2,7 @@ export enum RequirementName {
   // Generic roles
   PLAYER = 'player',
   CREATOR = 'creator',
+  ACTIVE = 'active',
 
   // Roles for:
   //  - Team-Role Based Distribution
