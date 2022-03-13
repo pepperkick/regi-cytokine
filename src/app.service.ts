@@ -9,6 +9,7 @@ import { StatusColors as color } from './objects/status-colors.enum';
 
 import * as config from '../config.json';
 import { DistributionType } from './objects/distribution.enum';
+import { RequirementName } from './objects/requirement-names.enum';
 
 @Injectable()
 export class AppService {
@@ -100,13 +101,8 @@ export class AppService {
       // Get the latest Lobby document for when the expiry moment is reached.
       const lobby = await this.lobbyService.getLobbyById(lobbyId);
 
-      // Do not do anything if the Lobby has died on this time-span.
-      if (
-        lobby.status == 'CLOSED' ||
-        lobby.status == 'FAILED' ||
-        lobby.status == 'EXPIRED'
-      )
-        return;
+      // Do not do anything if the Lobby is not in the WAITING_FOR_AFK_CHECK state.
+      if (lobby.status != 'WAITING_FOR_AFK_CHECK') return;
 
       this.logger.debug(
         `Lobby ${lobbyId}'s AFK check expired. Checking if action is needed...`,
@@ -126,6 +122,20 @@ export class AppService {
             `Removing AFK player ${player.discord} from lobby ${lobby._id}`,
           );
           await this.lobbyService.removePlayer(player.discord, lobby._id);
+        }
+
+        // Unmark active status from already active players
+        for (const player of lobby.queuedPlayers) {
+          if (player.roles.includes('active')) {
+            this.logger.debug(
+              `Unmarking player ${player.discord} (${player.name}) as active...`,
+            );
+            await this.lobbyService.removeRole(
+              player.discord,
+              lobbyId,
+              RequirementName.ACTIVE,
+            );
+          }
         }
 
         // Create a user list with AFK players.
@@ -205,8 +215,38 @@ export class AppService {
     }
 
     // Update the Internal Lobby document
-    this.lobbyService.updateLobbyChannels(lobby._id, { A: teamA, B: teamB });
+    await this.lobbyService.updateLobbyChannels(lobby._id, {
+      A: teamA,
+      B: teamB,
+    });
 
+    // Move player's (if connected to any Voice Channel) to their team's Voice Channel
+    for (const player of lobby.queuedPlayers) {
+      // Get the Discord GuildMember
+      const member = await this.discordService.getMember(player.discord);
+
+      // If no member was found with this Discord ID (strange?) skip.
+      if (!member) continue;
+      // If the user isn't connected to any Voice Channel, skip.
+      if (!member.voice.channel) continue;
+
+      // Declare team booleans
+      // TODO: Deprecate this and only use TEAM_A and TEAM_B for team detection.
+      const isTeamA =
+          player.roles.includes('team_a') ||
+          player.roles.filter((r) => r.includes('red')).length > 0,
+        isTeamB =
+          player.roles.includes('team_b') ||
+          player.roles.filter((r) => r.includes('blu')).length > 0;
+
+      // If this player has a 'team_a' role, move to teamA.voice
+      await member.voice.setChannel(
+        isTeamA ? teamA.voice : isTeamB ? teamB.voice : null,
+        'Moved automatically to respective Team Channel for Lobby.',
+      );
+    }
+
+    // Update the embed
     switch (lobby.distribution as DistributionType) {
       case DistributionType.RANDOM: {
         // Create the embed fields with the team and channels displayed.

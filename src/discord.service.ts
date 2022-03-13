@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import {
   CategoryChannel,
+  GuildMember,
   Intents,
   Interaction,
   Message,
@@ -26,6 +27,22 @@ export class DiscordService {
    */
   public getClient(): Client {
     return this.bot;
+  }
+
+  /**
+   * Gets a Discord GuildMember being passed their ID.
+   * @param id The Discord ID of this user.
+   * @returns Null if not found, GuildMember object of the user if found.
+   */
+  async getMember(id: string): Promise<GuildMember | null> {
+    // Get the Guild
+    const guild = await this.bot.guilds.fetch(config.discord.guild);
+
+    // Find the user
+    const member = await guild.members.fetch(id);
+
+    // Return the user
+    return member ? member : null;
   }
 
   /**

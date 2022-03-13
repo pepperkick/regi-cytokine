@@ -191,6 +191,30 @@ export class LobbyService {
   }
 
   /**
+   * Removes a role from a player inside a Lobby
+   * @param playerId The player Discord ID
+   * @param lobbyId The Lobby ID to remove the role from
+   * @param role The role to remove from the player
+   * @returns The updated lobby Document
+   */
+  async removeRole(playerId: string, lobbyId: string, role: RequirementName) {
+    try {
+      const { data } = await axios.delete(
+        `${config.cytokine.host}/api/v1/lobbies/${lobbyId}/players/discord/${playerId}/roles/${role}`,
+        {
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
+        },
+      );
+
+      return data;
+    } catch (error) {
+      this.logger.error(
+        `Player '${playerId}' request for removal of role ${role} from Lobby '${lobbyId}' failed: ${error}`,
+      );
+    }
+  }
+
+  /**
    * Gets the server info for a Match.
    * @param matchId The ID of the Match to get the server info for.
    * @returns The server information from Lighthouse.
