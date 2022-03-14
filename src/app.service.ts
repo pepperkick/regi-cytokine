@@ -226,9 +226,17 @@ export class AppService {
       const member = await this.discordService.getMember(player.discord);
 
       // If no member was found with this Discord ID (strange?) skip.
-      if (!member) continue;
+      if (!member) {
+        this.logger.debug(`Couldn't find Discord Member for ${player.discord}`);
+        continue;
+      }
       // If the user isn't connected to any Voice Channel, skip.
-      if (!member.voice.channel) continue;
+      if (!member.voice.channel) {
+        this.logger.debug(
+          `${player.discord} isn't connected to any Voice Channel`,
+        );
+        continue;
+      }
 
       // Declare team booleans
       // TODO: Deprecate this and only use TEAM_A and TEAM_B for team detection.

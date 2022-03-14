@@ -290,7 +290,11 @@ export class DiscordService {
   private async run() {
     // Create a new Discord client
     this.bot = new Client({
-      intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
+      intents: [
+        Intents.FLAGS.GUILDS,
+        Intents.FLAGS.GUILD_MESSAGES,
+        Intents.FLAGS.GUILD_MEMBERS,
+      ],
       botGuilds: [config.discord.guild],
     });
 
