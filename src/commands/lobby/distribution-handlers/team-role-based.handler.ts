@@ -38,7 +38,7 @@ export class TeamRoleBasedHandler {
       interaction.user.id,
     );
 
-    if (!kaiend)
+    if (kaiend?.error)
       return await interaction.editReply({
         content: `:x: Failed to queue into lobby: \`\`${kaiend.message}\`\`\n\nPlease link your **Steam** and **Discord** accounts here to proceed: <https://api.qixalite.com/accounts/login/discord>`,
       });
