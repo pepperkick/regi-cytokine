@@ -12,6 +12,7 @@ import { ButtonInteraction, Message } from 'discord.js';
 import { DistributionType } from 'src/objects/distribution.enum';
 
 import * as config from '../../config.json';
+import { RandomisedHandler } from './lobby/distribution-handlers/randomised.handler';
 
 @Discord()
 @SlashGroup({
@@ -25,6 +26,7 @@ import * as config from '../../config.json';
     StatusSubCommand,
     KickSubCommand,
 
+    RandomisedHandler,
     TeamRoleBasedHandler,
   ],
 })
@@ -53,7 +55,7 @@ export class LobbyCommand {
         (player) => player.discord === interaction.user.id,
       ),
     );
-    const player = lobby.queuedPlayers.find(
+    const player = lobby?.queuedPlayers.find(
       (p) => p.discord === interaction.user.id,
     );
 

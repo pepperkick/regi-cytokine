@@ -39,7 +39,7 @@ export class MessagingService {
    * @param lobby The Lobby object from Cytokine.
    * @param params Optional parameters.
    * @param distribution Optional. The Distribution method set on this lobby.
-   * @returns A string with the user list from the Lobby in its correct format.
+   * @returns An array of EmbedFields with updated player data.
    */
   generateUserList(
     lobby,
@@ -48,9 +48,94 @@ export class MessagingService {
     },
     distribution?: DistributionType,
   ) {
+    const fields = [];
+
     // Different format per distribution method
     switch (distribution) {
       case DistributionType.RANDOM: {
+        // If it's been distributed, do this per-team
+        if (params?.distributed) {
+          for (const role of lobby.requirements) {
+            // Get players on this role
+            const players = lobby.queuedPlayers.filter((p) =>
+              p.roles.includes(role.name as RequirementName),
+            );
+
+            // Now separate them onto teams.
+            const teamA = [],
+              teamB = [];
+            for (const player of players) {
+              if (player.roles.includes(RequirementName.TEAM_A))
+                teamA.push(player);
+              else if (player.roles.includes(RequirementName.TEAM_B))
+                teamB.push(player);
+            }
+
+            // Build the role fields for each team.
+            let emoji = this.getRequirementEmoji(`red-${role.name}`);
+
+            fields.push({
+              name: `<:${emoji?.name}:${
+                emoji?.id
+              }> ${this.getRequirementDisplayName(`red-${role.name}`)} [${
+                teamA.length
+              }/${role.count}]`,
+              value:
+                teamA.length > 0
+                  ? teamA.map((p) => `<@${p.discord}>`).join('\n')
+                  : 'Empty',
+              inline: true,
+            });
+
+            emoji = this.getRequirementEmoji(`blu-${role.name}`);
+
+            fields.push({
+              name: `<:${emoji?.name}:${
+                emoji?.id
+              }> ${this.getRequirementDisplayName(`blu-${role.name}`)} [${
+                teamB.length
+              }/${role.count}]`,
+              value:
+                teamB.length > 0
+                  ? teamB.map((p) => `<@${p.discord}>`).join('\n')
+                  : 'Empty',
+              inline: true,
+            });
+          }
+        } else {
+          // Make an array of all the role requirements
+          const roles = lobby.requirements;
+          for (const role of roles) {
+            if (role.count < 1) continue;
+
+            // Get the players in this role
+            const players = lobby.queuedPlayers.filter((player: Player) =>
+              player.roles.includes(role.name as RequirementName),
+            );
+
+            // Generate the string
+            const playerList = players.map(
+              (player: Player) => `<@${player.discord}>`,
+            );
+
+            // Add the role to the fields
+            const emoji = this.getRequirementEmoji(role.name);
+
+            fields.push({
+              name: `<:${emoji?.name}:${
+                emoji?.id
+              }> ${this.getRequirementDisplayName(role.name)} [${
+                playerList.length
+              }/${role.count}]`,
+              value: playerList.length > 0 ? playerList.join('\n') : 'Empty',
+              inline: true,
+            });
+          }
+        }
+
+        break;
+
+        /* wonder who wrote this code LMAO (probably a dumb person)
         if (params?.distributed) {
           const A = lobby.queuedPlayers.filter((user: Player) =>
               user.roles.includes(RequirementName.TEAM_A),
@@ -64,12 +149,9 @@ export class MessagingService {
             .map((user: Player) => {
               return `<@${user.discord}>`;
             })
-            .join('\n');
+            .join('\n');*/
       }
       case DistributionType.TEAM_ROLE_BASED: {
-        // Have a set of 2 columns with each class and team listed
-        const fields = [];
-
         // Make an array of all the role requirements
         const roles = lobby.requirements;
         let count = 1;
@@ -109,11 +191,11 @@ export class MessagingService {
           count++;
         }
 
-        // for (const field of fields) this.logger.debug(field);
-
-        return fields;
+        break;
       }
     }
+
+    return fields;
   }
 
   /**
@@ -236,41 +318,59 @@ export class MessagingService {
   getRequirementEmoji(requirement: string): RawEmojiData {
     switch (requirement as RequirementName) {
       case RequirementName.RED_SCOUT:
+        return { id: '953382922621157476', name: 'REDScout' };
       case RequirementName.BLU_SCOUT:
+        return { id: '953382893856641075', name: 'BLUScout' };
       case RequirementName.SCOUT:
-        return { id: '946860689409056819', name: 'Scout', animated: false };
+        return { id: '953382870179778600', name: 'Scout' };
       case RequirementName.RED_SOLDIER:
+        return { id: '953382922541482094', name: 'REDSoldier' };
       case RequirementName.BLU_SOLDIER:
+        return { id: '953382894225739816', name: 'BLUSoldier' };
       case RequirementName.SOLDIER:
-        return { id: '946860689522307083', name: 'Soldier', animated: false };
+        return { id: '953382870263672923', name: 'Soldier' };
       case RequirementName.RED_PYRO:
+        return { id: '953382922541482064', name: 'REDPyro' };
       case RequirementName.BLU_PYRO:
+        return { id: '953382894095728730', name: 'BLUPyro' };
       case RequirementName.PYRO:
-        return { id: '946860689694285945', name: 'Pyro', animated: false };
+        return { id: '953382870137843723', name: 'Pyro' };
       case RequirementName.RED_DEMOMAN:
+        return { id: '953382922277224498', name: 'REDDemo' };
       case RequirementName.BLU_DEMOMAN:
+        return { id: '953382893898588201', name: 'BLUDemo' };
       case RequirementName.DEMOMAN:
-        return { id: '946860690063380550', name: 'Demo', animated: false };
+        return { id: '953382870070747256', name: 'Demo' };
       case RequirementName.RED_HEAVY:
+        return { id: '953382922222723132', name: 'REDHeavy' };
       case RequirementName.BLU_HEAVY:
+        return { id: '953382894150250497', name: 'BLUHeavy' };
       case RequirementName.HEAVY:
-        return { id: '946860689534890124', name: 'Heavy', animated: false };
+        return { id: '953382870293053470', name: 'Heavy' };
       case RequirementName.RED_ENGINEER:
+        return { id: '953382921878782004', name: 'REDEngineer' };
       case RequirementName.BLU_ENGINEER:
+        return { id: '953382893688877158', name: 'BLUEngineer' };
       case RequirementName.ENGINEER:
-        return { id: '946860689488760842', name: 'Engineer', animated: false };
+        return { id: '953382870121054259', name: 'Engineer' };
       case RequirementName.RED_SNIPER:
+        return { id: '953382922637967470', name: 'REDSniper' };
       case RequirementName.BLU_SNIPER:
+        return { id: '953382894192193546', name: 'BLUSniper' };
       case RequirementName.SNIPER:
-        return { id: '946860690033999910', name: 'Sniper', animated: false };
+        return { id: '953382870418870332', name: 'Sniper' };
       case RequirementName.RED_MEDIC:
+        return { id: '953382922457591828', name: 'REDMedic' };
       case RequirementName.BLU_MEDIC:
+        return { id: '953382894192181350', name: 'BLUMedic' };
       case RequirementName.MEDIC:
-        return { id: '946860689815900250', name: 'Medic', animated: false };
+        return { id: '953382870272073748', name: 'Medic' };
       case RequirementName.RED_SPY:
+        return { id: '953382922453393460', name: 'REDSpy' };
       case RequirementName.BLU_SPY:
+        return { id: '953382894175387678', name: 'BLUSpy' };
       case RequirementName.SPY:
-        return { id: '946860689794932757', name: 'Spy', animated: false };
+        return { id: '953382872805421107', name: 'Spy' };
     }
   }
 
@@ -289,17 +389,40 @@ export class MessagingService {
     // If the Lobby's status is not in a component generation state, don't return anything.
     if (lobby.status != LobbyStatus.WAITING_FOR_REQUIRED_PLAYERS) return [];
 
+    // Format all the requirements into a menu keeping in mind missing requirements.
+    let requirements;
+    if (format?.distribution instanceof Array)
+      requirements = format?.distribution.find(
+        (d) => d.type === distribution,
+      ).requirements;
+    // If it failed, it's because a Lobby object was passed in instead of a LobbyFormat object.
+    else requirements = format.requirements;
+
     switch (distribution) {
-      case DistributionType.RANDOM:
-        return [
+      case DistributionType.RANDOM: {
+        const options = this.getRequirementList(requirements, lobby);
+
+        // Add the SelectMenu only if there is at least one option for a player to choose.
+        const rows = [];
+        if (options.length > 0) {
+          rows.push(
+            new MessageActionRow({
+              components: [
+                new MessageSelectMenu({
+                  placeholder: 'Select your class...',
+                  customId: InteractionType.ROLE_SELECT,
+                  minValues: 1,
+                  maxValues: 1,
+                  options,
+                }),
+              ],
+            }),
+          );
+        }
+
+        rows.push(
           new MessageActionRow({
             components: [
-              new MessageButton({
-                label: 'Queue up',
-                customId: InteractionType.QUEUE,
-                style: 'SUCCESS',
-                emoji: '✍',
-              }),
               new MessageButton({
                 label: 'Unqueue',
                 customId: InteractionType.UNQUEUE,
@@ -308,37 +431,12 @@ export class MessagingService {
               }),
             ],
           }),
-        ];
+        );
+
+        return rows;
+      }
       case DistributionType.TEAM_ROLE_BASED: {
-        // Format all the requirements into a menu keeping in mind missing requirements.
-        let requirements;
-        if (format?.distribution instanceof Array)
-          requirements = format?.distribution.find(
-            (d) => d.type === distribution,
-          ).requirements;
-        // If it failed, it's because a Lobby object was passed in instead of a LobbyFormat object.
-        else requirements = format.requirements;
-
-        const options = requirements
-          .filter((req) => {
-            // Count how many players have filled this requirement on the lobby
-            const filled = lobby.queuedPlayers.filter((player) =>
-              player.roles.includes(req.name),
-            );
-
-            // If it's not full, list it.
-            return filled.length < req.count;
-          })
-          .map((opt) => {
-            const label = this.getRequirementDisplayName(opt.name);
-
-            return {
-              label,
-              description: `Click here to occupy the ${label} class!`,
-              value: `${opt.name}|${lobby._id}`,
-              emoji: this.getRequirementEmoji(opt.name),
-            };
-          });
+        const options = this.getRequirementList(requirements, lobby);
 
         // If there are no options, do not return a MessageSelectMenu
         const actionRows = [];
@@ -373,6 +471,35 @@ export class MessagingService {
         return actionRows;
       }
     }
+  }
+
+  /**
+   * Generates a list of options for a SelectMenu with available roles in the Lobby for users to select from.
+   * @param requirements The list of requirements in the Lobby.
+   * @param lobby The Cytokine Lobby document.
+   * @returns Array of options for a SelectMenu Discord component.
+   */
+  getRequirementList(requirements, lobby: any) {
+    return requirements
+      .filter((req) => {
+        // Count how many players have filled this requirement on the lobby
+        const filled = lobby.queuedPlayers.filter((player) =>
+          player.roles.includes(req.name),
+        );
+
+        // If it's not full, list it.
+        return filled.length < req.count;
+      })
+      .map((opt) => {
+        const label = this.getRequirementDisplayName(opt.name);
+
+        return {
+          label,
+          description: `Click here to occupy the ${label} class!`,
+          value: `${opt.name}|${lobby._id}`,
+          emoji: this.getRequirementEmoji(opt.name),
+        };
+      });
   }
 
   /**
@@ -422,15 +549,12 @@ export class MessagingService {
         },
         {
           name: '👥 Queued Players',
-          value: `${lobby.queuedPlayers.length}/${format.maxPlayers}\n\n${
-            distribution === DistributionType.RANDOM ? userList : ''
-          }`,
+          value: `${lobby.queuedPlayers.length}/${format.maxPlayers}`,
           inline: false,
         },
+        ...userList,
       ],
     });
-
-    if (distribution != DistributionType.RANDOM) embed.fields.push(...userList);
 
     // Create a Button row to queue up or leave the queue.
     const btnRows = await this.createDistributionComponent(
@@ -478,19 +602,11 @@ export class MessagingService {
 
     embed.fields[3] = {
       name: '👥 Queued Players',
-      value: `${lobby.queuedPlayers.length}/${lobby.maxPlayers}\n\n${
-        (lobby.distribution as DistributionType) === DistributionType.RANDOM
-          ? userList
-          : ''
-      }`,
+      value: `${lobby.queuedPlayers.length}/${lobby.maxPlayers}`,
       inline: false,
     };
-
-    if ((lobby.distribution as DistributionType) !== DistributionType.RANDOM) {
-      // Delete old fields and add the new ones
-      embed.fields.splice(4, embed.fields.length - 4);
-      embed.fields.push(...userList);
-    }
+    embed.fields.splice(4, embed.fields.length - 4);
+    embed.fields.push(...userList);
 
     // Create the new Select menu with full roles omitted
     const btnRows = await this.createDistributionComponent(

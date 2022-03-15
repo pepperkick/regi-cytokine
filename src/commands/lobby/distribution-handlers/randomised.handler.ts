@@ -6,31 +6,25 @@ import { InteractionType } from 'src/objects/interactions/interaction-types.enum
 import { Player } from 'src/objects/match-player.interface';
 import { RequirementName } from 'src/objects/requirement-names.enum';
 
-/**
- * Purpose: This file manages the team role based distribution of roles on a Lobby with set distribution method.
- *
- * Handles queuing players to a lobby of this type.
- */
 @Discord()
-export class TeamRoleBasedHandler {
-  private readonly logger: Logger = new Logger(TeamRoleBasedHandler.name);
+export class RandomisedHandler {
+  private readonly logger: Logger = new Logger(RandomisedHandler.name);
 
-  @SelectMenuComponent(InteractionType.TEAM_ROLE_SELECT)
-  async handleTeamRoleSelect(interaction: SelectMenuInteraction) {
-    // A player has selected a role and a team.
-    // Defer reply
+  @SelectMenuComponent(InteractionType.ROLE_SELECT)
+  async handleRole(interaction: SelectMenuInteraction) {
+    // Player has selected their desired role (no team enforcement)
     await interaction.deferReply({ ephemeral: true });
 
-    // Sugar syntax (yes, don't worry lmao)
+    // Get our needed values to work with their selection.
     const [role, lobbyId] = interaction.values?.[0].split('|') ?? [];
 
-    // Get the lobby
+    // Get the Lobby they're trying to queue in
     let lobby = await LobbyCommand.service.getLobbyById(lobbyId);
 
-    // Did we find the lobby?
+    // Lobby wasn't found? Reply with the error.
     if (!lobby)
       return await interaction.editReply({
-        content: `:x: Failed to join the Lobby: \`\`Could not find Lobby\`\``,
+        content: `:x: Failed to join this lobby: \`\`Could not find Lobby\`\``,
       });
 
     // Get Kaiend data for their Steam profile. If they're not linked, it means they can't queue.
@@ -57,6 +51,11 @@ export class TeamRoleBasedHandler {
 
     try {
       lobby = await LobbyCommand.service.addPlayer(player, lobbyId);
+
+      if (!lobby)
+        return await interaction.editReply({
+          content: `:x: Failed to queue you into the Lobby: \`\`The role you're trying to queue as is already taken/full.\`\``,
+        });
 
       // Update the Lobby's embed to reflect the new roles
       await LobbyCommand.messaging.updateReply(

@@ -255,54 +255,27 @@ export class AppService {
     }
 
     // Update the embed
-    switch (lobby.distribution as DistributionType) {
-      case DistributionType.RANDOM: {
-        // Create the embed fields with the team and channels displayed.
-        // Remove queued players from the embed fields.
-        delete embed.fields[3];
+    // The user list is the actual embed fields.
+    embed.fields.splice(3, embed.fields.length - 3);
 
-        // Add the new fields to the embed.
-        embed.fields.splice(3, 0, {
-          name: `:red_circle: ${config.lobbies.teams.A.voice}`,
-          value: `${
-            players.A.length > 0
-              ? players.A.map((user: Player) => `<@${user.discord}>`).join('\n')
-              : 'Team is empty.'
-          }\n\n<#${teamA.text.id}>\n<#${teamA.voice.id}>`,
-          inline: true,
-        });
-        embed.fields.splice(4, 0, {
-          name: `:blue_circle: ${config.lobbies.teams.B.voice}`,
-          value: `${
-            players.B.length > 0
-              ? players.B.map((user: Player) => `<@${user.discord}>`).join('\n')
-              : 'Team is empty.'
-          }\n\n<#${teamB.text.id}>\n<#${teamB.voice.id}>`,
-          inline: true,
-        });
-        embed.fields.join();
-
-        break;
-      }
-      case DistributionType.TEAM_ROLE_BASED: {
-        // The user list is the actual embed fields.
-        embed.fields.splice(3, embed.fields.length - 3);
-
-        embed.fields.push(
-          ...players,
-          {
-            name: `:red_circle: ${config.lobbies.teams.A.voice}`,
-            value: `<#${teamA.text.id}>\n<#${teamA.voice.id}>`,
-            inline: true,
-          },
-          {
-            name: `:blue_circle: ${config.lobbies.teams.B.voice}`,
-            value: `<#${teamA.text.id}>\n<#${teamA.voice.id}>`,
-            inline: true,
-          },
-        );
-      }
-    }
+    embed.fields.push(
+      ...players,
+      {
+        name: '\u200b',
+        value: '\u200b',
+        inline: false,
+      },
+      {
+        name: `:red_circle: ${config.lobbies.teams.A.voice}`,
+        value: `<#${teamA.text.id}>\n<#${teamA.voice.id}>`,
+        inline: true,
+      },
+      {
+        name: `:blue_circle: ${config.lobbies.teams.B.voice}`,
+        value: `<#${teamA.text.id}>\n<#${teamA.voice.id}>`,
+        inline: true,
+      },
+    );
 
     return await message.edit({
       content:
