@@ -220,20 +220,32 @@ export class AppService {
       B: teamB,
     });
 
+    // Get the Discord GuildMembers
+    const members = await this.discordService.getMembers(
+      lobby.queuedPlayers.map((p) => p.discord),
+    );
+    if (!members) {
+      this.logger.error(`Failed to fetch members for ${lobby.name}`);
+    } else {
+      this.logger.debug(`Fetched ${members.size} members for ${lobby.name}`);
+    }
+
     // Move player's (if connected to any Voice Channel) to their team's Voice Channel
     for (const player of lobby.queuedPlayers) {
-      // Get the Discord GuildMember
-      const member = await this.discordService.getMember(player.discord);
+      const member = members?.get(player.discord);
 
       // If no member was found with this Discord ID (strange?) skip.
       if (!member) {
-        this.logger.debug(`Couldn't find Discord Member for ${player.discord}`);
+        this.logger.debug(
+          `Could not find Discord Member for ${player.discord}`,
+        );
         continue;
       }
+
       // If the user isn't connected to any Voice Channel, skip.
       if (!member.voice.channel) {
         this.logger.debug(
-          `${player.discord} isn't connected to any Voice Channel`,
+          `${player.discord} is not connected to any Voice Channel`,
         );
         continue;
       }
@@ -249,9 +261,13 @@ export class AppService {
 
       // If this player has a 'team_a' role, move to teamA.voice
       setTimeout(async () => {
+        const channel = isTeamA ? teamA.voice : isTeamB ? teamB.voice : null;
         await member.voice.setChannel(
-          isTeamA ? teamA.voice : isTeamB ? teamB.voice : null,
+          channel,
           'Moved automatically to respective Team Channel for Lobby.',
+        );
+        this.logger.debug(
+          `Moved ${player.discord} to voice channel ${channel.id}`,
         );
       }, 500);
     }

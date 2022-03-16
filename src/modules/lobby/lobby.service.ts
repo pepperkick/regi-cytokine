@@ -425,7 +425,7 @@ export class LobbyService {
     const cfg = format.mapTypes.find((m) => m.name === mType);
 
     // Set the default expiry time if not set
-    if (!cfg.expires) cfg.expires = config.lobbies.defaultExpiry;
+    if (!cfg?.expires) cfg.expires = config.lobbies.defaultExpiry;
 
     // Return the config
     return cfg;

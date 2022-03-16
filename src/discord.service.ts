@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import {
   CategoryChannel,
+  Collection,
   GuildMember,
   Intents,
   Interaction,
@@ -30,6 +31,27 @@ export class DiscordService {
   }
 
   /**
+   * Gets array of Discord GuildMember being passed their IDs.
+   * @param ids Array of Discord User IDs.
+   * @returns Null if not found, GuildMember object of the user if found.
+   */
+  async getMembers(
+    ids: string[],
+  ): Promise<Collection<string, GuildMember> | null> {
+    // Get the Guild
+    const guild = await this.bot.guilds.fetch(config.discord.guild);
+
+    // Find the users
+    const members = await guild.members.fetch({
+      user: ids,
+      force: true,
+    });
+
+    // Return the users
+    return members ? members : null;
+  }
+
+  /**
    * Gets a Discord GuildMember being passed their ID.
    * @param id The Discord ID of this user.
    * @returns Null if not found, GuildMember object of the user if found.
@@ -39,7 +61,11 @@ export class DiscordService {
     const guild = await this.bot.guilds.fetch(config.discord.guild);
 
     // Find the user
-    const member = await guild.members.fetch(id);
+    const member = await guild.members.fetch({
+      user: id,
+      force: true,
+      limit: 1,
+    });
 
     // Return the user
     return member ? member : null;
