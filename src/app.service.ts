@@ -225,9 +225,11 @@ export class AppService {
       lobby.queuedPlayers.map((p) => p.discord),
     );
     if (!members) {
-      this.logger.error(`Failed to fetch members for ${lobby.name}`);
+      this.logger.error(`Failed to fetch members for lobby ${lobby._id}`);
     } else {
-      this.logger.debug(`Fetched ${members.size} members for ${lobby.name}`);
+      this.logger.debug(
+        `Fetched ${members.size} members for lobby ${lobby._id}`,
+      );
     }
 
     // Move player's (if connected to any Voice Channel) to their team's Voice Channel
@@ -242,6 +244,7 @@ export class AppService {
         continue;
       }
 
+      this.logger.debug(JSON.stringify(member.voice));
       // If the user isn't connected to any Voice Channel, skip.
       if (!member.voice.channel) {
         this.logger.debug(
