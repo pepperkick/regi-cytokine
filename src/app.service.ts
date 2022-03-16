@@ -248,10 +248,12 @@ export class AppService {
           player.roles.filter((r) => r.includes('blu')).length > 0;
 
       // If this player has a 'team_a' role, move to teamA.voice
-      await member.voice.setChannel(
-        isTeamA ? teamA.voice : isTeamB ? teamB.voice : null,
-        'Moved automatically to respective Team Channel for Lobby.',
-      );
+      setTimeout(async () => {
+        await member.voice.setChannel(
+          isTeamA ? teamA.voice : isTeamB ? teamB.voice : null,
+          'Moved automatically to respective Team Channel for Lobby.',
+        );
+      }, 500);
     }
 
     // Update the embed
