@@ -269,7 +269,7 @@ export class AppService {
         this.logger.debug(
           `Moved ${player.discord} to voice channel ${channel.id}`,
         );
-      }, 2000);
+      }, config.lobbies.moveDelay * 1000);
     }
 
     // Update the embed

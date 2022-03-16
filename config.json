@@ -24,6 +24,7 @@
         "lobbyVoicePrefix": "Lobby ",
         "defaultExpiry": 1800,
         "afkCheckTimeout": 60,
+        "moveDelay": 1,
         "names": [
             "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda", "Mu", "Nu", "Xi", "Omicron", "Pi", "Rho", "Sigma", "Tau", "Upsilon", "Phi", "Chi", "Psi", "Omega",
             "Scout", "Soldier", "Pyro", "Demo", "Heavy", "Engineer", "Medic", "Sniper", "Spy",
@@ -110,7 +111,7 @@
                 {
                     "type": "RANDOM",
                     "requirements": [
-                        { "name": "player", "count": 2 }
+                        { "name": "scout", "count": 2 }
                     ]
                 },
                 {
