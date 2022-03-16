@@ -3,7 +3,6 @@ import {
   AutocompleteInteraction,
   ButtonInteraction,
   CommandInteraction,
-  InteractionCollector,
   Message,
   MessageActionRow,
   MessageButton,
@@ -20,7 +19,6 @@ import { LobbyStatus } from 'src/modules/lobby/lobby-status.enum';
 import { InteractionType } from 'src/objects/interactions/interaction-types.enum';
 import { Player } from 'src/objects/match-player.interface';
 import { RequirementName } from 'src/objects/requirement-names.enum';
-import { arrayBuffer } from 'stream/consumers';
 import { LobbyCommand } from '../lobby.command';
 
 @Discord()

@@ -250,64 +250,51 @@ export class DiscordService {
    * Sends the server details to the general lobby channel.
    */
   async sendServerDetails(channel: TextChannel, server) {
+    // Build the details' strings
+    const connect = `connect ${
+      server.data.sdrEnable ? server.data.sdrIp : server.ip
+    }:${server.data.sdrEnable ? server.data.sdrPort : server.port};${
+      server.data.password.length > 0
+        ? ` password ${server.data.password};`
+        : ''
+    }`;
+    const tvConnect = `connect ${
+      server.data.sdrEnable ? server.data.sdrIp : server.ip
+    }:${server.data.sdrEnable ? server.data.sdrTvPort : server.data.tvPort}};${
+      server.data.tvPassword.length > 0
+        ? ` password ${server.data.tvPassword}`
+        : ''
+    }`;
+
     // Create the embed.
     const embed = new MessageEmbed({
-      title: 'Cytokine Match Details',
-      description:
-        'Be sure to join your respective **voice channels** before joining the server.',
-      color: 0x37ef09,
+      title: 'Match Details',
+      description: `The server details for this match are ready\n**Connect String**\`\`${connect}\`\`\n**SourceTV Details**\`\`${tvConnect}\`\``,
+      footer: {
+        text: `Kindest Regards, Qixalite • ${new Date().toLocaleDateString(
+          'en-US',
+        )}`,
+      },
       fields: [
         {
-          name: `✍️ Manual Connect`,
-          value: `Paste this into your game console.\n\n\`\`connect ${
-            server.data.sdrEnable ? server.data.sdrIp : server.ip
-          }:${server.data.sdrEnable ? server.data.sdrPort : server.port}; ${
-            server.data.password.length > 0
-              ? `password ${server.data.password}`
-              : ''
-          }\`\``,
-          inline: true,
-        },
-        {
-          name: `🔗 Link Connect`,
-          value: `Click to join instantly!\n\nsteam://connect/${server.ip}:${
-            server.port
-          }/${
-            server.data.password.length > 0 ? `${server.data.password}` : ''
-          }`,
-          inline: true,
-        },
-        {
-          name: `📄 Server Details`,
-          value: `**IP:** ${server.ip}:${server.port}\n**Password:** ${
-            server.data.password.length > 0
-              ? `${server.data.password}`
-              : 'No Password'
-          }`,
-          inline: true,
-        },
-        {
-          name: `🎥 SourceTV`,
-          value: `In case you wish to spectate the lobby, these are the **SourceTV** details.\n\n\`\`connect ${
-            server.data.sdrEnable ? server.data.sdrIp : server.ip
-          }:${
-            server.data.sdrEnable ? server.data.sdrTvPort : server.data.tvPort
-          }; ${
-            server.data.tvPassword.length > 0
-              ? `password ${server.data.tvPassword}`
-              : ''
-          }\`\``,
+          name: 'Region',
+          value: `\`${server.region}\``,
           inline: true,
         },
       ],
     });
 
-    // If SDR is enabled, remove the Steam Web API Connect URI option.
-    if (server.data.sdrEnable) embed.fields.splice(1, 1);
+    // Add original IP in case of having connection issues (From Regi-Lighthouse)
+    if (server.data.sdrEnable)
+      embed.fields.push({
+        name: 'Original IP',
+        value: `Do not use this unless you have connection issues.\n\`${server.ip}:${server.port}\``,
+        inline: false,
+      });
 
-    // Send the message
+    // Send server details
     return await channel.send({
-      content: '@here',
+      content: `@here`,
       embeds: [embed],
     });
   }

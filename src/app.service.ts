@@ -9,6 +9,7 @@ import { StatusColors as color } from './objects/status-colors.enum';
 import * as config from '../config.json';
 import { DistributionType } from './objects/distribution.enum';
 import { RequirementName } from './objects/requirement-names.enum';
+import { LobbyCommand } from './commands/lobby.command';
 
 @Injectable()
 export class AppService {
@@ -410,9 +411,9 @@ export class AppService {
   /**
    * Does a Lobby Notification for FINISHED
    */
-  async lobbyNotifyFinished(lobbyId: string, match: any) {
+  async lobbyNotifyFinished(lobby: any, match: any) {
     // Get the Message object for this LobbyID
-    const { discord } = await this.getMessage(lobbyId);
+    const { discord } = await this.getMessage(lobby._id);
 
     // Get the lobby results channel to send into
     const channel = (await this.discordService
@@ -428,6 +429,15 @@ export class AppService {
       title: `Lobby ${discord.name} has finished!`,
       description: `:tada: Thanks to all participants for playing! Hope you enjoyed your game!\n\n:point_down: Results are listed below.`,
       fields: [
+        {
+          name: 'Lobby Information',
+          value: `:video_game: **Game**: ${
+            match.game
+          }\n:arrows_counterclockwise: **Distribution**: ${LobbyCommand.getDistributionTypeName(
+            lobby.distribution,
+          )}\n:map: **Map**: ${match.map}`,
+          inline: false,
+        },
         {
           name: ':clipboard: Logs',
           value: `[Click to view the log](${match.data.logstfUrl})`,

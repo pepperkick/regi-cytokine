@@ -54,7 +54,8 @@ export class AppController {
       `Received POST request with status '${status}' for match ${matchId}`,
     );
 
-    const { _id: lobbyId } = await this.appService.getLobbyFromMatchId(matchId);
+    const lobby = await this.appService.getLobbyFromMatchId(matchId),
+      lobbyId = lobby._id;
 
     switch (status) {
       case 'LOBBY_READY': {
@@ -75,7 +76,7 @@ export class AppController {
         break;
       }
       case 'FINISHED': {
-        await this.appService.lobbyNotifyFinished(lobbyId, data);
+        await this.appService.lobbyNotifyFinished(lobby, data);
         break;
       }
       case 'FAILED': {
