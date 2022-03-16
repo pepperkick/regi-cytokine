@@ -1,6 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { Player } from 'src/objects/match-player.interface';
 
 @Schema()
 export class Lobby extends Document {

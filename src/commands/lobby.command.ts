@@ -13,6 +13,8 @@ import { DistributionType } from 'src/objects/distribution.enum';
 
 import * as config from '../../config.json';
 import { RandomisedHandler } from './lobby/distribution-handlers/randomised.handler';
+import { RequirementName } from 'src/objects/requirement-names.enum';
+import { RingerSubCommand } from './lobby/ringer.command';
 
 @Discord()
 @SlashGroup({
@@ -25,6 +27,7 @@ import { RandomisedHandler } from './lobby/distribution-handlers/randomised.hand
     CloseSubCommand,
     StatusSubCommand,
     KickSubCommand,
+    RingerSubCommand,
 
     RandomisedHandler,
     TeamRoleBasedHandler,
@@ -119,6 +122,26 @@ export class LobbyCommand {
         content: `:x: Something went wrong while marking you as not AFK: ${e}`,
       });
     }
+  }
+
+  /**
+   * Checks if the role is a class specific role.
+   * @param role The Role name.
+   * @returns True if it is, false if not.
+   */
+  static isClassRole(role: RequirementName | string): boolean {
+    const nonClassRoles = [
+      RequirementName.ACTIVE,
+      RequirementName.PLAYER,
+      RequirementName.CREATOR,
+      RequirementName.NEEDS_SUB,
+      RequirementName.TEAM_A,
+      RequirementName.CAPTAIN_A,
+      RequirementName.TEAM_B,
+      RequirementName.CAPTAIN_B,
+    ];
+
+    return !nonClassRoles.includes(role as RequirementName);
   }
 
   /**

@@ -3,7 +3,6 @@ import { Message, TextChannel } from 'discord.js';
 import { DiscordService } from './discord.service';
 import { MessagingService } from './messaging.service';
 import { LobbyService } from './modules/lobby/lobby.service';
-import { Player } from './objects/match-player.interface';
 
 import { StatusColors as color } from './objects/status-colors.enum';
 

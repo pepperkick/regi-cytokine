@@ -191,6 +191,29 @@ export class LobbyService {
   }
 
   /**
+   * Substitutes a player.
+   * @param lobbyId The Lobby's ID we're doing the substitution in.
+   * @param player1 The player we're substituting.
+   * @param player2 The player we're adding in the place of player1.
+   * @returns The updated Lobby document.
+   */
+  async substitutePlayer(lobbyId: string, player1: Player, player2: Player) {
+    try {
+      const { data } = await axios.post(
+        `${config.cytokine.host}/api/v1/lobbies/${lobbyId}/sub/${player1.discord}/discord`,
+        player2,
+        {
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
+        },
+      );
+
+      return data;
+    } catch (e) {
+      this.logger.error(e.response.data);
+    }
+  }
+
+  /**
    * Removes a role from a player inside a Lobby
    * @param playerId The player Discord ID
    * @param lobbyId The Lobby ID to remove the role from
@@ -540,6 +563,25 @@ export class LobbyService {
    */
   async getInternalLobbyById(lobbyId: string): Promise<Lobby> {
     return this.repo.findOne({ lobbyId });
+  }
+
+  /**
+   * Gets the Lobby document for a lobby by any of its channels IDs.
+   * @param channelId The channel ID to search for.
+   * @returns The Lobby document that has a matching Channel ID.
+   */
+  async getInternalLobbyByChannel(channelId: string): Promise<Lobby> {
+    return this.repo.findOne({
+      $or: [
+        { 'channels.categoryId': channelId },
+        { 'channels.general.textChannelId': channelId },
+        { 'channels.general.voiceChannelId': channelId },
+        { 'channels.teamA.textChannelId': channelId },
+        { 'channels.teamA.voiceChannelId': channelId },
+        { 'channels.teamB.textChannelId': channelId },
+        { 'channels.teamB.voiceChannelId': channelId },
+      ],
+    });
   }
 
   /**

@@ -3,6 +3,7 @@ export enum RequirementName {
   PLAYER = 'player',
   CREATOR = 'creator',
   ACTIVE = 'active',
+  NEEDS_SUB = 'needs-sub',
 
   // Roles for:
   //  - Team-Role Based Distribution
