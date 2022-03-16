@@ -269,7 +269,7 @@ export class AppService {
         this.logger.debug(
           `Moved ${player.discord} to voice channel ${channel.id}`,
         );
-      }, 500);
+      }, 2000);
     }
 
     // Update the embed
