@@ -260,7 +260,7 @@ export class DiscordService {
     }`;
     const tvConnect = `connect ${
       server.data.sdrEnable ? server.data.sdrIp : server.ip
-    }:${server.data.sdrEnable ? server.data.sdrTvPort : server.data.tvPort}};${
+    }:${server.data.sdrEnable ? server.data.sdrTvPort : server.data.tvPort};${
       server.data.tvPassword.length > 0
         ? ` password ${server.data.tvPassword}`
         : ''
@@ -269,11 +269,17 @@ export class DiscordService {
     // Create the embed.
     const embed = new MessageEmbed({
       title: 'Match Details',
-      description: `The server details for this match are ready\n**Connect String**\`\`${connect}\`\`\n**SourceTV Details**\`\`${tvConnect}\`\``,
+      description: `The server details for this match are ready\n**Connect String**\`\`\`${connect}\`\`\`\n**SourceTV Details**\`\`\`${tvConnect}\`\`\``,
+      color: '#06D6A0',
       footer: {
         text: `Kindest Regards, Qixalite • ${new Date().toLocaleDateString(
           'en-US',
         )}`,
+      },
+      author: {
+        name: 'Qixalite',
+        iconURL:
+          'https://media.discordapp.net/attachments/743005170996215839/743077007889268736/QixaliteLogoDiscord3.png',
       },
       fields: [
         {
