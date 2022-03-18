@@ -92,12 +92,6 @@ export class RingerSubCommand {
           }`,
         });
 
-      // Do not allow a player who's already queued into the Lobby to ring.
-      if (lobby.queuedPlayers.find((p) => p.discord === interaction.user.id))
-        return await interaction.editReply({
-          content: `:x: You are already queued in this Lobby, you can't ring.`,
-        });
-
       // Do not allow to call this command if one player is already requiring a substitute.
       const needs = lobby.queuedPlayers.find((p) =>
         p.roles.includes(RequirementName.NEEDS_SUB),
@@ -188,6 +182,12 @@ export class RingerSubCommand {
       if (needs?.discord === interaction.user.id)
         return await interaction.editReply({
           content: `:x: You cannot substitute yourself!`,
+        });
+
+      // Do not allow a player who's already queued into the Lobby to ring.
+      if (lobby.queuedPlayers.find((p) => p.discord === interaction.user.id))
+        return await interaction.editReply({
+          content: `:x: You are already queued in this Lobby, you can't ring.`,
         });
 
       // Get the Kaiend entry for this user
