@@ -293,7 +293,7 @@ export class AppService {
       },
       {
         name: `:blue_circle: ${config.lobbies.teams.B.voice}`,
-        value: `<#${teamA.text.id}>\n<#${teamA.voice.id}>`,
+        value: `<#${teamB.text.id}>\n<#${teamB.voice.id}>`,
         inline: true,
       },
     );
