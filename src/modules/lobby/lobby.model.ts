@@ -28,6 +28,10 @@ export class Lobby extends Document {
   @Prop({ type: String })
   region: string;
 
+  // Access config for this lobby.
+  @Prop({ type: String })
+  accessConfig: string;
+
   // Discord Channels
   @Prop({ type: Object })
   channels: {

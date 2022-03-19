@@ -1,6 +1,8 @@
+import * as config from '../../config.json';
 import { ButtonComponent, Discord, SlashGroup } from 'discordx';
 import { Logger, Module } from '@nestjs/common';
 import { LobbyService } from '../modules/lobby/lobby.service';
+import { DiscordService } from '../discord.service';
 import { MessagingService } from 'src/messaging.service';
 import { CreateSubCommand } from './lobby/create.command';
 import { CloseSubCommand } from './lobby/close.command';
@@ -10,11 +12,17 @@ import { KickSubCommand } from './lobby/kick.command';
 import { InteractionType } from 'src/objects/interactions/interaction-types.enum';
 import { ButtonInteraction, Message } from 'discord.js';
 import { DistributionType } from 'src/objects/distribution.enum';
-
-import * as config from '../../config.json';
 import { RandomisedHandler } from './lobby/distribution-handlers/randomised.handler';
 import { RequirementName } from 'src/objects/requirement-names.enum';
 import { RingerSubCommand } from './lobby/ringer.command';
+import { PreferenceService } from '../modules/preferences/preference.service';
+import { AccessListsCommand } from './lobby/access-lists.command';
+import { AccessConfigsCommand } from './lobby/access-configs.command';
+
+export const PreferenceKeys = {
+  lobbyAccessConfigs: 'lobby_access_configs',
+  lobbyAccessLists: 'lobby_access_lists',
+};
 
 @Discord()
 @SlashGroup({
@@ -29,6 +37,9 @@ import { RingerSubCommand } from './lobby/ringer.command';
     KickSubCommand,
     RingerSubCommand,
 
+    AccessConfigsCommand,
+    AccessListsCommand,
+
     RandomisedHandler,
     TeamRoleBasedHandler,
   ],
@@ -37,13 +48,19 @@ export class LobbyCommand {
   private readonly logger = new Logger(LobbyCommand.name);
   static service: LobbyService;
   static messaging: MessagingService;
+  static preferenceService: PreferenceService;
+  static discordService: DiscordService;
 
   constructor(
     private readonly service: LobbyService,
     private readonly messaging: MessagingService,
+    private readonly preferenceService: PreferenceService,
+    private readonly discordService: DiscordService,
   ) {
     LobbyCommand.service = service;
     LobbyCommand.messaging = messaging;
+    LobbyCommand.preferenceService = preferenceService;
+    LobbyCommand.discordService = discordService;
   }
 
   @ButtonComponent(InteractionType.AFK_CHECK)

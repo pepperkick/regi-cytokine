@@ -45,3 +45,9 @@ export enum RequirementName {
   SNIPER = 'sniper',
   SPY = 'spy',
 }
+
+export const SpecialRequirementNames = [
+  RequirementName.ACTIVE,
+  RequirementName.CREATOR,
+  RequirementName.NEEDS_SUB,
+];

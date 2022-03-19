@@ -17,10 +17,9 @@ import { LobbyOptions } from 'src/modules/lobby/lobby-options.interface';
 import { LobbyService } from 'src/modules/lobby/lobby.service';
 import { Game } from 'src/objects/game.enum';
 import { LobbyFormat } from 'src/objects/lobby-format.interface';
-import { LobbyCommand } from '../lobby.command';
+import { LobbyCommand, PreferenceKeys } from '../lobby.command';
 import { Logger } from '@nestjs/common';
 import { InteractionType } from 'src/objects/interactions/interaction-types.enum';
-import { RequirementName } from 'src/objects/requirement-names.enum';
 import { DistributionType } from 'src/objects/distribution.enum';
 
 @Discord()
@@ -57,6 +56,13 @@ export class CreateSubCommand {
       type: 'STRING',
     })
     manualMap: string,
+    @SlashOption('access-config', {
+      description: '[OPTIONAL] Access config to set for this lobby.',
+      required: false,
+      autocomplete: true,
+      type: 'STRING',
+    })
+    accessConfig: string,
     @SlashOption('afk-check', {
       description:
         '[OPTIONAL] Toggles the AFK check done after a Lobby has all required players. Default is true.',
@@ -123,6 +129,32 @@ export class CreateSubCommand {
 
           // Return the available options
           return await interaction.respond(available);
+        }
+        case 'access-config': {
+          // Get available access configs
+          const lobbyConfigs = await LobbyCommand.preferenceService.getData(
+            interaction.user.id,
+            PreferenceKeys.lobbyAccessConfigs,
+          );
+          const available = [];
+
+          for (const key of Object.keys(lobbyConfigs)) {
+            available.push({
+              name: key,
+              value: key,
+            });
+          }
+
+          // Return the available options
+          return await interaction.respond(
+            available
+              .filter((choice) =>
+                choice.name.includes(
+                  <string>interaction.options.getFocused(true).value,
+                ),
+              )
+              .slice(0, 24),
+          );
         }
       }
     }
@@ -206,6 +238,75 @@ export class CreateSubCommand {
       this.logger.debug(
         `Creating lobby ${name} with expiry ${expires} and config ${cfg}`,
       );
+
+      // If accessConfig is set then validate it
+      if (accessConfig) {
+        // Check if the access config is valid
+        const userAccessConfigs = await LobbyCommand.preferenceService.getData(
+          interaction.user.id,
+          PreferenceKeys.lobbyAccessConfigs,
+        );
+        const guildAccessConfigs = await LobbyCommand.preferenceService.getData(
+          'guild',
+          PreferenceKeys.lobbyAccessConfigs,
+        );
+
+        if (
+          !userAccessConfigs[accessConfig] &&
+          !guildAccessConfigs[accessConfig]
+        ) {
+          return await LobbyCommand.messaging.replyToInteraction(
+            interaction,
+            `:x: Failed to create lobby: \`\`Access config with the name '${accessConfig}' does not exist.\`\`.`,
+            { ephemeral: true },
+          );
+        }
+        const config =
+          userAccessConfigs[accessConfig] || guildAccessConfigs[accessConfig];
+
+        // Check if access lists are valid
+        if (config.accessLists) {
+          for (const action of Object.keys(config.accessLists)) {
+            const whitelistName = config.accessLists[action]['whitelist'];
+            const blacklistName = config.accessLists[action]['blacklist'];
+
+            const userAccessLists =
+              await LobbyCommand.preferenceService.getData(
+                interaction.user.id,
+                PreferenceKeys.lobbyAccessLists,
+              );
+            const guildAccessLists =
+              await LobbyCommand.preferenceService.getData(
+                'guild',
+                PreferenceKeys.lobbyAccessLists,
+              );
+
+            if (
+              whitelistName &&
+              !userAccessLists[whitelistName] &&
+              !guildAccessLists[whitelistName]
+            ) {
+              return await LobbyCommand.messaging.replyToInteraction(
+                interaction,
+                `:x: Failed to create lobby: \`\`Access list with the name '${whitelistName}' does not exist.\`\`.`,
+                { ephemeral: true },
+              );
+            }
+
+            if (
+              blacklistName &&
+              !userAccessLists[blacklistName] &&
+              !guildAccessLists[blacklistName]
+            ) {
+              return await LobbyCommand.messaging.replyToInteraction(
+                interaction,
+                `:x: Failed to create lobby: \`\`Access list with the name '${blacklistName}' does not exist.\`\`.`,
+                { ephemeral: true },
+              );
+            }
+          }
+        }
+      }
 
       // Declare the LobbyOptions object to send over the request.
       const requirements = formatConfig.distribution.find(
@@ -313,6 +414,7 @@ export class CreateSubCommand {
             voiceChannelId: voice.id,
           },
         },
+        accessConfig,
       );
     }
   }

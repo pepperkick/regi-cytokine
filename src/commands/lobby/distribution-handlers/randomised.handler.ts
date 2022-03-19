@@ -27,6 +27,10 @@ export class RandomisedHandler {
         content: `:x: Failed to join this lobby: \`\`Could not find Lobby\`\``,
       });
 
+    const internalLobby = await LobbyCommand.service.getInternalLobbyById(
+      lobby._id,
+    );
+
     // Get Kaiend data for their Steam profile. If they're not linked, it means they can't queue.
     const kaiend = await LobbyCommand.service.getKaiendAccount(
       interaction.user.id,
@@ -44,6 +48,28 @@ export class RandomisedHandler {
       steam: kaiend.steam,
       roles: [RequirementName.PLAYER, role as RequirementName],
     };
+
+    if (
+      !(await LobbyCommand.service.canPlayerJoinRole(
+        internalLobby,
+        player,
+        RequirementName.PLAYER,
+      ))
+    )
+      return await interaction.editReply({
+        content: `:x: Failed to join the Lobby: \`\`You cannot join this lobby\`\``,
+      });
+
+    if (
+      !(await LobbyCommand.service.canPlayerJoinRole(
+        internalLobby,
+        player,
+        role as RequirementName,
+      ))
+    )
+      return await interaction.editReply({
+        content: `:x: Failed to join the Lobby: \`\`You cannot join ${role} role\`\``,
+      });
 
     if (lobby.createdBy === interaction.user.id)
       player.roles.unshift(RequirementName.CREATOR);
