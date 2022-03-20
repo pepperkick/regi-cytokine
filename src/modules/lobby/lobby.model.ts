@@ -15,6 +15,10 @@ export class Lobby extends Document {
   @Prop({ type: String })
   creatorId: string;
 
+  // The Discord user ID of the user who created the lobby.
+  @Prop()
+  createdAt: Date;
+
   // The Message ID attached to this lobby instance (CommandInteraction reply)
   // This is to obtain the message statessly.
   @Prop({ type: String })

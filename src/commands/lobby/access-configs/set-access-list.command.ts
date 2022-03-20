@@ -62,11 +62,21 @@ export class SetAccessListOnConfigCommand {
             interaction.user.id,
             PreferenceKeys.lobbyAccessLists,
           );
-          const names = Object.keys(userNames).concat(
-            Object.keys(guildNames).filter(
-              (item) => Object.keys(userNames).indexOf(item) < 0,
-            ),
-          );
+
+          let names = [];
+          if (userNames && guildNames) {
+            names = Object.keys(userNames).concat(
+              Object.keys(guildNames).filter(
+                (item) => Object.keys(userNames).indexOf(item) < 0,
+              ),
+            );
+          } else {
+            if (userNames) {
+              names = Object.keys(userNames);
+            } else if (guildNames) {
+              names = Object.keys(guildNames);
+            }
+          }
 
           const choices = [];
           if (names) {

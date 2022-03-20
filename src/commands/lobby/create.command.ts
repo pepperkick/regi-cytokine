@@ -132,13 +132,32 @@ export class CreateSubCommand {
         }
         case 'access-config': {
           // Get available access configs
-          const lobbyConfigs = await LobbyCommand.preferenceService.getData(
+          const userConfigs = await LobbyCommand.preferenceService.getData(
             interaction.user.id,
+            PreferenceKeys.lobbyAccessConfigs,
+          );
+          const guildConfigs = await LobbyCommand.preferenceService.getData(
+            'guild',
             PreferenceKeys.lobbyAccessConfigs,
           );
           const available = [];
 
-          for (const key of Object.keys(lobbyConfigs)) {
+          let names = [];
+          if (userConfigs && guildConfigs) {
+            names = Object.keys(userConfigs).concat(
+              Object.keys(guildConfigs).filter(
+                (item) => Object.keys(userConfigs).indexOf(item) < 0,
+              ),
+            );
+          } else {
+            if (userConfigs) {
+              names = Object.keys(userConfigs);
+            } else if (guildConfigs) {
+              names = Object.keys(guildConfigs);
+            }
+          }
+
+          for (const key of names) {
             available.push({
               name: key,
               value: key,
@@ -242,14 +261,21 @@ export class CreateSubCommand {
       // If accessConfig is set then validate it
       if (accessConfig) {
         // Check if the access config is valid
-        const userAccessConfigs = await LobbyCommand.preferenceService.getData(
+        let userAccessConfigs = await LobbyCommand.preferenceService.getData(
           interaction.user.id,
           PreferenceKeys.lobbyAccessConfigs,
         );
-        const guildAccessConfigs = await LobbyCommand.preferenceService.getData(
+        let guildAccessConfigs = await LobbyCommand.preferenceService.getData(
           'guild',
           PreferenceKeys.lobbyAccessConfigs,
         );
+
+        if (!userAccessConfigs) {
+          userAccessConfigs = {};
+        }
+        if (!guildAccessConfigs) {
+          guildAccessConfigs = {};
+        }
 
         if (
           !userAccessConfigs[accessConfig] &&
@@ -270,16 +296,21 @@ export class CreateSubCommand {
             const whitelistName = config.accessLists[action]['whitelist'];
             const blacklistName = config.accessLists[action]['blacklist'];
 
-            const userAccessLists =
-              await LobbyCommand.preferenceService.getData(
-                interaction.user.id,
-                PreferenceKeys.lobbyAccessLists,
-              );
-            const guildAccessLists =
-              await LobbyCommand.preferenceService.getData(
-                'guild',
-                PreferenceKeys.lobbyAccessLists,
-              );
+            let userAccessLists = await LobbyCommand.preferenceService.getData(
+              interaction.user.id,
+              PreferenceKeys.lobbyAccessLists,
+            );
+            let guildAccessLists = await LobbyCommand.preferenceService.getData(
+              'guild',
+              PreferenceKeys.lobbyAccessLists,
+            );
+
+            if (!userAccessLists) {
+              userAccessLists = {};
+            }
+            if (!guildAccessLists) {
+              guildAccessLists = {};
+            }
 
             if (
               whitelistName &&

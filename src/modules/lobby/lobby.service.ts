@@ -489,6 +489,7 @@ export class LobbyService {
 
     // Create new Lobby document
     const info = await new this.repo({
+      createdAt: new Date(),
       lobbyId,
       status,
       creatorId,
@@ -673,20 +674,27 @@ export class LobbyService {
     player: Player,
     role: RequirementName,
   ): Promise<boolean> {
-    if (!lobby.accessConfig) return true;
+    if (!lobby.accessConfig || lobby.accessConfig === '') return true;
     this.logger.debug(
-      `Checking if player ${player.discord} can join role ${role}`,
+      `Checking if player ${player.discord} can join role ${role} of lobby ${lobby._id}`,
     );
 
-    const userConfigs = await this.preference.getData(
+    let userConfigs = await this.preference.getData(
       lobby.creatorId,
       'lobby_access_configs',
     );
 
-    const guildConfigs = await this.preference.getData(
+    let guildConfigs = await this.preference.getData(
       'guild',
       'lobby_access_configs',
     );
+
+    if (!userConfigs) {
+      userConfigs = {};
+    }
+    if (!guildConfigs) {
+      guildConfigs = {};
+    }
 
     const userConfigNames = Object.keys(userConfigs).filter(
       (c) => c === lobby.accessConfig,
@@ -714,15 +722,22 @@ export class LobbyService {
 
     const { whitelist, blacklist } = accessLists[role];
 
-    const userLists = await this.preference.getData(
+    let userLists = await this.preference.getData(
       lobby.creatorId,
       'lobby_access_lists',
     );
 
-    const guildLists = await this.preference.getData(
+    let guildLists = await this.preference.getData(
       'guild',
       'lobby_access_lists',
     );
+
+    if (!userLists) {
+      userLists = {};
+    }
+    if (!guildLists) {
+      guildLists = {};
+    }
 
     let whiteAccessList, blackAccessList;
     if (whitelist) {
