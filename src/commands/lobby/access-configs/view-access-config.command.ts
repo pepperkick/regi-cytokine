@@ -36,7 +36,7 @@ export class ViewAccessConfigsCommand {
       PreferenceKeys.lobbyAccessConfigs,
     );
 
-    if (!lobbyConfigs[name]) {
+    if (!lobbyConfigs || !lobbyConfigs[name]) {
       return await interaction.reply({
         content: `Access config with the name '${name}' does not exist.`,
         ephemeral: true,

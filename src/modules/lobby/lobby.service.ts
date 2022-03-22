@@ -796,7 +796,7 @@ export class LobbyService {
       if (users && users.includes(discord)) return false;
 
       const member = await this.discord.getMember(discord);
-      return !roles && roles.some((r) => member.roles.cache.has(r));
+      return !(roles && roles.some((r) => member.roles.cache.has(r)));
     }
     if (whiteAccessList) {
       const { users, roles } = whiteAccessList;

@@ -38,7 +38,7 @@ export class ViewAccessListCommand {
       PreferenceKeys.lobbyAccessLists,
     );
 
-    if (!lobbyLists[name]) {
+    if (!lobbyLists || !lobbyLists[name]) {
       return await interaction.reply({
         content: `Access list with the name '${name}' does not exist.`,
         ephemeral: true,

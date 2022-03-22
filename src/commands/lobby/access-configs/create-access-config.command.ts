@@ -18,6 +18,7 @@ export class CreateAccessConfigCommand {
     interaction: CommandInteraction,
   ) {
     name = name.toLowerCase();
+    name = name.replace(/[^a-zA-Z0-9]/g, '_');
     const id = AccessConfigsCommand.getPrefId(interaction);
 
     let lobbyConfigs = await LobbyCommand.preferenceService.getData(
