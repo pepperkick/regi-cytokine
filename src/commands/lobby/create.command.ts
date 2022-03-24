@@ -2,6 +2,8 @@ import {
   AutocompleteInteraction,
   ButtonInteraction,
   CommandInteraction,
+  GuildMember,
+  GuildMemberRoleManager,
   Message,
 } from 'discord.js';
 import {
@@ -239,10 +241,13 @@ export class CreateSubCommand {
       );
 
       // If not found, tell the user to link them.
-      if (kaiend?.error)
+      if (kaiend?.error || !kaiend?.steam)
         return await LobbyCommand.messaging.replyToInteraction(
           interaction,
-          `:x: Failed to create lobby: \`\`${kaiend.message}\`\`\n\nPlease link your **Steam** and **Discord** accounts here to proceed: <https://api.qixalite.com/accounts/login/discord>`,
+          `:x: Failed to create lobby: \`\`${
+            kaiend.message ??
+            'Your Discord account does not have a valid Steam account linked.'
+          }\`\`\n\nPlease link your **Steam** and **Discord** accounts here to proceed: <https://api.qixalite.com/accounts/login/discord>`,
           { ephemeral: true },
         );
 
@@ -339,6 +344,33 @@ export class CreateSubCommand {
         }
       }
 
+      // Get the creator's tier based off of their current roles
+      const tier = LobbyCommand.service.getPlayerTier(
+        interaction.member as GuildMember,
+      );
+
+      // Validate if the selected region allows their tier (and isn't full)
+      switch (await LobbyCommand.service.canCreateLobby(region, tier)) {
+        case -1:
+          return await LobbyCommand.messaging.replyToInteraction(
+            interaction,
+            `:x: Failed to create lobby: \`\`The region '${region}' does not exist.\`\`.`,
+            { ephemeral: true },
+          );
+        case -2:
+          return await LobbyCommand.messaging.replyToInteraction(
+            interaction,
+            `:x: Failed to create lobby: \`\`Your tier does not allow you to host this region.\`\`.`,
+            { ephemeral: true },
+          );
+        case false:
+          return await LobbyCommand.messaging.replyToInteraction(
+            interaction,
+            `:x: Failed to create lobby: \`\`The region '${region}' is full/unavailable.\`\`.`,
+            { ephemeral: true },
+          );
+      }
+
       // Declare the LobbyOptions object to send over the request.
       const requirements = formatConfig.distribution.find(
         (dist) => dist.type === distribution,
@@ -349,6 +381,7 @@ export class CreateSubCommand {
         callbackUrl: `${config.localhost}/lobbies/callback`,
         queuedPlayers: [],
         requirements,
+        tier,
         format: formatConfig,
         userId: interaction.user.id,
         data: {

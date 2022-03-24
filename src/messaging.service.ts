@@ -757,19 +757,24 @@ Use SDR?:     ${preferences.valveSdr}
           createdAt: svCreatedAt,
         } = server;
 
-        embed.description += `\nServer Information
-Hostname:          ${sv.servername}
-Provider:          ${provider}
-Status:            ${svStatus}
-Image:             ${image}
-Started:           ${new Date(svCreatedAt).toUTCString()}
-
-Connection String: connect ${sv.sdrEnable ? sv.sdrIp : ip}:${
+        const connect = `connect ${sv.sdrEnable ? sv.sdrIp : ip}:${
           sv.sdrEnable ? sv.sdrPort : port
-        };${sv.password.length > 0 ? ` password ${sv.password}` : ''}
-RCON Password:     ${sv.rconPassword}
+        };${sv.password.length > 0 ? ` password ${sv.password}` : ''}`;
 
-Hatch URI:         http://${ip}${sv.hatchAddress}/status?password=${
+        embed.description += `\nServer Information
+Hostname:                    ${sv.servername}
+Provider:                    ${provider}
+Status:                      ${svStatus}
+Image:                       ${image}
+Started:                     ${new Date(svCreatedAt).toUTCString()}
+
+Connection String:           ${connect}; (Original IP: ${ip}:${port})
+Connection String with RCON: ${connect}; ${
+          sv.sdrEnable ? `rcon_address ""; rcon_address ${ip}:${port}` : ''
+        }; rcon_password ${sv.rconPassword};
+RCON Password:               ${sv.rconPassword}
+
+Hatch URI:                   http://${ip}${sv.hatchAddress}/status?password=${
           sv.hatchPassword
         }`;
       }

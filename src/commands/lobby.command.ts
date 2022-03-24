@@ -18,6 +18,7 @@ import { RingerSubCommand } from './lobby/ringer.command';
 import { PreferenceService } from '../modules/preferences/preference.service';
 import { AccessListsCommand } from './lobby/access-lists.command';
 import { AccessConfigsCommand } from './lobby/access-configs.command';
+import { RegionStatusSubCommand } from './lobby/region-status.command';
 
 export const PreferenceKeys = {
   lobbyAccessConfigs: 'lobby_access_configs',
@@ -36,6 +37,7 @@ export const PreferenceKeys = {
     StatusSubCommand,
     KickSubCommand,
     RingerSubCommand,
+    RegionStatusSubCommand,
 
     AccessConfigsCommand,
     AccessListsCommand,

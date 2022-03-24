@@ -10,9 +10,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Lobby } from 'src/modules/lobby/lobby.model';
 import { DiscordService } from 'src/discord.service';
-import { StatusColors as color } from '../../objects/status-colors.enum';
-import { LobbyCommand, PreferenceKeys } from '../../commands/lobby.command';
 import { PreferenceService } from '../preferences/preference.service';
+import { GuildMember } from 'discord.js';
 
 interface LobbyChannels {
   categoryId: string;
@@ -808,5 +807,72 @@ export class LobbyService {
     }
 
     return true;
+  }
+
+  /**
+   * Gets the tier of a player in Discord.
+   * @param member The GuildMember instance to scan their tier.
+   * @returns The tier of the player, free if not found.
+   */
+  getPlayerTier(member: GuildMember): string {
+    // Get the roles of the member.
+    const roles = member.roles;
+
+    // Loop the config set tiers to search for this role.
+    //
+    // Known Scenario: User has more than 1 of the tier roles
+    // So we'll just return the highest one found (descending order) and use that to determine access.
+    for (const id of Object.keys(config.discord.roles).reverse())
+      if (roles.cache.has(config.discord.roles[id])) return id;
+    return 'free';
+  }
+
+  /**
+   * Returns the amount of servers available on a region based on the requesting tier.
+   * @param region The Region name.
+   * @param tier The Tier name.
+   * @returns Numeric amount of servers left for this region & tier.
+   */
+  async getAvailableServers(region: string, tier: string): Promise<number> {
+    // Get the tier info
+    const t = config.regions[region]?.tiers[tier];
+
+    // Get currently active Lobbies.
+    const { lobbies: activeLobbies } = await this.getActiveLobbies();
+
+    // Filter them by region and tier.
+    const filtered = activeLobbies.filter(
+      (l) => l.tier === tier && l.region === region,
+    );
+
+    // Return the difference.
+    return t.limit - filtered.length;
+  }
+
+  /**
+   * Checks if a user can create a Lobby on a Region with a certain tier, while also checking for availability.
+   * @param region The Region name.
+   * @param tier The tier name.
+   * @returns True if they are allowed to, false if not.
+   */
+  async canCreateLobby(
+    region: string,
+    tier: string,
+  ): Promise<boolean | number> {
+    // Get the regions' tier list.
+    const r = config.regions[region];
+
+    // Invalid region? Just say no.
+    if (!r) return -1;
+
+    const tiers = r.tiers;
+
+    // Is this tier listed?
+    if (!tiers[tier]) return -2;
+
+    // Check availability for this tier and region.
+    const available = await this.getAvailableServers(region, tier);
+
+    return available > 0;
   }
 }

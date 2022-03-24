@@ -16,6 +16,10 @@
             "results": "",
             "admin": ""
         },
+        "roles": {
+            "premium": "",
+            "premium2": ""
+        },
         "token": ""
     },
     "lobbies": {
@@ -76,7 +80,7 @@
             "name": "Brazil",
             "alias": [ "sao-paulo" ],
             "continent": "south_america",
-            "tags": [ "sao", "sp" ],
+            "tags": [ "brazil", "sao", "sp" ],
             "discordVoiceRegion": "brazil",
             "valveSdr": true,
             "tiers": {}
@@ -85,7 +89,7 @@
             "name": "Chicago",
             "alias": [ "chi" ],
             "continent": "north_america",
-            "tags": [ "ch", "usa" ],
+            "tags": [ "chicago", "ch", "usa" ],
             "discordVoiceRegion": "us-central",
             "valveSdr": true,
             "tiers": {}

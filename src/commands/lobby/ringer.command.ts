@@ -195,9 +195,12 @@ export class RingerSubCommand {
         interaction.user.id,
       );
 
-      if (kaiend?.error)
+      if (kaiend?.error || !kaiend?.steam)
         return await interaction.editReply({
-          content: `:x: Failed to process your substitute request: \`\`${kaiend.message}\`\`\n\nPlease link your **Steam** and **Discord** accounts here to proceed: <https://api.qixalite.com/accounts/login/discord>`,
+          content: `:x: Failed to process your substitute request: \`\`${
+            kaiend.message ??
+            'Your Discord account does not have a valid Steam account linked.'
+          }\`\`\n\nPlease link your **Steam** and **Discord** accounts here to proceed: <https://api.qixalite.com/accounts/login/discord>`,
         });
 
       // Create the player's entry.
