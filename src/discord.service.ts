@@ -7,12 +7,16 @@ import {
   Interaction,
   Message,
   MessageEmbed,
+  OverwriteResolvable,
+  Role,
   TextChannel,
   VoiceChannel,
 } from 'discord.js';
 import { Client } from 'discordx';
 
 import * as config from '../config.json';
+import { Player } from './objects/match-player.interface';
+import { RequirementName } from './objects/requirement-names.enum';
 
 export class DiscordService {
   private readonly logger = new Logger(DiscordService.name);
@@ -72,6 +76,35 @@ export class DiscordService {
   }
 
   /**
+   * Gets a Discord Role being passed their ID.
+   * @param id The Discord ID of the role.
+   * @returns Null if not found, Role object of the role if found.
+   */
+  async getRole(id: string): Promise<Role | null> {
+    // Get the Guild
+    const guild = await this.bot.guilds.fetch(config.discord.guild);
+
+    // Find the role
+    const role = await guild.roles.fetch(id, {
+      force: true,
+      cache: false,
+    });
+
+    // Return the user
+    return role ? role : null;
+  }
+
+  /**
+   * Gets a Discord everyone Role for a guild.
+   * @returns Null if not found, Role object of the role if found.
+   */
+  async getEveryoneRole(): Promise<Role | null> {
+    // Get the Guild
+    const guild = await this.bot.guilds.fetch(config.discord.guild);
+    return guild.roles.everyone;
+  }
+
+  /**
    * Gets a Discord Message object from the message ID.
    */
   async getMessage(
@@ -96,6 +129,7 @@ export class DiscordService {
     name: string,
     team?,
     rtcRegion?: string,
+    permissions?: OverwriteResolvable[],
   ): Promise<{
     text: TextChannel;
     voice: VoiceChannel;
@@ -122,7 +156,6 @@ export class DiscordService {
         );
 
       // Now that we have a category, create the General Text & Voice Channels.
-      // TODO: More an idea than a TODO, but this could use permissions where the lobby players are the only ones that can see the channels.
       const gTextChannel = await category.createChannel(
           `${team.enabled ? team.text : config.lobbies.lobbyTextPrefix}${
             team.enabled ? '' : name
@@ -133,6 +166,7 @@ export class DiscordService {
               'This is an automatically generated text channel for Cytokine lobbies.',
             topic:
               '**This is a temporary channel for lobby chat.** This will be deleted after the lobby has been completed.',
+            permissionOverwrites: permissions,
           },
         ),
         gVoiceChannel = await category.createChannel(
@@ -146,6 +180,7 @@ export class DiscordService {
             topic:
               '**This is a temporary channel for lobby voice.** This will be deleted after the lobby has been completed.',
             rtcRegion,
+            permissionOverwrites: permissions,
           },
         );
 
@@ -168,6 +203,7 @@ export class DiscordService {
     name: string,
     categoryId: string,
     region?: string,
+    players?: Player[],
   ): Promise<{
     teamA: {
       text: TextChannel;
@@ -178,6 +214,37 @@ export class DiscordService {
       voice: VoiceChannel;
     };
   }> {
+    const teamAPerms: OverwriteResolvable[] = [];
+    const teamBPerms: OverwriteResolvable[] = [];
+    for (const player of players) {
+      if (
+        player.roles.includes(<RequirementName>'team_a') ||
+        player.roles.filter((r) => r.includes('red')).length > 0
+      ) {
+        teamAPerms.push({
+          id: await this.getMember(player.discord),
+          allow: ['VIEW_CHANNEL', 'CONNECT', 'SPEAK'],
+        });
+      } else if (
+        player.roles.includes(<RequirementName>'team_b') ||
+        player.roles.filter((r) => r.includes('blu')).length > 0
+      ) {
+        teamBPerms.push({
+          id: await this.getMember(player.discord),
+          allow: ['VIEW_CHANNEL', 'CONNECT', 'SPEAK'],
+        });
+      }
+    }
+
+    teamAPerms.push({
+      id: await this.getEveryoneRole(),
+      deny: ['VIEW_CHANNEL', 'CONNECT', 'SPEAK'],
+    });
+    teamBPerms.push({
+      id: await this.getEveryoneRole(),
+      deny: ['VIEW_CHANNEL', 'CONNECT', 'SPEAK'],
+    });
+
     // Create one for Team A
     const teamA = await this.createLobbyChannels(
         name,
@@ -188,6 +255,7 @@ export class DiscordService {
           enabled: true,
         },
         region,
+        teamAPerms,
       ),
       // Create one for Team B
       teamB = await this.createLobbyChannels(
@@ -199,6 +267,7 @@ export class DiscordService {
           enabled: true,
         },
         region,
+        teamBPerms,
       );
 
     return { teamA, teamB };

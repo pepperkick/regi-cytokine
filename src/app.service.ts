@@ -189,7 +189,7 @@ export class AppService {
     embed.color = color.DISTRIBUTED;
 
     // Get the user lists
-    const players = await this.messagingService.generateUserList(
+    const players = this.messagingService.generateUserList(
         lobby,
         {
           distributed: true,
@@ -201,6 +201,7 @@ export class AppService {
         lobby.name,
         discord.channels.categoryId,
         discord.region,
+        lobby.queuedPlayers,
       );
 
     // Check for the team specific channels being successfully created
