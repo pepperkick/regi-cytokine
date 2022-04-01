@@ -265,83 +265,13 @@ export class CreateSubCommand {
 
       // If accessConfig is set then validate it
       if (accessConfig) {
-        // Check if the access config is valid
-        let userAccessConfigs = await LobbyCommand.preferenceService.getData(
-          interaction.user.id,
-          PreferenceKeys.lobbyAccessConfigs,
-        );
-        let guildAccessConfigs = await LobbyCommand.preferenceService.getData(
-          'guild',
-          PreferenceKeys.lobbyAccessConfigs,
-        );
-
-        if (!userAccessConfigs) {
-          userAccessConfigs = {};
-        }
-        if (!guildAccessConfigs) {
-          guildAccessConfigs = {};
-        }
-
         if (
-          !userAccessConfigs[accessConfig] &&
-          !guildAccessConfigs[accessConfig]
-        ) {
-          return await LobbyCommand.messaging.replyToInteraction(
+          !(await LobbyCommand.service.validateAccessConfig(
+            accessConfig,
             interaction,
-            `:x: Failed to create lobby: \`\`Access config with the name '${accessConfig}' does not exist.\`\`.`,
-            { ephemeral: true },
-          );
-        }
-        const config =
-          userAccessConfigs[accessConfig] || guildAccessConfigs[accessConfig];
-
-        // Check if access lists are valid
-        if (config.accessLists) {
-          for (const action of Object.keys(config.accessLists)) {
-            const whitelistName = config.accessLists[action]['whitelist'];
-            const blacklistName = config.accessLists[action]['blacklist'];
-
-            let userAccessLists = await LobbyCommand.preferenceService.getData(
-              interaction.user.id,
-              PreferenceKeys.lobbyAccessLists,
-            );
-            let guildAccessLists = await LobbyCommand.preferenceService.getData(
-              'guild',
-              PreferenceKeys.lobbyAccessLists,
-            );
-
-            if (!userAccessLists) {
-              userAccessLists = {};
-            }
-            if (!guildAccessLists) {
-              guildAccessLists = {};
-            }
-
-            if (
-              whitelistName &&
-              !userAccessLists[whitelistName] &&
-              !guildAccessLists[whitelistName]
-            ) {
-              return await LobbyCommand.messaging.replyToInteraction(
-                interaction,
-                `:x: Failed to create lobby: \`\`Access list with the name '${whitelistName}' does not exist.\`\`.`,
-                { ephemeral: true },
-              );
-            }
-
-            if (
-              blacklistName &&
-              !userAccessLists[blacklistName] &&
-              !guildAccessLists[blacklistName]
-            ) {
-              return await LobbyCommand.messaging.replyToInteraction(
-                interaction,
-                `:x: Failed to create lobby: \`\`Access list with the name '${blacklistName}' does not exist.\`\`.`,
-                { ephemeral: true },
-              );
-            }
-          }
-        }
+          ))
+        )
+          return;
       }
 
       // Get the creator's tier based off of their current roles
@@ -424,10 +354,19 @@ export class CreateSubCommand {
         `User ${interaction.user.username}#${interaction.user.discriminator} created lobby ${lobby._id}`,
       );
 
+      // Compile a list of players that can and can't join the lobby based on access config
+      // Only the (player) action role is checked
+      const permissions =
+        await LobbyCommand.service.compileLobbyChannelPermissionsList(
+          accessConfig,
+          interaction.user.id,
+        );
+
       // Create the lobby channels.
       const { text, voice } = await LobbyCommand.service.createChannels(
         name,
         LobbyService.regions.voiceRegions[region],
+        permissions,
       );
 
       // Check the channels have been created correctly

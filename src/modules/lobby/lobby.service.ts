@@ -11,7 +11,18 @@ import { Model } from 'mongoose';
 import { Lobby } from 'src/modules/lobby/lobby.model';
 import { DiscordService } from 'src/discord.service';
 import { PreferenceService } from '../preferences/preference.service';
-import { GuildMember } from 'discord.js';
+import {
+  CommandInteraction,
+  GuildMember,
+  OverwriteResolvable,
+} from 'discord.js';
+import { MessagingService } from '../../messaging.service';
+
+// TODO: Not sure why the actual keys does not work, importing it makes building fail
+class PreferenceKeys {
+  static readonly lobbyAccessConfigs = 'lobby_access_configs';
+  static readonly lobbyAccessLists = 'lobby_access_lists';
+}
 
 interface LobbyChannels {
   categoryId: string;
@@ -38,6 +49,8 @@ export class LobbyService {
     @InjectModel('Lobby') private readonly repo: Model<Lobby>,
     private readonly discord: DiscordService,
     private readonly preference: PreferenceService,
+    // TODO: Not a good idea to reply to messages from the service, need to find a better way
+    private readonly messaging: MessagingService,
   ) {}
 
   /**
@@ -459,11 +472,16 @@ export class LobbyService {
   /**
    * Creates a Discord Text & Voice channel for a lobby.
    */
-  async createChannels(name: string, voiceRegion?: string) {
+  async createChannels(
+    name: string,
+    voiceRegion?: string,
+    permissions?: OverwriteResolvable[],
+  ) {
     return await this.discord.createLobbyChannels(
       name,
       { enabled: false },
       voiceRegion,
+      permissions,
     );
   }
 
@@ -668,6 +686,208 @@ export class LobbyService {
     return config.regions[region];
   }
 
+  /*
+   * Get access config.
+   */
+  async getAccessConfig(name: string, id: string) {
+    // Check if the access config is valid
+    const userAccessConfigs = await this.preference.getData(
+      id,
+      PreferenceKeys.lobbyAccessConfigs,
+    );
+    const guildAccessConfigs = await this.preference.getData(
+      'guild',
+      PreferenceKeys.lobbyAccessConfigs,
+    );
+
+    return !userAccessConfigs && !guildAccessConfigs
+      ? null
+      : userAccessConfigs && userAccessConfigs[name]
+      ? userAccessConfigs[name]
+      : guildAccessConfigs && guildAccessConfigs[name]
+      ? guildAccessConfigs[name]
+      : null;
+  }
+
+  /*
+   * Get access list.
+   */
+  async getAccessList(name: string, id: string) {
+    const userAccessLists = await this.preference.getData(
+      id,
+      PreferenceKeys.lobbyAccessLists,
+    );
+    const guildAccessLists = await this.preference.getData(
+      'guild',
+      PreferenceKeys.lobbyAccessLists,
+    );
+
+    return !userAccessLists && !guildAccessLists
+      ? null
+      : userAccessLists && userAccessLists[name]
+      ? userAccessLists[name]
+      : guildAccessLists && guildAccessLists[name]
+      ? guildAccessLists[name]
+      : null;
+  }
+
+  /*
+   * Check if the access config is valid.
+   */
+  async validateAccessConfig(
+    accessConfig: string,
+    interaction: CommandInteraction,
+  ) {
+    this.logger.debug(`Validating access config '${accessConfig}'...`);
+
+    // Check if the access config is present
+    const config = await this.getAccessConfig(
+      accessConfig,
+      interaction.user.id,
+    );
+
+    if (!config) {
+      await this.messaging.replyToInteraction(
+        interaction,
+        `:x: Failed to create lobby: \`\`Access config with the name '${accessConfig}' does not exist\`\`.`,
+        { ephemeral: true },
+      );
+      return false;
+    }
+
+    // Check if access lists are valid
+    if (config.accessLists) {
+      for (const action of Object.keys(config.accessLists)) {
+        const whitelistName = config.accessLists[action]['whitelist'];
+        const blacklistName = config.accessLists[action]['blacklist'];
+        const whitelist = whitelistName
+          ? await this.getAccessList(whitelistName, interaction.user.id)
+          : null;
+        const blacklist = blacklistName
+          ? await this.getAccessList(blacklistName, interaction.user.id)
+          : null;
+
+        if (whitelistName && !whitelist) {
+          await this.messaging.replyToInteraction(
+            interaction,
+            `:x: Failed to create lobby: \`\`Access list with the name '${whitelistName}' does not exist\`\`.`,
+            { ephemeral: true },
+          );
+          return false;
+        }
+
+        if (blacklistName && !blacklist) {
+          await this.messaging.replyToInteraction(
+            interaction,
+            `:x: Failed to create lobby: \`\`Access list with the name '${blacklistName}' does not exist\`\`.`,
+            { ephemeral: true },
+          );
+          return false;
+        }
+      }
+    } else {
+      await this.messaging.replyToInteraction(
+        interaction,
+        `:x: Failed to create lobby: \`\`Access config '${accessConfig}' does not have any access lists\`\`.`,
+        { ephemeral: true },
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  /*
+   * Generate a permissions list for lobby channels.
+   * This will contain who can and cannot see the channels.
+   */
+  async compileLobbyChannelPermissionsList(
+    name: string,
+    creator: string,
+  ): Promise<OverwriteResolvable[]> {
+    this.logger.debug(
+      `Generating channel permissions list accessConfig '${name}', creator '${creator}'...`,
+    );
+
+    const permissions: OverwriteResolvable[] = [];
+    const accessConfig = await this.getAccessConfig(name, creator);
+
+    if (!accessConfig) {
+      this.logger.warn(`Could not find accessConfig with name '${name}'`);
+      return permissions;
+    }
+
+    const { accessLists } = accessConfig;
+    if (!accessLists || !accessLists['player']) return permissions;
+
+    const { whitelist, blacklist } = accessLists['player'];
+    const whiteAccessList = whitelist
+      ? await this.getAccessList(whitelist, creator)
+      : null;
+    const blackAccessList = blacklist
+      ? await this.getAccessList(blacklist, creator)
+      : null;
+
+    if (whitelist && whiteAccessList) {
+      const { users, roles } = whiteAccessList;
+      let everyone = true;
+
+      if (users) {
+        for (const item of users) {
+          permissions.push({
+            id: await this.discord.getMember(item),
+            allow: ['VIEW_CHANNEL'],
+          });
+          everyone = false;
+        }
+      }
+
+      if (roles) {
+        for (const item of roles) {
+          permissions.push({
+            id: await this.discord.getRole(item),
+            allow: ['VIEW_CHANNEL'],
+          });
+          everyone = false;
+        }
+      }
+
+      if (!everyone) {
+        permissions.push({
+          id: await this.discord.getEveryoneRole(),
+          deny: ['VIEW_CHANNEL'],
+        });
+      }
+    }
+
+    if (blacklist && blackAccessList) {
+      const { users, roles } = blackAccessList;
+
+      if (users) {
+        for (const item of users) {
+          permissions.push({
+            id: await this.discord.getMember(item),
+            deny: ['VIEW_CHANNEL'],
+          });
+        }
+      }
+
+      if (roles) {
+        for (const item of roles) {
+          permissions.push({
+            id: await this.discord.getRole(item),
+            deny: ['VIEW_CHANNEL'],
+          });
+        }
+      }
+    }
+
+    return permissions;
+  }
+
+  /*
+   * Check if a player can join the specific role.
+   */
   async canPlayerJoinRole(
     lobby: Lobby,
     player: Player,
@@ -678,114 +898,41 @@ export class LobbyService {
       `Checking if player ${player.discord} can join role ${role} of lobby ${lobby._id}`,
     );
 
-    let userConfigs = await this.preference.getData(
+    const config = await this.getAccessConfig(
+      lobby.accessConfig,
       lobby.creatorId,
-      'lobby_access_configs',
     );
 
-    let guildConfigs = await this.preference.getData(
-      'guild',
-      'lobby_access_configs',
-    );
-
-    if (!userConfigs) {
-      userConfigs = {};
-    }
-    if (!guildConfigs) {
-      guildConfigs = {};
-    }
-
-    const userConfigNames = Object.keys(userConfigs).filter(
-      (c) => c === lobby.accessConfig,
-    );
-    const guildConfigNames = Object.keys(guildConfigs).filter(
-      (c) => c === lobby.accessConfig,
-    );
-
-    let configName;
-    if (userConfigNames.length > 0) {
-      configName = userConfigNames[0];
-    } else if (guildConfigNames.length > 0) {
-      configName = guildConfigNames[0];
-    }
-
-    if (!configName) {
+    if (!config) {
       this.logger.warn(
         `No access config found with name ${lobby.accessConfig} for lobby ${lobby.name}`,
       );
       return true;
     }
 
-    const { accessLists } = userConfigs[configName] || guildConfigs[configName];
-    if (!accessLists[role]) return true;
+    const { accessLists } = config;
+    if (!accessLists || !accessLists[role]) return true;
 
     const { whitelist, blacklist } = accessLists[role];
+    const whiteAccessList = whitelist
+      ? await this.getAccessList(whitelist, lobby.creatorId)
+      : null;
+    const blackAccessList = blacklist
+      ? await this.getAccessList(blacklist, lobby.creatorId)
+      : null;
 
-    let userLists = await this.preference.getData(
-      lobby.creatorId,
-      'lobby_access_lists',
-    );
-
-    let guildLists = await this.preference.getData(
-      'guild',
-      'lobby_access_lists',
-    );
-
-    if (!userLists) {
-      userLists = {};
-    }
-    if (!guildLists) {
-      guildLists = {};
+    if (whitelist && !whiteAccessList) {
+      this.logger.warn(
+        `No access list found with name ${whitelist} for action ${role} at lobby ${lobby.name}`,
+      );
+      return true;
     }
 
-    let whiteAccessList, blackAccessList;
-    if (whitelist) {
-      const userListNames = Object.keys(userLists).filter(
-        (c) => c === whitelist,
+    if (blacklist && !blackAccessList) {
+      this.logger.warn(
+        `No access list found with name ${whitelist} for action ${role} at lobby ${lobby.name}`,
       );
-      const guildListsNames = Object.keys(guildLists).filter(
-        (c) => c === whitelist,
-      );
-
-      let listName;
-      if (userListNames.length > 0) {
-        listName = userListNames[0];
-      } else if (guildListsNames.length > 0) {
-        listName = guildListsNames[0];
-      }
-
-      if (!listName) {
-        this.logger.warn(
-          `No access list found with name ${whitelist} for action ${role} at lobby ${lobby.name}`,
-        );
-        return true;
-      }
-
-      whiteAccessList = userLists[listName] || guildLists[listName];
-    }
-    if (blacklist) {
-      const userListNames = Object.keys(userLists).filter(
-        (c) => c === blacklist,
-      );
-      const guildListsNames = Object.keys(guildLists).filter(
-        (c) => c === blacklist,
-      );
-
-      let listName;
-      if (userListNames.length > 0) {
-        listName = userListNames[0];
-      } else if (guildListsNames.length > 0) {
-        listName = guildListsNames[0];
-      }
-
-      if (!listName) {
-        this.logger.warn(
-          `No access list found with name ${blacklist} for action ${role} at lobby ${lobby.name}`,
-        );
-        return true;
-      }
-
-      blackAccessList = userLists[listName] || guildLists[listName];
+      return true;
     }
 
     const { discord } = player;
