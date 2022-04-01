@@ -145,7 +145,7 @@ export class SetAccessListOnConfigCommand {
     }
 
     if (list && list != '') {
-      const guildlists = await LobbyCommand.preferenceService.getData(
+      const guildLists = await LobbyCommand.preferenceService.getData(
         'guild',
         PreferenceKeys.lobbyAccessLists,
       );
@@ -154,7 +154,7 @@ export class SetAccessListOnConfigCommand {
         PreferenceKeys.lobbyAccessLists,
       );
 
-      if (!guildlists[list] && !userLists) {
+      if (!guildLists[list] && !userLists) {
         return await interaction.reply({
           content: `Access list with the name '${list}' does not exist.`,
           ephemeral: true,
@@ -168,8 +168,10 @@ export class SetAccessListOnConfigCommand {
     if (!accessConfig.accessLists) {
       accessConfig.accessLists = {};
     }
+    if (!accessConfig.accessLists[action]) {
+      accessConfig.accessLists[action] = {};
+    }
 
-    accessConfig.accessLists[action] = {};
     accessConfig.accessLists[action][type] = list;
     lobbyConfigs[name] = accessConfig;
 
