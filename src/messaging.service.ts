@@ -534,7 +534,7 @@ export class MessagingService {
       fields: [
         {
           name: 'Format & Info',
-          value: `🗒 **Format**: ${format.name}\n:bust_in_silhouette: **Max. Players**: ${format.maxPlayers}\n:cyclone: **Distribution**: ${distributionName}\n:map: **Map**: ${params.map}`,
+          value: `🗒 **Format**: ${format.name}\n:bust_in_silhouette: **Max. Players**: ${format.maxPlayers}\n:cyclone: **Distribution**: ${distributionName}\n:map: **Map**: [${params.map}](https://https://fastdl.tf.qixalite.com/${params.map}.bsp)`,
           inline: true,
         },
         {
