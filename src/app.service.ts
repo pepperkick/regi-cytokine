@@ -201,7 +201,7 @@ export class AppService {
         lobby.name,
         discord.channels.categoryId,
         discord.region,
-        players,
+        lobby.queuedPlayers,
       );
 
     // Check for the team specific channels being successfully created
