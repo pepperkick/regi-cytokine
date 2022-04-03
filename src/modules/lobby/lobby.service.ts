@@ -73,9 +73,11 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      if (!error.response.data?.error) this.logger.error(error.response.data);
-
-      return error.response.data;
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::createLobby`,
+      );
+      return error.response?.data;
     }
   }
 
@@ -95,7 +97,10 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      this.logger.error(error.response.data);
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::getLobbyById`,
+      );
     }
   }
 
@@ -115,7 +120,10 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      this.logger.error(error.response.data);
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::getLobbyByMatchId`,
+      );
     }
   }
 
@@ -134,8 +142,11 @@ export class LobbyService {
       );
 
       return data;
-    } catch (e) {
-      this.logger.error(e.response.data);
+    } catch (error) {
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::getMatchById`,
+      );
     }
   }
 
@@ -156,7 +167,10 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      this.logger.error(error.response.data);
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::addPlayer`,
+      );
     }
   }
 
@@ -178,8 +192,11 @@ export class LobbyService {
       );
 
       return data;
-    } catch (e) {
-      this.logger.error(e.response.data);
+    } catch (error) {
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::addRole`,
+      );
     }
   }
 
@@ -223,8 +240,11 @@ export class LobbyService {
       );
 
       return data;
-    } catch (e) {
-      this.logger.error(e.response.data);
+    } catch (error) {
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::substitutePlayer`,
+      );
     }
   }
 
@@ -268,7 +288,10 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      this.logger.error(error.response.data);
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::getServerInfo`,
+      );
     }
   }
 
@@ -288,7 +311,10 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      this.logger.error(error.response.data);
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::getHatchInfo`,
+      );
     }
   }
 
@@ -306,7 +332,10 @@ export class LobbyService {
 
       return data;
     } catch (error) {
-      this.logger.error(error.response.data);
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::getActiveLobbies`,
+      );
     }
   }
 
@@ -325,10 +354,13 @@ export class LobbyService {
       );
 
       return data;
-    } catch (e) {
-      if (!e.response.data?.error) this.logger.error(e.response.data);
+    } catch (error) {
+      this.logger.error(
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::getKaiendAccount`,
+      );
 
-      return e.response.data;
+      return error.response?.data;
     }
   }
 
@@ -347,9 +379,10 @@ export class LobbyService {
       return data;
     } catch (error) {
       this.logger.error(
-        `Failed to close Lobby '${lobbyId}': ${error.response.data.error}`,
+        JSON.stringify(error, null, 2),
+        `${LobbyService.name}::closeLobby`,
       );
-      return error.response.data;
+      return error.response?.data;
     }
   }
 
