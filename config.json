@@ -12,13 +12,16 @@
     "discord": {
         "guild": "",
         "channels": {
+            "waiting": [
+                "", ""
+            ],
             "create": "",
             "results": "",
             "admin": ""
         },
         "roles": {
             "premium": "",
-            "premium2": ""
+            "<bypass>": ""
         },
         "token": ""
     },
@@ -55,6 +58,11 @@
             "tags": [ "sydney", "aus" ],
             "discordVoiceRegion": "sydney",
             "valveSdr": true,
+            "roles": [
+                { "name": "6vs6", "role": "956872138487369760" },
+                { "name": "9vs9", "role": "955684064336183306" },
+                { "name": "Ultiduo", "role": "956872302895710209" }
+            ],
             "tiers": {
                 "free": {
                     "limit": 5,
@@ -83,6 +91,11 @@
             "tags": [ "brazil", "sao", "sp" ],
             "discordVoiceRegion": "brazil",
             "valveSdr": true,
+            "roles": [
+                { "name": "6vs6", "role": "956884702394990634" },
+                { "name": "9vs9", "role": "956884702898315304" },
+                { "name": "Ultiduo", "role": "955684646073565184" }
+            ],
             "tiers": {}
         },
         "chicago": {
@@ -92,6 +105,11 @@
             "tags": [ "chicago", "ch", "usa" ],
             "discordVoiceRegion": "us-central",
             "valveSdr": true,
+            "roles": [
+                { "name": "6vs6", "role": "956884424883077141" },
+                { "name": "9vs9", "role": "956884520936812564" },
+                { "name": "Ultiduo", "role": "955684392213286982" }
+            ],
             "tiers": {}
         }
     },

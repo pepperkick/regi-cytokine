@@ -14,9 +14,6 @@ export interface LobbyOptions {
   // List of players in this lobby.
   queuedPlayers: Player[];
 
-  // Tier this Lobby has been created with
-  tier: string;
-
   // Role requirements to be filled to start the match
   requirements: FormatRequirement[];
 

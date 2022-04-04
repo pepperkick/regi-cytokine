@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Message, TextChannel } from 'discord.js';
+import {
+  Message,
+  OverwriteResolvable,
+  TextChannel,
+  VoiceChannel,
+} from 'discord.js';
 import { DiscordService } from './discord.service';
 import { MessagingService } from './messaging.service';
 import { LobbyService } from './modules/lobby/lobby.service';
@@ -10,6 +15,7 @@ import * as config from '../config.json';
 import { DistributionType } from './objects/distribution.enum';
 import { RequirementName } from './objects/requirement-names.enum';
 import { LobbyCommand } from './commands/lobby.command';
+import { Lobby } from './modules/lobby/lobby.model';
 
 @Injectable()
 export class AppService {
@@ -83,8 +89,16 @@ export class AppService {
    *  - We require confirmation from them to start the game.
    */
   async lobbyNotifyWaitingForAfk(lobbyId: string, lobby: any) {
-    // Get the Message object for this LobbyID
-    const { message } = await this.getMessage(lobbyId);
+    // If we're waiting for an AFK to finish, we must create the information channel with the correct permissions.
+    // This is an exclusive channel for Lobby information (excluding the main embed).
+    //
+    // Create the information channel.
+    const { message, discord } = await this.getMessage(lobbyId);
+
+    const info = await this.discordService.createInfoChannel(
+      discord,
+      lobby.queuedPlayers,
+    );
 
     // Update embed color
     // And update the last field message, removing the queue up reminder.
@@ -92,10 +106,7 @@ export class AppService {
     embed.color = color.WAITING_FOR_AFK;
 
     // Create the AFK check message, and set a timeout for it to expire.
-    const afkMessage = await this.messagingService.sendAFKCheck(
-      lobby,
-      message.channel as TextChannel,
-    );
+    const afkMessage = await this.messagingService.sendAFKCheck(lobby, info);
 
     setTimeout(async () => {
       // Get the latest Lobby document for when the expiry moment is reached.
@@ -144,7 +155,7 @@ export class AppService {
           .join('\n');
 
         // Send a message to the Lobby's general channel saying which players have been removed from the queue for being AFK.
-        await (message.channel as TextChannel).send({
+        await info.send({
           content: `@here\nThe following players have failed to confirm their AFK status in time and have been removed from the Lobby:\n${players}`,
         });
       }
@@ -351,6 +362,11 @@ export class AppService {
     // Get the Message object for this LobbyID
     const { message, discord } = await this.getMessage(lobbyId);
 
+    const info = await this.discordService.createInfoChannel(
+      discord,
+      data.players,
+    );
+
     // Update embed color
     const embed = message.embeds[0];
     embed.color = color.WAITING_FOR_PLAYERS;
@@ -358,17 +374,11 @@ export class AppService {
     // Get the Server info from the server ID
     const server = await this.lobbyService.getServerInfo(data._id);
 
-    // Find the general lobby channel.
-    const client = await this.discordService.getClient();
-    const lobbyChannel = <TextChannel>(
-      await client.channels.fetch(discord.channels.general.textChannelId)
-    );
-
     // Update the message and send connect data to the general channel.
-    await this.discordService.sendServerDetails(lobbyChannel, server);
+    await this.discordService.sendServerDetails(info, server);
 
     return await message.edit({
-      content: `:white_check_mark: Server is ready!\n\n:point_right: Details have been posted in <#${discord.channels.general.textChannelId}>\n:hourglass: Waiting for players to join...`,
+      content: `:white_check_mark: Server is ready!\n\n:point_right: Details have been posted in <#${info.id}>\n:hourglass: Waiting for players to join...`,
       embeds: [embed],
     });
   }
@@ -457,8 +467,44 @@ export class AppService {
       ],
     };
 
+    // Move all players back to a waiting channel before deletion.
+    // First decide which waiting channel we're using, depends on amount of players in said channel.
+    const pAmount = lobby.queuedPlayers.length;
+
+    let waiting = null;
+    for (const channel of config.discord.channels.waiting) {
+      const ch = await this.discordService.getChannel(channel);
+
+      if (ch instanceof VoiceChannel) {
+        // Ignore this channel if it has too many players on it.
+        if (ch.full || ch.members.size > Math.floor(pAmount / 2)) continue;
+
+        // If we've found a channel that has enough space, use it.
+        waiting = ch;
+      }
+    }
+
+    // If nothing was found free, use a random waiting channel to move everyone.
+    waiting = await this.discordService.getChannel(
+      config.discord.channels.waiting[
+        Math.floor(Math.random() * config.discord.channels.waiting.length)
+      ],
+    );
+
+    await lobby.queuedPlayers.forEach(async (p) => {
+      const user = await this.discordService.getMember(p.discord);
+
+      // Move the player to the waiting channel.
+      setTimeout(async () => {
+        try {
+          await user.voice.setChannel(waiting);
+        } catch (e) {
+          this.logger.error(`Tried to move ${user.id} but failed: ${e}`);
+        }
+      }, config.lobbies.moveDelay * 1000);
+    });
+
     // Delete the channels that were created
-    // (to be discussed on what's said above)
     await this.discordService.deleteChannels(discord);
 
     return await channel.send({

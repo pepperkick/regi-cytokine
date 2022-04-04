@@ -280,25 +280,30 @@ export class CreateSubCommand {
       );
 
       // Validate if the selected region allows their tier (and isn't full)
-      switch (await LobbyCommand.service.canCreateLobby(region, tier)) {
-        case -1:
-          return await LobbyCommand.messaging.replyToInteraction(
-            interaction,
-            `:x: Failed to create lobby: \`\`The region '${region}' does not exist.\`\`.`,
-            { ephemeral: true },
-          );
-        case -2:
-          return await LobbyCommand.messaging.replyToInteraction(
-            interaction,
-            `:x: Failed to create lobby: \`\`Your tier does not allow you to host this region.\`\`.`,
-            { ephemeral: true },
-          );
-        case false:
-          return await LobbyCommand.messaging.replyToInteraction(
-            interaction,
-            `:x: Failed to create lobby: \`\`The region '${region}' is full/unavailable.\`\`.`,
-            { ephemeral: true },
-          );
+      if (tier !== '<bypass>') {
+        switch (await LobbyCommand.service.canCreateLobby(region, tier)) {
+          // Region passed by parameter does not exist on the config.
+          case -1:
+            return await LobbyCommand.messaging.replyToInteraction(
+              interaction,
+              `:x: Failed to create lobby: \`\`The region '${region}' does not exist.\`\`.`,
+              { ephemeral: true },
+            );
+          // Tier the user has does not allow that region to be hosted.
+          case -2:
+            return await LobbyCommand.messaging.replyToInteraction(
+              interaction,
+              `:x: Failed to create lobby: \`\`Your tier does not allow you to host this region.\`\`.`,
+              { ephemeral: true },
+            );
+          // The tier & region server pool for that region are full.
+          case false:
+            return await LobbyCommand.messaging.replyToInteraction(
+              interaction,
+              `:x: Failed to create lobby: \`\`The region '${region}' is full/unavailable.\`\`.`,
+              { ephemeral: true },
+            );
+        }
       }
 
       // Declare the LobbyOptions object to send over the request.
@@ -311,7 +316,6 @@ export class CreateSubCommand {
         callbackUrl: `${config.localhost}/lobbies/callback`,
         queuedPlayers: [],
         requirements,
-        tier,
         format: formatConfig,
         userId: interaction.user.id,
         data: {
@@ -358,8 +362,11 @@ export class CreateSubCommand {
       // Only the (player) action role is checked
       const permissions =
         await LobbyCommand.service.compileLobbyChannelPermissionsList(
+          lobby,
           accessConfig,
           interaction.user.id,
+          region,
+          format,
         );
 
       // Create the lobby channels.
@@ -409,7 +416,8 @@ export class CreateSubCommand {
         name,
         expires,
         lobby.status,
-        [],
+        format,
+        tier,
         {
           categoryId: text.parentId,
           general: {

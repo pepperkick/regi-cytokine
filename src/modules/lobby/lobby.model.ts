@@ -32,6 +32,14 @@ export class Lobby extends Document {
   @Prop({ type: String })
   region: string;
 
+  // The tier this lobby was created with.
+  @Prop({ type: String })
+  tier: string;
+
+  // The format this Lobby is using
+  @Prop({ type: String })
+  format: string;
+
   // Access config for this lobby.
   @Prop({ type: String })
   accessConfig: string;
@@ -47,6 +55,10 @@ export class Lobby extends Document {
     general: {
       // General TextChannel
       textChannelId?: string;
+
+      // AFK Checks and Connect strings are sent on this channel.
+      // This channel should only be created if a Lobby is full and requirements are met.
+      infoChannelId?: string;
 
       // General VoiceChannel
       voiceChannelId?: string;

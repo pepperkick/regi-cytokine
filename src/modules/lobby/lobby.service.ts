@@ -417,6 +417,7 @@ export class LobbyService {
    */
   async getNewLobbyName(): Promise<string> {
     // Get active lobbies
+    console.log(await this.getActiveLobbies());
     const { lobbies } = await this.getActiveLobbies();
 
     // Compare against the pool of names in the config to get one that isn't being used.
@@ -529,7 +530,8 @@ export class LobbyService {
     name: string,
     expires: number,
     status: string,
-    players?: Player[],
+    format?: string,
+    tier?: string,
     channels?: LobbyChannels,
     accessConfig?: string,
   ) {
@@ -548,7 +550,8 @@ export class LobbyService {
       name,
       channels,
       accessConfig,
-      afk: [...players],
+      format,
+      tier,
     });
 
     // Return the saved document
@@ -559,9 +562,10 @@ export class LobbyService {
    * Updates a Lobby document in the database saving the new channels.
    * @param lobbyId The Lobby ID linked to the document.
    * @param teamChannels The team channels to save.
+   * @param extra If passed, sets the info channel for the Lobby (where the AFK check is sent)
    * @returns The new internal Lobby document.
    */
-  async updateLobbyChannels(lobbyId, teamChannels: { A; B }) {
+  async updateLobbyChannels(lobbyId, teamChannels, extra?: any) {
     try {
       // Get the internal Lobby document with this ID linked to it.
       const lobby = await this.getInternalLobbyById(lobbyId);
@@ -578,6 +582,8 @@ export class LobbyService {
           voiceChannelId: teamChannels.B.voice.id,
         },
       };
+
+      if (extra) lobby.channels.general.infoChannelId = extra;
 
       // Mark as modified and save it
       lobby.markModified('channels');
@@ -631,6 +637,7 @@ export class LobbyService {
       $or: [
         { 'channels.categoryId': channelId },
         { 'channels.general.textChannelId': channelId },
+        { 'channels.general.infoChannelId': channelId },
         { 'channels.general.voiceChannelId': channelId },
         { 'channels.teamA.textChannelId': channelId },
         { 'channels.teamA.voiceChannelId': channelId },
@@ -717,6 +724,15 @@ export class LobbyService {
    */
   getRegion(region: string) {
     return config.regions[region];
+  }
+
+  /**
+   * Returns a Format object being passed its name.
+   * @param name The Format's name.
+   * @returns The format object or null if not found.
+   */
+  getFormat(name: string) {
+    return config.formats.find((f) => f.name === name);
   }
 
   /*
@@ -830,23 +846,55 @@ export class LobbyService {
     return true;
   }
 
-  /*
+  /**
    * Generate a permissions list for lobby channels.
    * This will contain who can and cannot see the channels.
+   * @param lobby The Cytokine Lobby document
+   * @param name The name of the AccessList the Lobby is using (if any)
+   * @param creator The Discord ID of the Lobby creator
+   * @returns An array of OverwriteResolvable permissions for the Lobby's category.
    */
   async compileLobbyChannelPermissionsList(
+    lobby: any,
     name: string,
     creator: string,
+    region?: string,
+    format?: string,
   ): Promise<OverwriteResolvable[]> {
     this.logger.debug(
       `Generating channel permissions list accessConfig '${name}', creator '${creator}'...`,
     );
 
+    // Declare our permissions array and get the AccessConfig instance.
     const permissions: OverwriteResolvable[] = [];
     const accessConfig = await this.getAccessConfig(name, creator);
 
+    // If no AccessConfig is being used, set-up permissions for region & format set on this Lobby.
     if (!accessConfig) {
-      this.logger.warn(`Could not find accessConfig with name '${name}'`);
+      this.logger.warn(
+        `Could not find accessConfig with name '${name}'. Configuring permissions per region/format.`,
+      );
+
+      // Find the specific role for this region & format.
+      const r = this.getRegion(region);
+      const role = r.roles.find((r) => r.name === format);
+
+      if (!role || !r)
+        this.logger.error(
+          `Could not find role for region '${region}' and format '${format}'.`,
+        );
+      else
+        permissions.push(
+          {
+            id: await this.discord.getRole(role.role),
+            allow: ['VIEW_CHANNEL', 'CONNECT'],
+          },
+          {
+            id: await this.discord.getEveryoneRole(),
+            deny: ['VIEW_CHANNEL', 'CONNECT'],
+          },
+        );
+
       return permissions;
     }
 

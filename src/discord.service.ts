@@ -1,20 +1,26 @@
 import { Logger } from '@nestjs/common';
 import {
   CategoryChannel,
+  CategoryCreateChannelOptions,
   Collection,
+  GuildChannel,
   GuildMember,
   Intents,
   Interaction,
   Message,
   MessageEmbed,
+  NewsChannel,
   OverwriteResolvable,
   Role,
+  StageChannel,
+  StoreChannel,
   TextChannel,
   VoiceChannel,
 } from 'discord.js';
 import { Client } from 'discordx';
 
 import * as config from '../config.json';
+import { Lobby } from './modules/lobby/lobby.model';
 import { Player } from './objects/match-player.interface';
 import { RequirementName } from './objects/requirement-names.enum';
 
@@ -32,6 +38,42 @@ export class DiscordService {
    */
   public getClient(): Client {
     return this.bot;
+  }
+
+  /**
+   * Gets the Category for a Lobby being passed the Lobby.
+   * @param lobby Internal Lobby document.
+   * @returns The CategoryChannel object corresponding to that Lobby.
+   */
+  async getCategory(lobby: Lobby): Promise<CategoryChannel> {
+    return (await this.getChannel(
+      lobby.channels.categoryId,
+    )) as CategoryChannel;
+  }
+
+  /**
+   * Gets a channel being passed its ID.
+   * @param channel The Channel to find.
+   * @returns The channel object if found.
+   */
+  async getChannel(
+    channel: string,
+  ): Promise<
+    | TextChannel
+    | VoiceChannel
+    | CategoryChannel
+    | NewsChannel
+    | StoreChannel
+    | StageChannel
+    | GuildChannel
+  > {
+    // Get the guild
+    const guild = await this.bot.guilds.fetch(config.discord.guild);
+
+    // Find the channel
+    const ch = await guild.channels.fetch(channel);
+
+    return ch ? ch : null;
   }
 
   /**
@@ -123,6 +165,78 @@ export class DiscordService {
   }
 
   /**
+   * Generates a permissions array only with queued players in a Lobby.
+   * @param players Array of Queued Players in a Lobby.
+   * @returns Array of permissions to set for a channel.
+   */
+  async compileQueuePermissions(
+    players: any[],
+  ): Promise<OverwriteResolvable[]> {
+    // Declare permissions array
+    const perms: OverwriteResolvable[] = [];
+
+    // Push permissions to the array
+    for (const player of players)
+      perms.push({
+        id: await this.getMember(player.discord),
+        allow: ['VIEW_CHANNEL', 'CONNECT'],
+        deny: ['SEND_MESSAGES', 'SPEAK'],
+      });
+
+    // Deny access to the rest of users
+    perms.push({
+      id: await this.getEveryoneRole(),
+      deny: ['VIEW_CHANNEL', 'CONNECT'],
+    });
+
+    return perms;
+  }
+
+  /**
+   * Creates (or updates) the Information Channel for a Lobby.
+   * @param lobby The Internal Lobby document.
+   * @param players The Lobby Queued Players array.
+   * @returns The Information TextChannel instance.
+   */
+  async createInfoChannel(lobby: Lobby, players: any[]): Promise<TextChannel> {
+    // Get permissions for the Info channel.
+    const permissionOverwrites = await this.compileQueuePermissions(players);
+
+    // If the channel already exists, update perms and return it.
+    if (lobby.channels.general.infoChannelId?.length) {
+      const info = (await this.getChannel(
+        lobby.channels.general.infoChannelId,
+      )) as TextChannel;
+
+      await info.edit(
+        {
+          permissionOverwrites,
+        },
+        'Updated Info Channel Permissions',
+      );
+
+      return info;
+    }
+
+    // If not, create it!
+    const cat = await this.getCategory(lobby);
+
+    const info = await cat.createChannel(`${lobby.name}-info`, {
+      type: 'GUILD_TEXT',
+      reason: `This is an automatically generated text channel for Cytokine lobbies.`,
+      topic: `**This is a temporary channel for lobby information.** This will be deleted after the lobby has been completed.`,
+      permissionOverwrites,
+    });
+
+    // Update internal lobby
+    lobby.channels.general.infoChannelId = info.id;
+    lobby.markModified('channels');
+    await lobby.save();
+
+    return info;
+  }
+
+  /**
    * Creates general Text & Voice channel for a lobby.
    */
   async createLobbyChannels(
@@ -140,34 +254,48 @@ export class DiscordService {
     // Create a Text & Voice Channel
     try {
       // Get the category set in the Config file. If none is set, create one.
-      let category: CategoryChannel = undefined;
-
-      if (config.lobbies.categoryId.length < 1 && !team.enabled)
-        category = await guild.channels.create(`Lobby ${name}`, {
-          type: 'GUILD_CATEGORY',
-          reason:
-            'This is an automatically generated category for Cytokine lobbies.',
-        });
-      else
-        category = <CategoryChannel>(
-          await guild.channels.fetch(
-            team.enabled ? team.category : config.lobbies.categoryId,
-          )
-        );
+      const category: CategoryChannel =
+        team?.category?.length || team?.enabled
+          ? ((await guild.channels.fetch(team.category)) as CategoryChannel)
+          : await guild.channels.create(`Lobby ${name}`, {
+              type: 'GUILD_CATEGORY',
+              reason:
+                'This is an automatically generated category for Cytokine lobbies.',
+              permissionOverwrites: permissions,
+            });
 
       // Now that we have a category, create the General Text & Voice Channels.
+      const gOptions: CategoryCreateChannelOptions = {
+        type: 'GUILD_TEXT',
+        reason:
+          'This is an automatically generated text channel for Cytokine lobbies.',
+        topic:
+          '**This is a temporary channel for lobby chat.** This will be deleted after the lobby has been completed.',
+      };
+
+      // If team channels aren't being created, have the General Text Channel not grant permissions to send messages or anything.
+      if (!team.enabled)
+        gOptions['permissionOverwrites'] = [
+          ...permissions.filter(
+            async (p) => p.id != (await this.getEveryoneRole()),
+          ),
+          {
+            id: await this.getEveryoneRole(),
+            deny: [
+              'VIEW_CHANNEL',
+              'SEND_MESSAGES',
+              'ADD_REACTIONS',
+              'CREATE_PUBLIC_THREADS',
+              'CREATE_PRIVATE_THREADS',
+            ],
+          },
+        ];
+
       const gTextChannel = await category.createChannel(
           `${team.enabled ? team.text : config.lobbies.lobbyTextPrefix}${
             team.enabled ? '' : name
           }`,
-          {
-            type: 'GUILD_TEXT',
-            reason:
-              'This is an automatically generated text channel for Cytokine lobbies.',
-            topic:
-              '**This is a temporary channel for lobby chat.** This will be deleted after the lobby has been completed.',
-            permissionOverwrites: permissions,
-          },
+          gOptions,
         ),
         gVoiceChannel = await category.createChannel(
           `${team.enabled ? team.voice : config.lobbies.lobbyVoicePrefix}${
@@ -180,12 +308,11 @@ export class DiscordService {
             topic:
               '**This is a temporary channel for lobby voice.** This will be deleted after the lobby has been completed.',
             rtcRegion,
-            permissionOverwrites: permissions,
           },
         );
 
       return {
-        text: gTextChannel,
+        text: gTextChannel as TextChannel,
         voice: gVoiceChannel,
       };
     } catch (e) {
@@ -284,6 +411,7 @@ export class DiscordService {
         ? lobby.channels.categoryId
         : undefined,
       lobby.channels.general.textChannelId,
+      lobby.channels.general?.infoChannelId,
       lobby.channels.teamA?.textChannelId,
       lobby.channels.teamB?.textChannelId,
       lobby.channels.general.voiceChannelId,
