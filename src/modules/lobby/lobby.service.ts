@@ -417,7 +417,6 @@ export class LobbyService {
    */
   async getNewLobbyName(): Promise<string> {
     // Get active lobbies
-    console.log(await this.getActiveLobbies());
     const { lobbies } = await this.getActiveLobbies();
 
     // Compare against the pool of names in the config to get one that isn't being used.
@@ -877,11 +876,11 @@ export class LobbyService {
 
       // Find the specific role for this region & format.
       const r = this.getRegion(region);
-      const role = r.roles.find((r) => r.name === format);
+      const role = r?.roles.find((r) => r.name === format);
 
       if (!role || !r)
         this.logger.error(
-          `Could not find role for region '${region}' and format '${format}'.`,
+          `Could not find role for region '${region}' and format '${format}'. Lobby will be fully public. If this is intentional, ignore this.`,
         );
       else
         permissions.push(

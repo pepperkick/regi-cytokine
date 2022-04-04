@@ -11,6 +11,7 @@ import {
   MessageEmbed,
   NewsChannel,
   OverwriteResolvable,
+  PermissionResolvable,
   Role,
   StageChannel,
   StoreChannel,
@@ -265,31 +266,52 @@ export class DiscordService {
             });
 
       // Now that we have a category, create the General Text & Voice Channels.
+      // If permissions are empty, have the channels inherit the Category's permissions.
+      // Otherwise, set the permissions to the ones passed in (could be due to Team Channel creation or other)
       const gOptions: CategoryCreateChannelOptions = {
-        type: 'GUILD_TEXT',
-        reason:
-          'This is an automatically generated text channel for Cytokine lobbies.',
-        topic:
-          '**This is a temporary channel for lobby chat.** This will be deleted after the lobby has been completed.',
-      };
+          type: 'GUILD_TEXT',
+          reason:
+            'This is an automatically generated text channel for Cytokine lobbies.',
+          topic:
+            '**This is a temporary channel for lobby chat.** This will be deleted after the lobby has been completed.',
+        },
+        gVOptions: CategoryCreateChannelOptions = {
+          type: 'GUILD_VOICE',
+          reason:
+            'This is an automatically generated voice channel for Cytokine lobbies.',
+          topic:
+            '**This is a temporary channel for lobby voice.** This will be deleted after the lobby has been completed.',
+          rtcRegion,
+        };
 
       // If team channels aren't being created, have the General Text Channel not grant permissions to send messages or anything.
-      if (!team.enabled)
+      if (!team.enabled) {
+        const generalPerms = {
+          id: await this.getEveryoneRole(),
+          deny: [
+            'SEND_MESSAGES',
+            'ADD_REACTIONS',
+            'CREATE_PUBLIC_THREADS',
+            'CREATE_PRIVATE_THREADS',
+          ],
+        };
+
+        // If there are permissions present, it means an override (be it role & format or accessList) is present.
+        // Deny channel viewing for everyone so only they can see it.
+        if (permissions.length > 0) generalPerms.deny.push('VIEW_CHANNEL');
+
         gOptions['permissionOverwrites'] = [
           ...permissions.filter(
-            async (p) => p.id != (await this.getEveryoneRole()),
+            async (p) => p?.id != (await this.getEveryoneRole()),
           ),
-          {
-            id: await this.getEveryoneRole(),
-            deny: [
-              'VIEW_CHANNEL',
-              'SEND_MESSAGES',
-              'ADD_REACTIONS',
-              'CREATE_PUBLIC_THREADS',
-              'CREATE_PRIVATE_THREADS',
-            ],
-          },
+          generalPerms as OverwriteResolvable,
         ];
+      }
+      // If we're creating team channels, let's set the permissions on them for each player.
+      else {
+        gOptions['permissionOverwrites'] = permissions;
+        gVOptions['permissionOverwrites'] = permissions;
+      }
 
       const gTextChannel = await category.createChannel(
           `${team.enabled ? team.text : config.lobbies.lobbyTextPrefix}${
@@ -301,19 +323,12 @@ export class DiscordService {
           `${team.enabled ? team.voice : config.lobbies.lobbyVoicePrefix}${
             team.enabled ? '' : name
           }`,
-          {
-            type: 'GUILD_VOICE',
-            reason:
-              'This is an automatically generated voice channel for Cytokine lobbies.',
-            topic:
-              '**This is a temporary channel for lobby voice.** This will be deleted after the lobby has been completed.',
-            rtcRegion,
-          },
+          gVOptions,
         );
 
       return {
         text: gTextChannel as TextChannel,
-        voice: gVoiceChannel,
+        voice: gVoiceChannel as VoiceChannel,
       };
     } catch (e) {
       // Probably missing permissions when creating channels.
