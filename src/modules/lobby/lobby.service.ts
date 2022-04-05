@@ -876,10 +876,10 @@ export class LobbyService {
 
       // Find the specific role for this region & format.
       const r = this.getRegion(region);
-      const role = r?.roles.find((r) => r.name === format);
+      const role = r?.roles?.find((r) => r.name === format);
 
       if (!role || !r)
-        this.logger.error(
+        this.logger.warn(
           `Could not find role for region '${region}' and format '${format}'. Lobby will be fully public. If this is intentional, ignore this.`,
         );
       else

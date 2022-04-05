@@ -471,7 +471,7 @@ export class AppService {
     // First decide which waiting channel we're using, depends on amount of players in said channel.
     const pAmount = lobby.queuedPlayers.length;
 
-    let waiting = null;
+    let waiting: VoiceChannel = null;
     for (const channel of config.discord.channels.waiting) {
       const ch = await this.discordService.getChannel(channel);
 
@@ -481,28 +481,49 @@ export class AppService {
 
         // If we've found a channel that has enough space, use it.
         waiting = ch;
+
+        break;
       }
     }
 
     // If nothing was found free, use a random waiting channel to move everyone.
-    waiting = await this.discordService.getChannel(
-      config.discord.channels.waiting[
-        Math.floor(Math.random() * config.discord.channels.waiting.length)
-      ],
-    );
+    if (!waiting) {
+      const channel = await this.discordService.getChannel(
+        config.discord.channels.waiting[
+          Math.floor(Math.random() * config.discord.channels.waiting.length)
+        ],
+      );
 
-    await lobby.queuedPlayers.forEach(async (p) => {
-      const user = await this.discordService.getMember(p.discord);
+      if (channel.isVoice()) {
+        waiting = channel as VoiceChannel;
+      } else {
+        this.logger.error(
+          `Waiting channel ${channel.id} is not a voice channel!`,
+          `${LobbyService.name}::lobbyNotifyFinished`,
+        );
+      }
+    }
 
-      // Move the player to the waiting channel.
-      setTimeout(async () => {
+    if (waiting) {
+      this.logger.debug(
+        `Moving ${lobby.queuedPlayers.length} players to ${waiting.id}`,
+        `${LobbyService.name}::lobbyNotifyFinished`,
+      );
+
+      // Move all players back to the waiting channel.
+      for (const player of lobby.queuedPlayers) {
+        const user = await this.discordService.getMember(player.discord);
+        // TODO: Check if user is in the lobby channel before moving otherwise it will move them to the waiting channel even if they are connected to some other channel.
         try {
           await user.voice.setChannel(waiting);
-        } catch (e) {
-          this.logger.error(`Tried to move ${user.id} but failed: ${e}`);
+        } catch (error) {
+          this.logger.error(
+            `Tried to move ${user.id} but failed: ${error}`,
+            `${LobbyService.name}::lobbyNotifyFinished`,
+          );
         }
-      }, config.lobbies.moveDelay * 1000);
-    });
+      }
+    }
 
     // Delete the channels that were created
     await this.discordService.deleteChannels(discord);
