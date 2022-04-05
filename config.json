@@ -26,12 +26,12 @@
         "token": ""
     },
     "lobbies": {
-        "categoryId": "",
         "lobbyTextPrefix": "lobby-",
         "lobbyVoicePrefix": "Lobby ",
         "defaultExpiry": 1800,
         "afkCheckTimeout": 60,
         "moveDelay": 1,
+        "maxAnnounces": 1,
         "names": [
             "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda", "Mu", "Nu", "Xi", "Omicron", "Pi", "Rho", "Sigma", "Tau", "Upsilon", "Phi", "Chi", "Psi", "Omega",
             "Scout", "Soldier", "Pyro", "Demo", "Heavy", "Engineer", "Medic", "Sniper", "Spy",
@@ -58,11 +58,15 @@
             "tags": [ "sydney", "aus" ],
             "discordVoiceRegion": "sydney",
             "valveSdr": true,
-            "roles": [
-                { "name": "6vs6", "role": "956872138487369760" },
-                { "name": "9vs9", "role": "955684064336183306" },
-                { "name": "Ultiduo", "role": "956872302895710209" }
-            ],
+            "announce": "",
+            "roles": {
+                "region": "",
+                "format": [
+                    { "name": "6vs6", "role": "956872138487369760" },
+                    { "name": "9vs9", "role": "955684064336183306" },
+                    { "name": "Ultiduo", "role": "113301858918920192" }
+                ]
+            },
             "tiers": {
                 "free": {
                     "limit": 5,
@@ -91,11 +95,15 @@
             "tags": [ "brazil", "sao", "sp" ],
             "discordVoiceRegion": "brazil",
             "valveSdr": true,
-            "roles": [
-                { "name": "6vs6", "role": "956884702394990634" },
-                { "name": "9vs9", "role": "956884702898315304" },
-                { "name": "Ultiduo", "role": "955684646073565184" }
-            ],
+            "announce": "",
+            "roles": {
+                "region": "",
+                "format": [
+                    { "name": "6vs6", "role": "956884702394990634" },
+                    { "name": "9vs9", "role": "956884702898315304" },
+                    { "name": "Ultiduo", "role": "955684646073565184" }
+                ]
+            },
             "tiers": {}
         },
         "chicago": {
@@ -105,11 +113,15 @@
             "tags": [ "chicago", "ch", "usa" ],
             "discordVoiceRegion": "us-central",
             "valveSdr": true,
-            "roles": [
-                { "name": "6vs6", "role": "956884424883077141" },
-                { "name": "9vs9", "role": "956884520936812564" },
-                { "name": "Ultiduo", "role": "955684392213286982" }
-            ],
+            "announce": "",
+            "roles": {
+                "region": "",
+                "format": [
+                    { "name": "6vs6", "role": "956884424883077141" },
+                    { "name": "9vs9", "role": "956884520936812564" },
+                    { "name": "Ultiduo", "role": "955684392213286982" }
+                ]
+            },
             "tiers": {}
         }
     },

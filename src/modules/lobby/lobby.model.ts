@@ -44,6 +44,10 @@ export class Lobby extends Document {
   @Prop({ type: String })
   accessConfig: string;
 
+  // Amount of times this lobby has gotten announced.
+  @Prop({ type: Number, min: 0 })
+  announcements: number;
+
   // Discord Channels
   @Prop({ type: Object })
   channels: {

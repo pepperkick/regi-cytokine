@@ -11,7 +11,6 @@ import {
   MessageEmbed,
   NewsChannel,
   OverwriteResolvable,
-  PermissionResolvable,
   Role,
   StageChannel,
   StoreChannel,
@@ -166,6 +165,33 @@ export class DiscordService {
   }
 
   /**
+   * Finds a role for a specific region &/or format.
+   * @param region
+   * @param format The Format name, if provided will return region-format specific role.
+   * @returns The Role instance.
+   */
+  async findRegionFormatRole(region: string, format?: string): Promise<Role> {
+    // Find the region object
+    const r = config.regions[region];
+    if (!r) {
+      this.logger.error(
+        `Tried to find region role for invalid region '${region}'`,
+      );
+      return await this.getEveryoneRole();
+    }
+
+    // If no format parameter was provided just return the region role.
+    const fRole = r?.roles?.format.find((f) => f?.name === format)?.role;
+
+    const roleId = !fRole ? r?.roles?.region : fRole;
+
+    // If no region role was found, return the everyone role.
+    return typeof roleId !== 'string'
+      ? await this.getEveryoneRole()
+      : await this.getRole(roleId);
+  }
+
+  /**
    * Generates a permissions array only with queued players in a Lobby.
    * @param players Array of Queued Players in a Lobby.
    * @returns Array of permissions to set for a channel.
@@ -235,6 +261,34 @@ export class DiscordService {
     await lobby.save();
 
     return info;
+  }
+
+  /**
+   * Builds a base Qixalite styled MessageEmbed.
+   * @param title A custom title to set on the embed.
+   * @param description A custom description to set on the embed.
+   * @returns A Qix-styled MessageEmbed instance.
+   */
+  async buildBaseEmbed(
+    title?: string,
+    description?: string,
+  ): Promise<MessageEmbed> {
+    return new MessageEmbed({
+      title: title ? title : 'Qixalite',
+      description: description ? description : '',
+      color: '#06D6A0',
+      footer: {
+        text: `Kindest Regards, Qixalite • ${new Date().toLocaleDateString(
+          'en-US',
+        )}`,
+      },
+      author: {
+        name: 'Qixalite',
+        iconURL:
+          'https://media.discordapp.net/attachments/743005170996215839/743077007889268736/QixaliteLogoDiscord3.png',
+      },
+      fields: [],
+    });
   }
 
   /**
@@ -479,27 +533,14 @@ export class DiscordService {
     }`;
 
     // Create the embed.
-    const embed = new MessageEmbed({
-      title: 'Match Details',
-      description: `The server details for this match are ready\n**Connect String**\`\`\`${connect}\`\`\`\n**SourceTV Details**\`\`\`${tvConnect}\`\`\``,
-      color: '#06D6A0',
-      footer: {
-        text: `Kindest Regards, Qixalite • ${new Date().toLocaleDateString(
-          'en-US',
-        )}`,
-      },
-      author: {
-        name: 'Qixalite',
-        iconURL:
-          'https://media.discordapp.net/attachments/743005170996215839/743077007889268736/QixaliteLogoDiscord3.png',
-      },
-      fields: [
-        {
-          name: 'Region',
-          value: `\`${server.region}\``,
-          inline: true,
-        },
-      ],
+    const embed = await this.buildBaseEmbed(
+      'Match Details',
+      `The server details for this match are ready\n**Connect String**\`\`\`${connect}\`\`\`\n**SourceTV Details**\`\`\`${tvConnect}\`\`\``,
+    );
+    embed.fields.push({
+      name: 'Region',
+      value: `\`${server.region}\``,
+      inline: true,
     });
 
     // Add original IP in case of having connection issues (From Regi-Lighthouse)

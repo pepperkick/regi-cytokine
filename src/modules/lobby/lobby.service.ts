@@ -551,6 +551,7 @@ export class LobbyService {
       accessConfig,
       format,
       tier,
+      announcements: 0,
     });
 
     // Return the saved document
@@ -876,7 +877,7 @@ export class LobbyService {
 
       // Find the specific role for this region & format.
       const r = this.getRegion(region);
-      const role = r?.roles?.find((r) => r.name === format);
+      const role = r?.roles?.format?.find((r) => r.name === format);
 
       if (!role || !r)
         this.logger.warn(

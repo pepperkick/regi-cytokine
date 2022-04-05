@@ -19,6 +19,7 @@ import { PreferenceService } from '../modules/preferences/preference.service';
 import { AccessListsCommand } from './lobby/access-lists.command';
 import { AccessConfigsCommand } from './lobby/access-configs.command';
 import { RegionStatusSubCommand } from './lobby/region-status.command';
+import { AnnounceSubCommand } from './lobby/announce.command';
 
 export const PreferenceKeys = {
   lobbyAccessConfigs: 'lobby_access_configs',
@@ -38,6 +39,7 @@ export const PreferenceKeys = {
     KickSubCommand,
     RingerSubCommand,
     RegionStatusSubCommand,
+    AnnounceSubCommand,
 
     AccessConfigsCommand,
     AccessListsCommand,

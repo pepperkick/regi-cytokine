@@ -1,8 +1,4 @@
-import {
-  AutocompleteInteraction,
-  CommandInteraction,
-  MessageEmbed,
-} from 'discord.js';
+import { AutocompleteInteraction, CommandInteraction } from 'discord.js';
 import { Discord, Slash, SlashGroup, SlashOption } from 'discordx';
 import * as config from '../../../config.json';
 import { LobbyCommand } from '../lobby.command';
@@ -46,21 +42,10 @@ export class RegionStatusSubCommand {
       await interaction.deferReply({ ephemeral: true });
 
       // Create the reply
-      const reply = new MessageEmbed({
-        title: 'Lobby Region Status',
-        fields: [],
-        color: '#06D6A0',
-        footer: {
-          text: `[F]: Free [P]: Premium\nKindest Regards, Qixalite • ${new Date().toLocaleDateString(
-            'en-US',
-          )}`,
-        },
-        author: {
-          name: 'Qixalite',
-          iconURL:
-            'https://media.discordapp.net/attachments/743005170996215839/743077007889268736/QixaliteLogoDiscord3.png',
-        },
-      });
+      const reply = await LobbyCommand.discordService.buildBaseEmbed(
+        'Lobby Region Status',
+      );
+      reply.footer.text = '[F]: Free [P]: Premium\n' + reply.footer.text;
 
       // If a region was specified, only show that one
       let r = Object.keys(config.regions);
