@@ -117,9 +117,13 @@ export class AnnounceSubCommand {
       `:white_check_mark: Successfully announced your Lobby to <#${channel.id}>!`,
     );
 
-    return await channel.send({
+    const announce = await channel.send({
       content: role === null ? '@here' : `${role}`,
       embeds: [embed],
     });
+
+    // Publis the announcement if it's on a news channel (Announcement Channel)
+    if (channel instanceof NewsChannel) await announce.crosspost();
+    return announce;
   }
 }
