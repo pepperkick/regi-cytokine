@@ -476,9 +476,7 @@ export class DiscordService {
   async deleteChannels(lobby) {
     // Delete the channels
     const channels = [
-      lobby.channels.categoryId !== config.lobbies.categoryId
-        ? lobby.channels.categoryId
-        : undefined,
+      lobby.channels.categoryId,
       lobby.channels.general.textChannelId,
       lobby.channels.general?.infoChannelId,
       lobby.channels.teamA?.textChannelId,
