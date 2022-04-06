@@ -58,13 +58,25 @@ export class AnnounceSubCommand {
 
     // If an access config is present, we only need to tag @here inside the lobby's general channel.
     // Permissions will be set accordingly, so for region-format types of lobbies others won't see the channel and not get tagged.
-    if (accessConfig?.length < 1 || !accessConfig) {
-      // Search for the announcement channel depending on the region.
-      // If none is set, use the Lobby's general channel.
-      const announce = config?.regions[region]?.announce;
+    const access = await LobbyCommand.service.getAccessConfig(
+      accessConfig,
+      interaction.user.id,
+    );
+    const ann = config?.regions[region]?.announce;
 
-      if (announce?.length > 0)
-        channel = (await LobbyCommand.discordService.getChannel(announce)) as
+    // Blacklisted lobbies should still be broadcasted generally, as only some players are banned from the Lobby while others aren't.
+    // However, if a whitelist is present on the Lobby, only players on the whitelist will be able to see the announcement.
+    // Would be pointless to post such an announcement public.
+    //
+    // Condition states: If access config is a blacklist or if there isn't an access config present, look for the announcement channel.
+    if (
+      access?.accessLists['player']?.blacklist ||
+      accessConfig?.length < 1 ||
+      !accessConfig ||
+      !access
+    ) {
+      if (ann.length > 0)
+        channel = (await LobbyCommand.discordService.getChannel(ann)) as
           | TextChannel
           | NewsChannel;
       role = await LobbyCommand.discordService.findRegionFormatRole(
@@ -122,7 +134,7 @@ export class AnnounceSubCommand {
       embeds: [embed],
     });
 
-    // Publis the announcement if it's on a news channel (Announcement Channel)
+    // Publish the announcement if it's on a news channel (Announcement Channel)
     if (channel instanceof NewsChannel) await announce.crosspost();
     return announce;
   }
