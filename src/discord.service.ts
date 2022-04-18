@@ -183,12 +183,13 @@ export class DiscordService {
     // If no format parameter was provided just return the region role.
     const fRole = r?.roles?.format.find((f) => f?.name === format)?.role;
 
-    const roleId = !fRole ? r?.roles?.region : fRole;
+    const roleId = !fRole || !format ? r?.roles?.region : fRole;
 
     // If no region role was found, return the everyone role.
-    return typeof roleId !== 'string'
-      ? await this.getEveryoneRole()
-      : await this.getRole(roleId);
+    const role = await this.getRole(roleId);
+
+    // return role ?? await this.getEveryoneRole();
+    return role ? role : await this.getEveryoneRole();
   }
 
   /**
@@ -267,21 +268,27 @@ export class DiscordService {
    * Builds a base Qixalite styled MessageEmbed.
    * @param title A custom title to set on the embed.
    * @param description A custom description to set on the embed.
+   * @param color A custom color to override the default green.
+   * @param footer If true, will add a footer with the current date.
    * @returns A Qix-styled MessageEmbed instance.
    */
   async buildBaseEmbed(
     title?: string,
     description?: string,
+    color?: number,
+    footer?: boolean,
   ): Promise<MessageEmbed> {
     return new MessageEmbed({
       title: title ? title : 'Qixalite',
       description: description ? description : '',
-      color: '#06D6A0',
-      footer: {
-        text: `Kindest Regards, Qixalite • ${new Date().toLocaleDateString(
-          'en-US',
-        )}`,
-      },
+      color: color ?? '#06D6A0',
+      footer: footer
+        ? {
+            text: `Kindest Regards, Qixalite • ${new Date().toLocaleDateString(
+              'en-US',
+            )}`,
+          }
+        : {},
       author: {
         name: 'Qixalite',
         iconURL:

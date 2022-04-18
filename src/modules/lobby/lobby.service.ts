@@ -875,25 +875,42 @@ export class LobbyService {
         `Could not find accessConfig with name '${name}'. Configuring permissions per region/format.`,
       );
 
-      // Find the specific role for this region & format.
-      const r = this.getRegion(region);
-      const role = r?.roles?.format?.find((r) => r.name === format);
+      // Find the specific role for this region and region-format.
+      const r = await this.discord.findRegionFormatRole(region),
+        role = await this.discord.findRegionFormatRole(region, format);
 
-      if (!role || !r)
+      if (!r || !role) {
         this.logger.warn(
           `Could not find role for region '${region}' and format '${format}'. Lobby will be fully public. If this is intentional, ignore this.`,
         );
-      else
-        permissions.push(
+
+        return [
           {
-            id: await this.discord.getRole(role.role),
+            id: await this.discord.getEveryoneRole(),
+            allow: ['VIEW_CHANNEL', 'CONNECT'],
+          },
+        ];
+      } else {
+        const perms: OverwriteResolvable[] = [
+          {
+            id: r,
             allow: ['VIEW_CHANNEL', 'CONNECT'],
           },
           {
             id: await this.discord.getEveryoneRole(),
             deny: ['VIEW_CHANNEL', 'CONNECT'],
           },
-        );
+        ];
+
+        // Make sure they're not equal to avoid repetition.
+        if (r.id != role.id)
+          perms.push({
+            id: role,
+            allow: ['VIEW_CHANNEL', 'CONNECT'],
+          });
+
+        permissions.push(...perms);
+      }
 
       return permissions;
     }

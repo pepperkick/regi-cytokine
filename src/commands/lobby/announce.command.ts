@@ -3,6 +3,7 @@ import { CommandInteraction, NewsChannel, TextChannel } from 'discord.js';
 import { Discord, Slash, SlashGroup, SlashOption } from 'discordx';
 import { LobbyCommand } from '../lobby.command';
 import * as config from '../../../config.json';
+import { DistributionType } from 'src/objects/distribution.enum';
 
 @Discord()
 @SlashGroup('lobby')
@@ -107,7 +108,13 @@ export class AnnounceSubCommand {
         true,
       )
       .addField('Format', `**${format}**`, true)
-      .addField('Distribution', `**${lobby.distribution}**`, true)
+      .addField(
+        'Distribution',
+        `**${LobbyCommand.getDistributionTypeName(
+          lobby.distribution as DistributionType,
+        )}**`,
+        true,
+      )
       .addField(
         'Current Queue',
         `**${lobby.queuedPlayers.length}** players queued out of **${lobby.maxPlayers}**`,

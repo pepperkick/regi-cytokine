@@ -102,8 +102,8 @@ export class AppService {
 
     // Update embed color
     // And update the last field message, removing the queue up reminder.
-    const embed = message.embeds[0];
-    embed.color = color.WAITING_FOR_AFK;
+    const embeds = message.embeds;
+    for (const embed of message.embeds) embed.color = color.WAITING_FOR_AFK;
 
     // Create the AFK check message, and set a timeout for it to expire.
     const afkMessage = await this.messagingService.sendAFKCheck(lobby, info);
@@ -163,7 +163,7 @@ export class AppService {
 
     return await message.edit({
       content: `:hourglass: Waiting on players to confirm they're ready...`,
-      embeds: [embed],
+      embeds: [...embeds],
       components: [],
     });
   }
@@ -178,12 +178,12 @@ export class AppService {
 
     // Update embed color
     // And update the last field message, removing the queue up reminder.
-    const embed = message.embeds[0];
-    embed.color = color.DISTRIBUTING;
+    const embeds = message.embeds;
+    for (const embed of embeds) embed.color = color.DISTRIBUTING;
 
     return await message.edit({
       content: ':hourglass: Distributing players randomly...',
-      embeds: [embed],
+      embeds: [...embeds],
       components: [],
     });
   }
@@ -196,8 +196,8 @@ export class AppService {
     const { message, discord } = await this.getMessage(lobby._id);
 
     // Update embed color
-    const embed = message.embeds[0];
-    embed.color = color.DISTRIBUTED;
+    const embeds = message.embeds;
+    for (const embed of message.embeds) embed.color = color.DISTRIBUTED;
 
     // Get the user lists
     const players = this.messagingService.generateUserList(
@@ -289,10 +289,7 @@ export class AppService {
 
     // Update the embed
     // The user list is the actual embed fields.
-    embed.fields.splice(3, embed.fields.length - 3);
-
-    embed.fields.push(
-      ...players,
+    embeds[0].fields.push(
       {
         name: '\u200b',
         value: '\u200b',
@@ -310,10 +307,12 @@ export class AppService {
       },
     );
 
+    embeds[1].fields = [...players];
+
     return await message.edit({
       content:
         ':white_check_mark: Players have been distributed!\n\n:hourglass: Preparing lobby...',
-      embeds: [embed],
+      embeds: [...embeds],
     });
   }
 
@@ -325,13 +324,13 @@ export class AppService {
     const { message } = await this.getMessage(lobbyId);
 
     // Update embed color
-    const embed = message.embeds[0];
-    embed.color = color.LOBBY_READY;
+    const embeds = message.embeds;
+    for (const embed of message.embeds) embed.color = color.LOBBY_READY;
 
     return await message.edit({
       content:
         ':white_check_mark: Lobby is ready!\n\n:point_right: Join your respective team channels below.',
-      embeds: [embed],
+      embeds: [...embeds],
     });
   }
 
@@ -343,12 +342,12 @@ export class AppService {
     const { message } = await this.getMessage(lobbyId);
 
     // Update embed color
-    const embed = message.embeds[0];
-    embed.color = color.CREATING_SERVER;
+    const embeds = message.embeds;
+    for (const embed of message.embeds) embed.color = color.CREATING_SERVER;
 
     return await message.edit({
       content: `${message.content}\n:hourglass: Waiting for server to start...`,
-      embeds: [embed],
+      embeds: [...embeds],
     });
   }
 
@@ -368,8 +367,8 @@ export class AppService {
     );
 
     // Update embed color
-    const embed = message.embeds[0];
-    embed.color = color.WAITING_FOR_PLAYERS;
+    const embeds = message.embeds;
+    for (const embed of message.embeds) embed.color = color.WAITING_FOR_PLAYERS;
 
     // Get the Server info from the server ID
     const server = await this.lobbyService.getServerInfo(data._id);
@@ -379,7 +378,7 @@ export class AppService {
 
     return await message.edit({
       content: `:white_check_mark: Server is ready!\n\n:point_right: Details have been posted in <#${info.id}>\n:hourglass: Waiting for players to join...`,
-      embeds: [embed],
+      embeds: [...embeds],
     });
   }
 
@@ -391,14 +390,14 @@ export class AppService {
     const { message } = await this.getMessage(lobbyId);
 
     // Update embed color
-    const embed = message.embeds[0];
-    embed.color = color.LIVE;
+    const embeds = message.embeds;
+    for (const embed of message.embeds) embed.color = color.LIVE;
 
     // Add the STV connection string to the embed
     // Get the Server info from the server ID
     const server = await this.lobbyService.getServerInfo(match._id);
 
-    embed.fields.push({
+    embeds[0].fields.push({
       name: ':tv: STV Connection',
       value: `If you wish to spectate the match connect to the **STV** with: \`\`connect ${
         server.data.sdrEnable ? server.data.sdrIp : server.ip
@@ -415,7 +414,7 @@ export class AppService {
     return await message.edit({
       content:
         ":busts_in_silhouette: All players have joined the server!\n\n:crossed_swords: **It's game time! Good luck and happy competition!**",
-      embeds: [embed],
+      embeds: [...embeds],
     });
   }
 

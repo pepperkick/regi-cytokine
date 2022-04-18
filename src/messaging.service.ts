@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { forwardRef, Inject, Logger } from '@nestjs/common';
 import {
   ButtonInteraction,
   CommandInteraction,
@@ -20,6 +20,7 @@ import { Player } from './objects/match-player.interface';
 import { RequirementName } from './objects/requirement-names.enum';
 import * as color from './objects/status-colors.enum';
 import * as config from '../config.json';
+import { DiscordService } from './discord.service';
 interface ReplyParameters {
   content?: string;
   ephemeral?: true;
@@ -32,7 +33,10 @@ interface ReplyParameters {
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
 
-  constructor() {}
+  constructor(
+    @Inject(forwardRef(() => DiscordService))
+    private readonly discord: DiscordService,
+  ) {}
 
   /**
    * Creates a user list from an array of players.
@@ -527,34 +531,45 @@ export class MessagingService {
     // Make a user list with all Discord tags.
     const userList = this.generateUserList(lobby, {}, distribution);
 
-    const embed = new MessageEmbed({
-      title: `Lobby **${params.lobbyName}**`,
-      description: `Created by <@${interaction.user.id}>`,
-      color: 0x787878,
-      fields: [
-        {
-          name: 'Format & Info',
-          value: `🗒 **Format**: ${format.name}\n:bust_in_silhouette: **Max. Players**: ${format.maxPlayers}\n:cyclone: **Distribution**: ${distributionName}\n:map: **Map**: [${params.map}](http://fastdl.tf.qixalite.com/${params.map}.bsp)`,
-          inline: true,
-        },
-        {
-          name: 'Region',
-          value: `📍 **${params.region}**`,
-          inline: true,
-        },
-        {
-          name: 'Game',
-          value: `🎮 ${format.game}`,
-          inline: true,
-        },
-        {
-          name: '👥 Queued Players',
-          value: `${lobby.queuedPlayers.length}/${format.maxPlayers}`,
-          inline: false,
-        },
-        ...userList,
-      ],
-    });
+    const info = await this.discord.buildBaseEmbed(
+      `Lobby **${params.lobbyName}**`,
+      `Created by <@${interaction.user.id}>`,
+      0x787878,
+      false,
+    );
+    info.fields = [
+      {
+        name: 'Format & Info',
+        value: `🗒 **Format**: ${format.name}\n:bust_in_silhouette: **Max. Players**: ${format.maxPlayers}\n:cyclone: **Distribution**: ${distributionName}\n:map: **Map**: [${params.map}](http://fastdl.tf.qixalite.com/${params.map}.bsp)`,
+        inline: true,
+      },
+      {
+        name: 'Region',
+        value: `📍 **${params.region}**`,
+        inline: true,
+      },
+      {
+        name: 'Game',
+        value: `🎮 ${format.game}`,
+        inline: true,
+      },
+      {
+        name: '👥 Queued Players',
+        value: `${lobby.queuedPlayers.length}/${format.maxPlayers}`,
+        inline: false,
+      },
+    ];
+
+    const users = await this.discord.buildBaseEmbed(
+      `Queued Players List`,
+      `Currently queued players for Lobby ${params.lobbyName}`,
+      0x787878,
+      true,
+    );
+    // Remove author info
+    delete users.author;
+
+    users.fields = [...userList];
 
     // Create a Button row to queue up or leave the queue.
     const btnRows = await this.createDistributionComponent(
@@ -565,7 +580,7 @@ export class MessagingService {
 
     const message = {
       content: params.content,
-      embeds: [embed],
+      embeds: [info, users],
       components: [...btnRows],
     };
 
@@ -597,16 +612,11 @@ export class MessagingService {
     );
 
     // Update the fields that are outdated
-    const embed = message.embeds[0];
-    embed.color = color[lobby.status];
+    const embeds = message.embeds;
+    for (const embed of embeds) embed.color = color[lobby.status];
 
-    embed.fields[3] = {
-      name: '👥 Queued Players',
-      value: `${lobby.queuedPlayers.length}/${lobby.maxPlayers}`,
-      inline: false,
-    };
-    embed.fields.splice(4, embed.fields.length - 4);
-    embed.fields.push(...userList);
+    // Update player list
+    embeds[1].fields = [...userList];
 
     // Create the new Select menu with full roles omitted
     const btnRows = await this.createDistributionComponent(
@@ -615,7 +625,10 @@ export class MessagingService {
       lobby,
     );
 
-    return await message.edit({ embeds: [embed], components: [...btnRows] });
+    return await message.edit({
+      embeds: [...embeds],
+      components: [...btnRows],
+    });
   }
 
   /**

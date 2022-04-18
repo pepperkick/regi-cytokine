@@ -7,6 +7,7 @@ import { LobbyCommand } from './commands/lobby.command';
 
 import * as config from '../config.json';
 import { PreferenceModule } from './modules/preferences/preference.module';
+import { MessagingService } from './messaging.service';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { PreferenceModule } from './modules/preferences/preference.module';
     PreferenceModule,
   ],
   controllers: [AppController],
-  providers: [AppService, LobbyCommand],
+  providers: [AppService, LobbyCommand, MessagingService],
   exports: [],
 })
 export class AppModule {}
