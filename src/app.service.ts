@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   Message,
+  MessageEmbed,
   OverwriteResolvable,
   TextChannel,
   VoiceChannel,
@@ -16,6 +17,7 @@ import { DistributionType } from './objects/distribution.enum';
 import { RequirementName } from './objects/requirement-names.enum';
 import { LobbyCommand } from './commands/lobby.command';
 import { Lobby } from './modules/lobby/lobby.model';
+import { LobbyFormat } from './objects/lobby-format.interface';
 
 @Injectable()
 export class AppService {
@@ -68,7 +70,14 @@ export class AppService {
 
   async lobbyNotifyWaitingForRequiredPlayers(lobby: any) {
     // Get the Message object for this LobbyID
-    const { message } = await this.getMessage(lobby._id);
+    const { message, discord } = await this.getMessage(lobby._id);
+
+    // Disable the advert boolean in case of a captain based Lobby.
+    if (lobby.distribution === DistributionType.CAPTAIN_BASED) {
+      discord.minimumAdverted = false;
+      discord.markModified('minimumAdverted');
+      await discord.save();
+    }
 
     // If no message is found, do not do anything.
     if (!message) return;
@@ -78,7 +87,138 @@ export class AppService {
       content: `:hourglass: Waiting for players to queue up...`,
     });
 
-    return await this.messagingService.updateReply(lobby, message);
+    // Get the format information.
+    const format = config.formats.find(
+      (f) => f.name === discord.format,
+    ) as LobbyFormat;
+
+    return await this.messagingService.updateReply(lobby, message, format);
+  }
+
+  /**
+   * Does a Lobby Notification for WAITING_FOR_PICKS
+   * This is where captains begin the picking process.
+   */
+  async lobbyNotifyWaitingForPicks(lobby: any) {
+    // Get the Message object for this LobbyID
+    const { message, discord } = await this.getMessage(lobby._id);
+
+    // Create info channel (if not exists)
+    const info = await this.discordService.createInfoChannel(
+      discord,
+      lobby.queuedPlayers,
+    );
+
+    // Begin the picking process.
+    // Messages are sent pinging the captain on the info channel where they make a choice.
+    // They can pick one player at a time.
+    const capA = lobby.queuedPlayers.find((p) => p.roles.includes('captain-a')),
+      capB = lobby.queuedPlayers.find((p) => p.roles.includes('captain-b'));
+
+    // Define the picking order for the Lobby.
+    const { maxPlayers } = config.formats.find(
+      (f) => f.name === discord.format,
+    );
+
+    const picksPerCaptain = Math.floor((maxPlayers - 2) / 2);
+
+    // Picking order should follow this logic:
+    //  - Captain A picks one player first.
+    //  - Rest of picks is 2 per captain
+    //  - Must end with captain B picking one player.
+    // Remaining unfilled role is taken by the captain automatically (will mostly be Medic on 6s for example)
+    const midOrder = [];
+    for (let i = 0; i < Math.floor(picksPerCaptain / 2); i++) {
+      i % 2 === 0
+        ? midOrder.push(capB.discord, capB.discord)
+        : midOrder.push(capA.discord, capA.discord);
+    }
+
+    this.logger.log(capA, capB);
+    this.logger.log(JSON.stringify(lobby.queuedPlayers));
+
+    const pickOrder = [capA.discord, ...midOrder, capB.discord];
+
+    // Set them on the internal Lobby document.
+    discord.captainPicks.picks = pickOrder;
+    discord.captainPicks.position = 0;
+
+    // Save it.
+    discord.markModified('captainPicks');
+    await discord.save();
+
+    await info.send({
+      content: `:crossed_swords: The captains for this match have been decided!\n\n:point_right: Check the current team composition on <#${discord.channels.general.textChannelId}>.`,
+      embeds: [
+        new MessageEmbed({
+          title: ':crossed_swords: Captains',
+          fields: [
+            {
+              name: ':red_circle: RED Captain',
+              value: `<@${capA.discord}>`,
+              inline: true,
+            },
+            {
+              name: ':blue_circle: BLU Captain',
+              value: `<@${capB.discord}>`,
+              inline: true,
+            },
+          ],
+        }),
+      ],
+    });
+
+    // Send to the info message who the first picker is.
+    const captain = discord.captainPicks.picks[discord.captainPicks.position];
+
+    await info.send({
+      content: `<@${captain}>'s starts picking!\n\n:point_right: Use the \`/lobby pick\` command to pick a player for your team.`,
+    });
+
+    // Update the lobby embed.
+    return await this.messagingService.updateReply(
+      lobby,
+      message,
+      config.formats.find((f) => f.name === discord.format) as LobbyFormat,
+      ':white_check_mark: Captains have been decided!\n\n:hourglass: Waiting for captains to finish picking...',
+    );
+  }
+
+  /**
+   * Verifies if the picking process has ended.
+   * @param lobby The Cytokine Lobby document.
+   * @returns True if it ended, if not it returns the current captain's turn.
+   */
+  async verifyPickProcess(lobby: any): Promise<boolean | string> {
+    // Get the current position of the pick.
+    const iLobby = await this.lobbyService.getInternalLobbyById(lobby._id);
+
+    const { position, picks } = iLobby.captainPicks;
+
+    // If the position is equal to the pick order length we have reached the end of the picking process.
+    if (position === picks.length) {
+      this.logger.log(`Picks for Lobby ${lobby._id} are complete!`);
+
+      // Stop the timer.
+      return true;
+    }
+
+    const unfilled = lobby.queuedPlayers.filter(
+      (p) =>
+        !p.roles.includes('captain-a') &&
+        !p.roles.includes('captain-b') &&
+        !p.roles.includes('can-captain') &&
+        !p.roles.includes('picked'),
+    );
+
+    this.logger.debug(
+      `Picks have not been completed. Remaining picks: ${unfilled.length}/${
+        lobby.maxPlayers - 2
+      }`,
+    );
+
+    // Return the captain that needs to pick.
+    return picks[position];
   }
 
   /**

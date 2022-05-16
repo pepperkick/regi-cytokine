@@ -20,6 +20,8 @@ import { AccessListsCommand } from './lobby/access-lists.command';
 import { AccessConfigsCommand } from './lobby/access-configs.command';
 import { RegionStatusSubCommand } from './lobby/region-status.command';
 import { AnnounceSubCommand } from './lobby/announce.command';
+import { CaptainBasedHandler } from './lobby/distribution-handlers/captain.handler';
+import { PickSubCommand } from './lobby/pick.command';
 
 export const PreferenceKeys = {
   lobbyAccessConfigs: 'lobby_access_configs',
@@ -40,12 +42,14 @@ export const PreferenceKeys = {
     RingerSubCommand,
     RegionStatusSubCommand,
     AnnounceSubCommand,
+    PickSubCommand,
 
     AccessConfigsCommand,
     AccessListsCommand,
 
     RandomisedHandler,
     TeamRoleBasedHandler,
+    CaptainBasedHandler,
   ],
 })
 export class LobbyCommand {
@@ -176,8 +180,8 @@ export class LobbyCommand {
         return 'Randomised';
       case DistributionType.TEAM_ROLE_BASED:
         return 'Open';
-      case DistributionType.CAPTAIN_ROLE_PICK:
-        return 'Captain';
+      case DistributionType.CAPTAIN_BASED:
+        return 'Captains';
       default:
         return 'Unknown Distribution';
     }

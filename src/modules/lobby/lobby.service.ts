@@ -17,6 +17,7 @@ import {
   OverwriteResolvable,
 } from 'discord.js';
 import { MessagingService } from '../../messaging.service';
+import { LobbyPick } from './lobby-pick.interface';
 
 // TODO: Not sure why the actual keys does not work, importing it makes building fail
 class PreferenceKeys {
@@ -340,6 +341,32 @@ export class LobbyService {
   }
 
   /**
+   * Perform a pick on a Lobby.
+   * @param lobbyId The ID of the Lobby this pick is for.
+   * @param pick The LobbyPick object.
+   * @returns The updated Lobby document if successful, else the error message.
+   */
+  async performPick(lobbyId: string, pick: LobbyPick) {
+    try {
+      const { data } = await axios.post(
+        `${config.cytokine.host}/api/v1/lobbies/${lobbyId}/pick`,
+        pick,
+        {
+          headers: { Authorization: `Bearer ${config.cytokine.secret}` },
+        },
+      );
+
+      return data;
+    } catch (e) {
+      this.logger.error(
+        JSON.stringify(e, null, 2),
+        `${LobbyService.name}::performPick`,
+      );
+      return e;
+    }
+  }
+
+  /**
    * Gets the Kaiend document for a user.
    * @param discordId The Discord ID of the user.
    * @returns The Kaiend document corresponding to this user.
@@ -552,6 +579,10 @@ export class LobbyService {
       format,
       tier,
       announcements: 0,
+      captainPicks: {
+        position: 0,
+        picks: [],
+      },
     });
 
     // Return the saved document
@@ -805,7 +836,7 @@ export class LobbyService {
     }
 
     // Check if access lists are valid
-    if (config.accessLists) {
+    if (config?.accessLists) {
       for (const action of Object.keys(config.accessLists)) {
         const whitelistName = config.accessLists[action]['whitelist'];
         const blacklistName = config.accessLists[action]['blacklist'];
@@ -991,13 +1022,13 @@ export class LobbyService {
     player: Player,
     role: RequirementName,
   ): Promise<boolean> {
-    if (!lobby.accessConfig || lobby.accessConfig === '') return true;
+    if (!lobby?.accessConfig || lobby?.accessConfig === '') return true;
     this.logger.debug(
       `Checking if player ${player.discord} can join role ${role} of lobby ${lobby._id}`,
     );
 
     const config = await this.getAccessConfig(
-      lobby.accessConfig,
+      lobby?.accessConfig,
       lobby.creatorId,
     );
 

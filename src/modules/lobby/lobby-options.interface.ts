@@ -26,6 +26,7 @@ export interface LobbyOptions {
   // Data for lobby
   data?: {
     expiryTime: number;
+    captainTimeout: number;
   };
 
   // Options for match

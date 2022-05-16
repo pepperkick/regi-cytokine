@@ -309,7 +309,14 @@ export class CreateSubCommand {
       // Declare the LobbyOptions object to send over the request.
       const requirements = formatConfig.distribution.find(
         (dist) => dist.type === distribution,
-      ).requirements;
+      )?.requirements;
+
+      if (!requirements)
+        return await LobbyCommand.messaging.replyToInteraction(
+          interaction,
+          `:x: Failed to create lobby: \`\`Could not find requirements for the selected distribution.\`\`.`,
+          { ephemeral: true },
+        );
 
       const options: LobbyOptions = {
         distribution,
@@ -320,9 +327,10 @@ export class CreateSubCommand {
         userId: interaction.user.id,
         data: {
           expiryTime: expires,
+          captainTimeout: config.lobbies.captainTimeout ?? 0,
         },
         matchOptions: {
-          region: region,
+          region,
           game: <Game>formatConfig.game,
           requiredPlayers: formatConfig.maxPlayers,
           map,
@@ -388,9 +396,6 @@ export class CreateSubCommand {
         );
       }
 
-      // Send a message to the text channel explaining its purpose.
-      await LobbyCommand.messaging.sendInitialMessage(text, name);
-
       // Create the new message to edit the interaction with the lobby's status.
       const messageId = await LobbyCommand.messaging.lobbyInitialReply(
         interaction,
@@ -398,7 +403,7 @@ export class CreateSubCommand {
         lobby,
         {
           content: ':hourglass: Waiting for players to queue up...',
-          region,
+          region: config.regions[region]?.name ?? 'Unknown',
           userId: interaction.user.id,
           lobbyName: name,
           map,
@@ -439,9 +444,10 @@ export class CreateSubCommand {
     await interaction.deferReply({ ephemeral: true });
 
     // Get the Lobby ID from the internal Lobby document
-    const { lobbyId } = await LobbyCommand.service.getInternalLobbyByMessageId(
-        interaction.message.id,
-      ),
+    const { lobbyId, format } =
+        await LobbyCommand.service.getInternalLobbyByMessageId(
+          interaction.message.id,
+        ),
       discordId = interaction.user.id;
 
     // Get the Lobby object, player object and lobbyId
@@ -473,6 +479,7 @@ export class CreateSubCommand {
     await LobbyCommand.messaging.updateReply(
       lobby,
       <Message>interaction.message,
+      config.formats.find((f) => f.name === format) as LobbyFormat,
     );
 
     // Reply to the user with an ephemeral message saying they've been added to the queue.

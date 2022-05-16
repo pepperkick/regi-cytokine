@@ -33,8 +33,10 @@ export enum RequirementName {
   //  - Captain Based Distribution
   //  - Random Distribution (excludes CAPTAIN)
   // TF2Pickup/PugChamp Lobby Type (Players can select their role, but not the team they desire to be in)
+  CAN_CAPTAIN = 'can-captain',
   CAPTAIN_A = 'captain-a',
   CAPTAIN_B = 'captain-b',
+  PICKED = 'picked',
   SCOUT = 'scout',
   SOLDIER = 'soldier',
   PYRO = 'pyro',
@@ -50,4 +52,7 @@ export const SpecialRequirementNames = [
   RequirementName.ACTIVE,
   RequirementName.CREATOR,
   RequirementName.NEEDS_SUB,
+  RequirementName.CAPTAIN_A,
+  RequirementName.CAPTAIN_B,
+  RequirementName.PICKED,
 ];

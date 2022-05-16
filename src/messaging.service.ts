@@ -76,14 +76,12 @@ export class MessagingService {
             }
 
             // Build the role fields for each team.
-            let emoji = this.getRequirementEmoji(`red-${role.name}`);
+            let emoji = this.getRequirementEmoji(`red-${role.name}`, true);
 
             fields.push({
-              name: `<:${emoji?.name}:${
-                emoji?.id
-              }> ${this.getRequirementDisplayName(`red-${role.name}`)} [${
-                teamA.length
-              }/${role.count}]`,
+              name: `${emoji} ${this.getRequirementDisplayName(
+                `red-${role.name}`,
+              )} [${teamA.length}/${role.count}]`,
               value:
                 teamA.length > 0
                   ? teamA.map((p) => `<@${p.discord}>`).join('\n')
@@ -91,14 +89,12 @@ export class MessagingService {
               inline: true,
             });
 
-            emoji = this.getRequirementEmoji(`blu-${role.name}`);
+            emoji = this.getRequirementEmoji(`blu-${role.name}`, true);
 
             fields.push({
-              name: `<:${emoji?.name}:${
-                emoji?.id
-              }> ${this.getRequirementDisplayName(`blu-${role.name}`)} [${
-                teamB.length
-              }/${role.count}]`,
+              name: `${emoji} ${this.getRequirementDisplayName(
+                `blu-${role.name}`,
+              )} [${teamB.length}/${role.count}]`,
               value:
                 teamB.length > 0
                   ? teamB.map((p) => `<@${p.discord}>`).join('\n')
@@ -123,12 +119,10 @@ export class MessagingService {
             );
 
             // Add the role to the fields
-            const emoji = this.getRequirementEmoji(role.name);
+            const emoji = this.getRequirementEmoji(role.name, true);
 
             fields.push({
-              name: `<:${emoji?.name}:${
-                emoji?.id
-              }> ${this.getRequirementDisplayName(role.name)} [${
+              name: `${emoji} ${this.getRequirementDisplayName(role.name)} [${
                 playerList.length
               }/${role.count}]`,
               value: playerList.length > 0 ? playerList.join('\n') : 'Empty',
@@ -173,14 +167,11 @@ export class MessagingService {
           );
 
           // Add the role to the fields
-          const emoji = this.getRequirementEmoji(role.name);
+          const emoji = this.getRequirementEmoji(role.name, true),
+            roleName = this.getRequirementDisplayName(role.name);
 
           fields.push({
-            name: `<:${emoji?.name}:${
-              emoji?.id
-            }> ${this.getRequirementDisplayName(role.name)} [${
-              playerList.length
-            }/${role.count}]`,
+            name: `${emoji} ${roleName} [${playerList.length}/${role.count}]`,
             value: playerList.length > 0 ? playerList.join('\n') : 'Empty',
             inline: true,
           });
@@ -196,6 +187,81 @@ export class MessagingService {
         }
 
         break;
+      }
+      case DistributionType.CAPTAIN_BASED: {
+        // Add a field for the captains.
+        const isLocked = [
+          LobbyStatus.WAITING_FOR_PICKS,
+          LobbyStatus.DISTRIBUTING,
+          LobbyStatus.DISTRIBUTED,
+        ].includes(lobby.status);
+
+        let roles = [];
+
+        if (isLocked) {
+          // We have a picking process lobby.
+          // Only list players that have been picked + captains.
+          // Filter out classes that do not belong to the lobby's requirements.
+          roles = [
+            'captain-a',
+            'captain-b',
+            'scout',
+            'soldier',
+            'pyro',
+            'demoman',
+            'heavy',
+            'engineer',
+            'medic',
+            'sniper',
+            'spy',
+          ];
+
+          roles = roles.filter((r) => {
+            const validRoles = lobby.requirements.map((r) => r.name);
+
+            return validRoles.includes(r);
+          });
+
+          // Transform roles to both BLU and RED roles.
+          roles = roles.flatMap((r) => {
+            // Skip captain roles
+            return r.startsWith('captain') ? r : [`red-${r}`, `blu-${r}`];
+          });
+        } else {
+          // Get all possible roles
+          roles = lobby.requirements;
+        }
+
+        for (const role of roles) {
+          // As overfill is allowed, we only need to list the classes themselves.
+          const players = lobby.queuedPlayers.filter(
+            (p) =>
+              p.roles.includes(isLocked ? role : role.name) &&
+              (isLocked
+                ? p.roles.includes('picked') ||
+                  p.roles.includes('captain-a') ||
+                  p.roles.includes('captain-b')
+                : true),
+          );
+
+          // List all classes in the Lobby with queued players for this class.
+          const playerList = players.map((p) => `<@${p.discord}>`);
+
+          // Add the role to the fields, with its emoji and info.
+          const emoji = this.getRequirementEmoji(
+              isLocked ? role : role.name,
+              true,
+            ),
+            roleName = this.getRequirementDisplayName(
+              isLocked ? role : role.name,
+            );
+
+          fields.push({
+            name: `${emoji} ${roleName}`,
+            value: playerList.length > 0 ? playerList.join('\n') : 'Empty',
+            inline: true,
+          });
+        }
       }
     }
 
@@ -244,10 +310,12 @@ export class MessagingService {
     switch (requirement) {
       case 'player':
         return 'Player';
+      case 'can-captain':
+        return 'Captain';
       case 'captain-a':
-        return 'Captain (Team A)';
+        return 'Captain (RED)';
       case 'captain-b':
-        return 'Captain (Team B)';
+        return 'Captain (BLU)';
       case 'creator':
         return 'Lobby Owner';
       case 'team_a':
@@ -288,6 +356,8 @@ export class MessagingService {
         return 'Medic (BLU)';
       case 'blu-sniper':
         return 'Sniper (BLU)';
+      case 'red-spy':
+        return 'Spy (RED)';
       case 'blu-spy':
         return 'Spy (BLU)';
       case 'scout':
@@ -316,66 +386,23 @@ export class MessagingService {
   /**
    * Gets the RawEmoji of a requirement.
    * @param requirement The requirement name.
+   * @param asString Optional. If true, will return the string representation of the emoji.
    * @returns The RawEmoji object of that requirement.
-   * @deprecated This will be switched with a highly configurable method on Regi-Cytokine's config file. For now this suffices.
    */
-  getRequirementEmoji(requirement: string): RawEmojiData {
-    switch (requirement as RequirementName) {
-      case RequirementName.RED_SCOUT:
-        return { id: '953382922621157476', name: 'REDScout' };
-      case RequirementName.BLU_SCOUT:
-        return { id: '953382893856641075', name: 'BLUScout' };
-      case RequirementName.SCOUT:
-        return { id: '953382870179778600', name: 'Scout' };
-      case RequirementName.RED_SOLDIER:
-        return { id: '953382922541482094', name: 'REDSoldier' };
-      case RequirementName.BLU_SOLDIER:
-        return { id: '953382894225739816', name: 'BLUSoldier' };
-      case RequirementName.SOLDIER:
-        return { id: '953382870263672923', name: 'Soldier' };
-      case RequirementName.RED_PYRO:
-        return { id: '953382922541482064', name: 'REDPyro' };
-      case RequirementName.BLU_PYRO:
-        return { id: '953382894095728730', name: 'BLUPyro' };
-      case RequirementName.PYRO:
-        return { id: '953382870137843723', name: 'Pyro' };
-      case RequirementName.RED_DEMOMAN:
-        return { id: '953382922277224498', name: 'REDDemo' };
-      case RequirementName.BLU_DEMOMAN:
-        return { id: '953382893898588201', name: 'BLUDemo' };
-      case RequirementName.DEMOMAN:
-        return { id: '953382870070747256', name: 'Demo' };
-      case RequirementName.RED_HEAVY:
-        return { id: '953382922222723132', name: 'REDHeavy' };
-      case RequirementName.BLU_HEAVY:
-        return { id: '953382894150250497', name: 'BLUHeavy' };
-      case RequirementName.HEAVY:
-        return { id: '953382870293053470', name: 'Heavy' };
-      case RequirementName.RED_ENGINEER:
-        return { id: '953382921878782004', name: 'REDEngineer' };
-      case RequirementName.BLU_ENGINEER:
-        return { id: '953382893688877158', name: 'BLUEngineer' };
-      case RequirementName.ENGINEER:
-        return { id: '953382870121054259', name: 'Engineer' };
-      case RequirementName.RED_SNIPER:
-        return { id: '953382922637967470', name: 'REDSniper' };
-      case RequirementName.BLU_SNIPER:
-        return { id: '953382894192193546', name: 'BLUSniper' };
-      case RequirementName.SNIPER:
-        return { id: '953382870418870332', name: 'Sniper' };
-      case RequirementName.RED_MEDIC:
-        return { id: '953382922457591828', name: 'REDMedic' };
-      case RequirementName.BLU_MEDIC:
-        return { id: '953382894192181350', name: 'BLUMedic' };
-      case RequirementName.MEDIC:
-        return { id: '953382870272073748', name: 'Medic' };
-      case RequirementName.RED_SPY:
-        return { id: '953382922453393460', name: 'REDSpy' };
-      case RequirementName.BLU_SPY:
-        return { id: '953382894175387678', name: 'BLUSpy' };
-      case RequirementName.SPY:
-        return { id: '953382872805421107', name: 'Spy' };
-    }
+  getRequirementEmoji(
+    requirement: string | RequirementName,
+    asString = false,
+  ): RawEmojiData | string {
+    const emoji =
+      config.discord.emojis.find((e) => e.req === requirement)?.emoji ?? null;
+
+    return asString
+      ? emoji
+        ? emoji?.default
+          ? `:${emoji.default}:`
+          : `<:${emoji.name}:${emoji.id}>`
+        : '⚔️'
+      : emoji;
   }
 
   /**
@@ -389,6 +416,7 @@ export class MessagingService {
     distribution: DistributionType,
     format: LobbyFormat | any,
     lobby,
+    iLobby?,
   ): Promise<MessageActionRow[]> {
     // If the Lobby's status is not in a component generation state, don't return anything.
     if (lobby.status != LobbyStatus.WAITING_FOR_REQUIRED_PLAYERS) return [];
@@ -400,12 +428,20 @@ export class MessagingService {
         (d) => d.type === distribution,
       ).requirements;
     // If it failed, it's because a Lobby object was passed in instead of a LobbyFormat object.
-    else requirements = format.requirements;
+    else {
+      requirements = format.requirements;
+
+      // Get the format name from the internal Lobby.
+      if (iLobby) {
+        format = config.formats[iLobby.format];
+      }
+    }
+
+    // Get the options for the Lobby.
+    const options = this.getRequirementList(requirements, lobby);
 
     switch (distribution) {
       case DistributionType.RANDOM: {
-        const options = this.getRequirementList(requirements, lobby);
-
         // Add the SelectMenu only if there is at least one option for a player to choose.
         const rows = [];
         if (options.length > 0) {
@@ -440,8 +476,6 @@ export class MessagingService {
         return rows;
       }
       case DistributionType.TEAM_ROLE_BASED: {
-        const options = this.getRequirementList(requirements, lobby);
-
         // If there are no options, do not return a MessageSelectMenu
         const actionRows = [];
         if (options.length > 0)
@@ -458,6 +492,39 @@ export class MessagingService {
               ],
             }),
           );
+
+        actionRows.push(
+          new MessageActionRow({
+            components: [
+              new MessageButton({
+                label: 'Unqueue',
+                customId: InteractionType.UNQUEUE,
+                style: 'DANGER',
+                emoji: '❌',
+              }),
+            ],
+          }),
+        );
+
+        return actionRows;
+      }
+      case DistributionType.CAPTAIN_BASED: {
+        // Get the minimum role selection for this format.
+        const minValues = +format.minRoles;
+
+        const actionRows = [];
+        actionRows.push(
+          new MessageActionRow({
+            components: [
+              new MessageSelectMenu({
+                placeholder: 'Select your desired role..',
+                customId: InteractionType.ROLE_SELECT_CAPTAINS,
+                minValues,
+                options,
+              }),
+            ],
+          }),
+        );
 
         actionRows.push(
           new MessageActionRow({
@@ -492,16 +559,16 @@ export class MessagingService {
         );
 
         // If it's not full, list it.
-        return filled.length < req.count;
+        return req.overfill ? true : filled.length < req.count;
       })
       .map((opt) => {
         const label = this.getRequirementDisplayName(opt.name);
 
         return {
           label,
-          description: `Click here to occupy the ${label} class!`,
+          description: `Click here to take the ${label} role!`,
           value: `${opt.name}|${lobby._id}`,
-          emoji: this.getRequirementEmoji(opt.name),
+          emoji: this.getRequirementEmoji(opt.name, true) ?? '⚔️',
         };
       });
   }
@@ -599,10 +666,13 @@ export class MessagingService {
    *
    * @param lobby The updated lobby information
    * @param message The original message to update
+   * @param format LobbyFormat object with data necessary to update the embeds.
    */
   async updateReply(
     lobby,
     message: Message<true> | Message<boolean>,
+    format: LobbyFormat,
+    content?: string,
   ): Promise<Message<boolean>> {
     // Make a user list with all Discord tags.
     const userList = this.generateUserList(
@@ -616,16 +686,20 @@ export class MessagingService {
     for (const embed of embeds) embed.color = color[lobby.status];
 
     // Update player list
+    embeds[0].fields[
+      embeds[0].fields.length - 1
+    ].value = `${lobby.queuedPlayers.length}/${lobby.maxPlayers}`;
     embeds[1].fields = [...userList];
 
     // Create the new Select menu with full roles omitted
     const btnRows = await this.createDistributionComponent(
       lobby.distribution as DistributionType,
-      lobby,
+      format,
       lobby,
     );
 
     return await message.edit({
+      content,
       embeds: [...embeds],
       components: [...btnRows],
     });
@@ -830,19 +904,5 @@ Hatch URI:                   http://${ip}${sv.hatchAddress}/status?password=${
         }),
       ],
     });
-  }
-
-  /**
-   * Sends initial message to the general lobby channel.
-   * @param channel The General TextChannel object to send the message to.
-   * @param lobbyName The name of the lobby.
-   */
-  async sendInitialMessage(channel: TextChannel, lobbyName) {
-    return await channel.send(`:wave: **Welcome to Lobby ${lobbyName}!**
-      
-:point_right: This channel is meant for a pre-game chat between the lobbys' players.
-:x: Please do not spam or use any language that is not supported by the game.
-          
-:smile: Enjoy your game and happy competition!`);
   }
 }

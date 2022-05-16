@@ -39,7 +39,7 @@ export class ImportAccessConfigCommand {
         });
       }
 
-      if (!list.accessLists) {
+      if (!list?.accessLists) {
         return await interaction.reply({
           content: `Access config must contain an access list.`,
           ephemeral: true,

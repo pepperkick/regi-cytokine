@@ -21,6 +21,9 @@ import { Player } from 'src/objects/match-player.interface';
 import { RequirementName } from 'src/objects/requirement-names.enum';
 import { LobbyCommand } from '../lobby.command';
 
+import * as config from '../../../config.json';
+import { LobbyFormat } from 'src/objects/lobby-format.interface';
+
 @Discord()
 @SlashGroup('lobby')
 export class RingerSubCommand {
@@ -162,7 +165,7 @@ export class RingerSubCommand {
 
     try {
       // Get the Lobby from this interaction.
-      const { lobbyId, messageId, channels } =
+      const { lobbyId, messageId, channels, format } =
         await LobbyCommand.service.getInternalLobbyByChannel(
           interaction.channel.id,
         );
@@ -222,7 +225,11 @@ export class RingerSubCommand {
 
       // Everything went well, update the reply with the new queued Players.
       const lobbyMessage = await interaction.channel.messages.fetch(messageId);
-      await LobbyCommand.messaging.updateReply(lobby, lobbyMessage);
+      await LobbyCommand.messaging.updateReply(
+        lobby,
+        lobbyMessage,
+        config.formats.find((f) => f.name === format) as LobbyFormat,
+      );
 
       // Update the message to reflect the successful substitution, and remove the button.
       await (interaction.message as Message).edit({

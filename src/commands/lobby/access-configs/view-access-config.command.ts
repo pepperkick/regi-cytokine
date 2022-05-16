@@ -46,7 +46,7 @@ export class ViewAccessConfigsCommand {
     const config = lobbyConfigs[name];
     const fields = [];
 
-    if (config.accessLists) {
+    if (config?.accessLists) {
       let listText = '';
       for (const action of Object.keys(config.accessLists)) {
         const actionList = config.accessLists[action];

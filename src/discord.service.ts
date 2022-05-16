@@ -204,12 +204,17 @@ export class DiscordService {
     const perms: OverwriteResolvable[] = [];
 
     // Push permissions to the array
-    for (const player of players)
+    for (const player of players) {
+      const isCaptain =
+        player.roles.includes('captain-a') ||
+        player.roles.includes('captain-b');
+
       perms.push({
         id: await this.getMember(player.discord),
         allow: ['VIEW_CHANNEL', 'CONNECT'],
-        deny: ['SEND_MESSAGES', 'SPEAK'],
+        deny: isCaptain ? [] : ['SEND_MESSAGES', 'SPEAK'],
       });
+    }
 
     // Deny access to the rest of users
     perms.push({
@@ -224,9 +229,14 @@ export class DiscordService {
    * Creates (or updates) the Information Channel for a Lobby.
    * @param lobby The Internal Lobby document.
    * @param players The Lobby Queued Players array.
+   * @param get Optional. If true, will only fetch the information channel.
    * @returns The Information TextChannel instance.
    */
-  async createInfoChannel(lobby: Lobby, players: any[]): Promise<TextChannel> {
+  async createInfoChannel(
+    lobby: Lobby,
+    players: any[],
+    get = false,
+  ): Promise<TextChannel> {
     // Get permissions for the Info channel.
     const permissionOverwrites = await this.compileQueuePermissions(players);
 
@@ -235,6 +245,8 @@ export class DiscordService {
       const info = (await this.getChannel(
         lobby.channels.general.infoChannelId,
       )) as TextChannel;
+
+      if (info && get) return info;
 
       await info.edit(
         {

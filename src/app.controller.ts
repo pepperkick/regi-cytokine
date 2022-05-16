@@ -1,5 +1,6 @@
 import { Body, Controller, Logger, Post, Query } from '@nestjs/common';
 import { AppService } from './app.service';
+import { LobbyStatus } from './modules/lobby/lobby-status.enum';
 
 @Controller()
 export class AppController {
@@ -18,27 +19,31 @@ export class AppController {
     await this.appService.updateInternalLobby(lobbyId, status);
 
     switch (status) {
-      case 'WAITING_FOR_REQUIRED_PLAYERS': {
+      case LobbyStatus.WAITING_FOR_REQUIRED_PLAYERS: {
         await this.appService.lobbyNotifyWaitingForRequiredPlayers(data);
         break;
       }
-      case 'WAITING_FOR_AFK_CHECK': {
+      case LobbyStatus.WAITING_FOR_PICKS: {
+        await this.appService.lobbyNotifyWaitingForPicks(data);
+        break;
+      }
+      case LobbyStatus.WAITING_FOR_AFK_CHECK: {
         await this.appService.lobbyNotifyWaitingForAfk(lobbyId, data);
         break;
       }
-      case 'DISTRIBUTING': {
+      case LobbyStatus.DISTRIBUTING: {
         await this.appService.lobbyNotifyDistributing(lobbyId);
         break;
       }
-      case 'DISTRIBUTED': {
+      case LobbyStatus.DISTRIBUTED: {
         await this.appService.lobbyNotifyDistributed(data);
         break;
       }
-      case 'CLOSED': {
+      case LobbyStatus.CLOSED: {
         await this.appService.lobbyNotifyClosed(lobbyId);
         break;
       }
-      case 'EXPIRED': {
+      case LobbyStatus.EXPIRED: {
         await this.appService.lobbyNotifyExpired(lobbyId);
         break;
       }

@@ -1,5 +1,6 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { LobbyPickTracker } from './lobby-pick-tracker.interface';
 
 @Schema()
 export class Lobby extends Document {
@@ -47,6 +48,14 @@ export class Lobby extends Document {
   // Amount of times this lobby has gotten announced.
   @Prop({ type: Number, min: 0 })
   announcements: number;
+
+  // For captain-based lobbies: Did this lobby get adverted when minimum players were in?
+  @Prop({ type: Boolean })
+  minimumAdverted: boolean;
+
+  // For captain-based lobbies: The pick order for the captains.
+  @Prop({ type: Object })
+  captainPicks: LobbyPickTracker;
 
   // Discord Channels
   @Prop({ type: Object })

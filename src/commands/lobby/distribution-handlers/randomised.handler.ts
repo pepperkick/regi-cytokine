@@ -3,8 +3,11 @@ import { Message, SelectMenuInteraction } from 'discord.js';
 import { Discord, SelectMenuComponent } from 'discordx';
 import { LobbyCommand } from 'src/commands/lobby.command';
 import { InteractionType } from 'src/objects/interactions/interaction-types.enum';
+import { LobbyFormat } from 'src/objects/lobby-format.interface';
 import { Player } from 'src/objects/match-player.interface';
 import { RequirementName } from 'src/objects/requirement-names.enum';
+
+import * as config from '../../../../config.json';
 
 @Discord()
 export class RandomisedHandler {
@@ -90,6 +93,9 @@ export class RandomisedHandler {
       await LobbyCommand.messaging.updateReply(
         lobby,
         interaction.message as Message,
+        config.formats.find(
+          (f) => f.name === internalLobby.format,
+        ) as LobbyFormat,
       );
 
       return await interaction.editReply({

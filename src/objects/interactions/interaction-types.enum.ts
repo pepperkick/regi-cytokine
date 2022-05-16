@@ -4,12 +4,13 @@ export enum InteractionType {
   QUEUE = 'queue',
   // Present in all types of lobbies
   UNQUEUE = 'unqueue',
-  // Randomised & Captain Lobby: Role only selection
+  // Randomised Role only selection
   ROLE_SELECT = 'role-queue',
   // Team-Role Based Distribution Queueing SelectMenu
   TEAM_ROLE_SELECT = 'team-role-queue',
   // Captain Based Distribution
-  BE_CAPTAIN = 'captain-queue',
+  ROLE_SELECT_CAPTAINS = 'role-queue-captain',
+  CAPTAIN_PICK = 'captain-pick',
 
   // AFK Check
   AFK_CHECK = 'afk-check',

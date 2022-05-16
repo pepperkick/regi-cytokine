@@ -165,10 +165,10 @@ export class SetAccessListOnConfigCommand {
     }
 
     const accessConfig = lobbyConfigs[name];
-    if (!accessConfig.accessLists) {
+    if (!accessConfig?.accessLists) {
       accessConfig.accessLists = {};
     }
-    if (!accessConfig.accessLists[action]) {
+    if (!accessConfig?.accessLists[action]) {
       accessConfig.accessLists[action] = {};
     }
 

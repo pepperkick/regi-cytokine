@@ -25,33 +25,35 @@
         },
         "token": ""
         "emojis": [
-            { "req": "scout", "emoji": { "id": "953382870179778600", "name": "Scout" } },
-            { "req": "soldier", "emoji": { "id": "953382870263672923", "name": "Soldier" } },
-            { "req": "pyro", "emoji": { "id": "953382870137843723", "name": "Pyro" } },
-            { "req": "demoman", "emoji": { "id": "953382870070747256", "name": "Demo" } },
-            { "req": "heavy", "emoji": { "id": "953382870293053470", "name": "Heavy" } },
-            { "req": "engineer", "emoji": { "id": "953382870121054259", "name": "Engineer" } },
-            { "req": "medic", "emoji": { "id": "953382870272073748", "name": "Medic" } },
-            { "req": "sniper", "emoji": { "id": "953382870418870332", "name": "Sniper" } },
-            { "req": "spy", "emoji": { "id": "953382872805421107", "name": "Spy" } },
-            { "req": "red-scout", "emoji": { "id": "953382922621157476", "name": "REDScout" } },
-            { "req": "red-soldier", "emoji": { "id": "953382922541482094", "name": "REDSoldier" } },
-            { "req": "red-pyro", "emoji": { "id": "953382922541482064", "name": "REDPyro" } },
-            { "req": "red-demoman", "emoji": { "id": "953382922277224498", "name": "REDDemo" } },
-            { "req": "red-heavy", "emoji": { "id": "953382922222723132", "name": "REDHeavy" } },
-            { "req": "red-engineer", "emoji": { "id": "953382921878782004", "name": "REDEngineer" } },
-            { "req": "red-medic", "emoji": { "id": "953382922457591828", "name": "REDMedic" } },
-            { "req": "red-sniper", "emoji": { "id": "953382922637967470", "name": "REDSniper" } },
-            { "req": "red-spy", "emoji": { "id": "953382922453393460", "name": "REDSpy" } },
-            { "req": "blu-scout", "emoji": { "id": "953382893856641075", "name": "BLUScout" } },
-            { "req": "blu-soldier", "emoji": { "id": "953382894225739816", "name": "BLUSoldier" } },
-            { "req": "blu-pyro", "emoji": { "id": "953382894095728730", "name": "BLUPyro" } },
-            { "req": "blu-demoman", "emoji": { "id": "953382893898588201", "name": "BLUDemo" } },
-            { "req": "blu-heavy", "emoji": { "id": "95338289415025049", "name": "BLUHeavy" } },
-            { "req": "blu-engineer", "emoji": { "id": "953382893688877158", "name": "BLUEngineer" } },
-            { "req": "blu-medic", "emoji": { "id": "953382894192181350", "name": "BLUMedic" } },
-            { "req": "blu-sniper", "emoji": { "id": "953382894192193546", "name": "BLUSniper" } },
-            { "req": "blu-spy", "emoji": { "id": "953382894175387678", "name": "BLUSpy" } }
+            { "req": "captain-a", "emoji": { "default": "red_circle" } },
+            { "req": "captain-a", "emoji": { "default": "blue_circle" } },
+            { "req": "scout", "emoji": { "id": "968592882065895474", "name": "Scout" } },
+            { "req": "soldier", "emoji": { "id": "968592881977815090", "name": "Soldier" } },
+            { "req": "pyro", "emoji": { "id": "968592882036510730", "name": "Pyro" } },
+            { "req": "demoman", "emoji": { "id": "968592881789042739", "name": "Demo" } },
+            { "req": "heavy", "emoji": { "id": "968592881956823111", "name": "Heavy" } },
+            { "req": "engineer", "emoji": { "id": "968592881772281928", "name": "Engineer" } },
+            { "req": "medic", "emoji": { "id": "968592881973604402", "name": "Medic" } },
+            { "req": "sniper", "emoji": { "id": "968592881893933076", "name": "Sniper" } },
+            { "req": "spy", "emoji": { "id": "968592882099445770", "name": "Spy" } },
+            { "req": "red-scout", "emoji": { "id": "968592906996826142", "name": "REDScout" } },
+            { "req": "red-soldier", "emoji": { "id": "968592907038761010", "name": "REDSoldier" } },
+            { "req": "red-pyro", "emoji": { "id": "968592907026198538", "name": "REDPyro" } },
+            { "req": "red-demoman", "emoji": { "id": "968592906703220766", "name": "REDDemo" } },
+            { "req": "red-heavy", "emoji": { "id": "968592906451583047", "name": "REDHeavy" } },
+            { "req": "red-engineer", "emoji": { "id": "968592907017809921", "name": "REDEngineer" } },
+            { "req": "red-medic", "emoji": { "id": "968592906736795688", "name": "REDMedic" } },
+            { "req": "red-sniper", "emoji": { "id": "968592906871009300", "name": "REDSniper" } },
+            { "req": "red-spy", "emoji": { "id": "968592906921324574", "name": "REDSpy" } },
+            { "req": "blu-scout", "emoji": { "id": "968592855826305074", "name": "BLUScout" } },
+            { "req": "blu-soldier", "emoji": { "id": "968592855721443399", "name": "BLUSoldier" } },
+            { "req": "blu-pyro", "emoji": { "id": "968592855864074330", "name": "BLUPyro" } },
+            { "req": "blu-demoman", "emoji": { "id": "968592855406903407", "name": "BLUDemo" } },
+            { "req": "blu-heavy", "emoji": { "id": "968592855897624616", "name": "BLUHeavy" } },
+            { "req": "blu-engineer", "emoji": { "id": "968592856031826080", "name": "BLUEngineer" } },
+            { "req": "blu-medic", "emoji": { "id": "968592856019238932", "name": "BLUMedic" } },
+            { "req": "blu-sniper", "emoji": { "id": "968592855956353105", "name": "BLUSniper" } },
+            { "req": "blu-spy", "emoji": { "id": "968592855981490194", "name": "BLUSpy" } }
         ],
     },
     "lobbies": {
@@ -59,6 +61,7 @@
         "lobbyVoicePrefix": "Lobby ",
         "defaultExpiry": 1800,
         "afkCheckTimeout": 60,
+        "captainTimeout": 5,
         "moveDelay": 1,
         "maxAnnounces": 1,
         "names": [
@@ -160,6 +163,7 @@
             "game": "tf2",
             "maxPlayers": 2,
             "hidden": true,
+            "minRoles": 2,
             "mapTypes": [
                 {
                     "name": "cp",
@@ -183,6 +187,40 @@
                         { "name": "red-scout", "count": 1 },
                         { "name": "blu-scout", "count": 1 }
                     ]
+                },
+                {
+                    "type": "CAPTAIN_BASED",
+                    "requirements": [
+                        { "name": "can-captain", "count": 2, "overfill": true},
+                        { "name": "scout", "count": 2, "overfill": true}
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "4vs4",
+            "game": "tf2",
+            "maxPlayers": 4,
+            "hidden": false,
+            "minRoles": 2,
+            "mapTypes": [
+                {
+                    "name": "koth",
+                    "config": "etf2l/4s_koth.cfg",
+                    "expires": 1800
+                }
+            ],
+            "maps": [
+                "koth_badlands"
+            ],
+            "distribution": [
+                {
+                    "type": "CAPTAIN_BASED",
+                    "requirements": [
+                        { "name": "can-captain", "count": 2, "overfill": true},
+                        { "name": "scout", "count": 2, "overfill": true},
+                        { "name": "soldier", "count": 2, "overfill": true}
+                    ]
                 }
             ]
         },
@@ -191,6 +229,7 @@
             "game": "tf2",
             "maxPlayers": 12,
             "hidden": false,
+            "minRoles": 3,
             "mapTypes": [
                 {
                     "name": "cp",
@@ -219,6 +258,16 @@
                         { "name": "red-medic", "count": 1 },
                         { "name": "blu-medic", "count": 1 }
                     ]
+                },
+                {
+                    "type": "CAPTAIN_BASED",
+                    "requirements": [
+                        { "name": "can-captain", "count": 2, "overfill": true},
+                        { "name": "scout", "count": 4, "overfill": true},
+                        { "name": "soldier", "count": 4, "overfill": true},
+                        { "name": "demoman", "count": 2, "overfill": true},
+                        { "name": "medic", "count": 2, "overfill": true}
+                    ]
                 }
             ]
         },
@@ -227,6 +276,7 @@
             "game": "tf2",
             "maxPlayers": 18,
             "hidden": false,
+            "minRoles": 4,
             "mapTypes": [
                 {
                     "name": "koth",
@@ -238,6 +288,9 @@
                     "config": "etf2l/hl_stopwatch.cfg",
                     "expires": 3600
                 }
+            ],
+            "maps": [
+                "pl_upward", "pl_borneo"
             ],
             "distribution": [
                 {
@@ -259,6 +312,21 @@
                         { "name": "blu-heavy", "count": 1 },
                         { "name": "blu-engineer", "count": 1 },
                         { "name": "blu-sniper", "count": 1 }
+                    ]
+                },
+                {
+                    "type": "CAPTAIN_BASED",
+                    "requirements": [
+                        { "name": "can-captain", "count": 2, "overfill": true},
+                        { "name": "scout", "count": 2, "overfill": true },
+                        { "name": "soldier", "count": 2, "overfill": true },
+                        { "name": "demoman", "count": 2, "overfill": true },
+                        { "name": "medic", "count": 2, "overfill": true },
+                        { "name": "pyro", "count": 2, "overfill": true },
+                        { "name": "heavy", "count": 2, "overfill": true },
+                        { "name": "engineer", "count": 2, "overfill": true },
+                        { "name": "sniper", "count": 2, "overfill": true },
+                        { "name": "spy", "count": 2, "overfill": true }
                     ]
                 }
             ]

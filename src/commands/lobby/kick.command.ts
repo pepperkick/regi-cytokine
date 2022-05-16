@@ -3,6 +3,9 @@ import { CommandInteraction, GuildMember, TextChannel } from 'discord.js';
 import { Discord, Slash, SlashGroup, SlashOption } from 'discordx';
 import { LobbyCommand } from '../lobby.command';
 
+import * as config from '../../../config.json';
+import { LobbyFormat } from 'src/objects/lobby-format.interface';
+
 @Discord()
 @SlashGroup('lobby')
 export class KickSubCommand {
@@ -55,7 +58,11 @@ export class KickSubCommand {
           message = await channel.messages.fetch(iLobby.messageId);
 
         // Update the Lobby's embed
-        await LobbyCommand.messaging.updateReply(lobby, message);
+        await LobbyCommand.messaging.updateReply(
+          lobby,
+          message,
+          config.formats.find((f) => f.name === iLobby.format) as LobbyFormat,
+        );
 
         // Send a success message to the kicker and one telling the kicked player.
         await channel.send({
