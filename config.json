@@ -62,6 +62,7 @@
         "defaultExpiry": 1800,
         "afkCheckTimeout": 60,
         "captainTimeout": 5,
+        "captainPickTimeout": 30,
         "moveDelay": 1,
         "maxAnnounces": 1,
         "names": [

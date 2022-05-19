@@ -41,6 +41,10 @@ export class Lobby extends Document {
   @Prop({ type: String })
   format: string;
 
+  // Distribution type of this Lobby
+  @Prop({ type: String })
+  distribution: string;
+
   // Access config for this lobby.
   @Prop({ type: String })
   accessConfig: string;

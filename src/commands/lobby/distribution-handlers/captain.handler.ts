@@ -9,6 +9,7 @@ import { CaptainSelection } from './captain-selection.interface';
 
 import * as config from '../../../../config.json';
 import { LobbyFormat } from 'src/objects/lobby-format.interface';
+import { LobbyPick } from 'src/modules/lobby/lobby-pick.interface';
 
 /**
  * Handles the captain selection phase of the distribution.
@@ -19,6 +20,121 @@ export class CaptainBasedHandler {
   private readonly logger: Logger = new Logger(CaptainBasedHandler.name);
 
   constructor() {}
+
+  /**
+   * Performs a pick.
+   * @param lobby The lobby to perform the pick in.
+   * @param pick The pick to perform.
+   * @param issuer The Discord User ID of the issuer of the pick.
+   * @param expired If true, the pick has expired and will be announced as so.
+   *
+   * @returns True if successful, if not a string indicating the error.
+   */
+  async pickPlayer(
+    lobby: any,
+    pick: LobbyPick,
+    issuer: string,
+    expired = false,
+  ): Promise<true | string> {
+    // Obtain the information channel to send the successful pick to.
+    const iLobby = await LobbyCommand.service.getInternalLobbyById(lobby._id);
+    const info = await LobbyCommand.discordService.createInfoChannel(
+      iLobby,
+      lobby.queuedPlayers,
+      true,
+    );
+
+    const { role, player } = pick.pick;
+
+    // Is this captain's turn to pick?
+    if (iLobby.captainPicks.picks[iLobby.captainPicks.position] !== issuer)
+      return `It's not your turn to pick.`;
+
+    if (iLobby.captainPicks.position >= iLobby.captainPicks.picks.length)
+      return `The picking process has finished.`;
+
+    try {
+      // Send pick request.
+      lobby = await LobbyCommand.service.performPick(lobby._id, pick);
+    } catch (e) {
+      this.logger.error(`Failed to perform pick: ${e}`);
+    }
+
+    // Update the internal Lobby document to reflect the new pick.
+    iLobby.captainPicks.position += 1;
+
+    // Set the lobby pick expiry date.
+    const expiry = new Date();
+    expiry.setSeconds(expiry.getSeconds() + config.lobbies.captainPickTimeout);
+
+    iLobby.captainPicks.pickExpires = expiry;
+
+    const captains = new CaptainBasedHandler();
+
+    const emoji = LobbyCommand.messaging.getRequirementEmoji(role, true),
+      roleName = LobbyCommand.messaging.getRequirementDisplayName(role),
+      { position, picks } = iLobby.captainPicks;
+
+    await info.send({
+      content: `${
+        expired
+          ? `**Your pick time has expired, this pick is automatic.** `
+          : ''
+      }<@${player}> has been picked as ${emoji} **${roleName}** by <@${issuer}>!\n\n${
+        position < picks.length ? `<@${picks[position]}> is picking next. ` : ''
+      }**${picks.length - position}** picks remaining.`,
+    });
+
+    // Are the picks finished?
+    if (position >= picks.length) {
+      // Determine which are the unfilled roles for each team to assign the captains to that role.
+      const remainingA = captains.getAvailableRoles(null, lobby, 'team_a'),
+        remainingB = captains.getAvailableRoles(null, lobby, 'team_b');
+      const [capA, capB] = captains.getCurrentCaptains(lobby.queuedPlayers);
+
+      this.logger.debug(remainingA, remainingB);
+
+      // Since there is always going to be 2 remaining roles, assing these to the captains.
+      await LobbyCommand.service.addRole(
+        lobby._id,
+        capA,
+        `red-${remainingA[0]}`,
+      );
+      await LobbyCommand.service.addRole(lobby._id, capA, remainingA[0]);
+      await LobbyCommand.service.addRole(
+        lobby._id,
+        capB,
+        `blu-${remainingB[0]}`,
+      );
+      lobby = await LobbyCommand.service.addRole(
+        lobby._id,
+        capB,
+        remainingB[0],
+      );
+
+      iLobby.captainPicks.pickExpires = null;
+
+      // Send the captains the roles they have been assigned.
+      await info.send({
+        content: `:white_check_mark: All picks are now finished! Captains have been automatically assigned a role. Lobby will start shortly...`,
+      });
+    }
+
+    // Success.
+    iLobby.markModified('captainPicks');
+    await iLobby.save();
+
+    await LobbyCommand.messaging.updateReply(
+      lobby,
+      await LobbyCommand.discordService.getMessage(
+        iLobby.messageId,
+        iLobby.channels.general.textChannelId,
+      ),
+      config.formats.find((f) => f.name === iLobby.format) as LobbyFormat,
+    );
+
+    return true;
+  }
 
   /**
    * Gets the current captains in a Lobby, or null if not selected yet.

@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { LobbyFormat } from '../../objects/lobby-format.interface';
 import * as config from '../../../config.json';
 import { RequirementName } from '../../objects/requirement-names.enum';
@@ -18,6 +18,7 @@ import {
 } from 'discord.js';
 import { MessagingService } from '../../messaging.service';
 import { LobbyPick } from './lobby-pick.interface';
+import { CaptainBasedHandler } from 'src/commands/lobby/distribution-handlers/captain.handler';
 
 // TODO: Not sure why the actual keys does not work, importing it makes building fail
 class PreferenceKeys {
@@ -43,8 +44,6 @@ interface LobbyChannels {
 
 export class LobbyService {
   private readonly logger = new Logger(LobbyService.name);
-  static formats = LobbyService.parseLobbyFormats();
-  static regions = LobbyService.parseRegions();
 
   constructor(
     @InjectModel('Lobby') private readonly repo: Model<Lobby>,
@@ -52,7 +51,120 @@ export class LobbyService {
     private readonly preference: PreferenceService,
     // TODO: Not a good idea to reply to messages from the service, need to find a better way
     private readonly messaging: MessagingService,
-  ) {}
+  ) {
+    setInterval(async () => {
+      await this.monitorPicks();
+    }, 10000);
+  }
+
+  /**
+   * Monitors internal Lobby documents for picking expiry dates.
+   * @noparams
+   * @noreturn
+   */
+  async monitorPicks() {
+    this.logger.debug(`Checking picks for captain based lobbies.`);
+
+    // Get all Captain Based lobbies.
+    const lobbies = await this.repo.find({
+      distribution: 'CAPTAIN_BASED',
+      status: 'WAITING_FOR_PICKS',
+    });
+
+    if (!lobbies.length) return;
+
+    this.logger.debug(
+      `Found ${lobbies.length} Captain based Lobbies. Checking for expired picks...`,
+    );
+
+    // Loop through each lobby and check if any of its picks have expired.
+    const now = new Date();
+    for (const lobby of lobbies) {
+      // Check if picks are still going.
+      if (
+        lobby.captainPicks.position >= lobby.captainPicks.picks.length ||
+        lobby.captainPicks.pickExpires === null
+      )
+        continue;
+
+      if (lobby.captainPicks.pickExpires <= now) {
+        const captain = lobby.captainPicks.picks[lobby.captainPicks.position];
+
+        this.logger.debug(
+          `Captain ${captain} has not picked in time. Picking a player automatically...`,
+        );
+
+        const result = await this.autoPick(lobby.lobbyId, captain);
+
+        if (typeof result === 'string') {
+          this.logger.error(
+            `Fatal error when automatically picking: ${result}`,
+          );
+          return;
+        }
+
+        this.logger.debug(`Successfully performed automatic pick.`);
+      }
+    }
+  }
+
+  /**
+   * Picks a player for a Lobby automatically. This is used when a captain has not picked in time.
+   * @param lobbyId The Lobby ID where to pick in.
+   * @param captain The captain who is picking.
+   * @returns Updated Cytokine Lobby document.
+   */
+  async autoPick(lobbyId: string, captain: string) {
+    const captains = new CaptainBasedHandler();
+
+    // Get the Cytokine Lobby document for this ID.
+    const lobby = await this.getLobbyById(lobbyId);
+
+    // Automatically perform a pick based on available players and roles.
+    // Get the captain's team.
+    const roles = lobby.queuedPlayers.find((p) => p.discord === captain).roles;
+    const team = roles.includes('team_a')
+      ? 'team_a'
+      : roles.includes('team_b')
+      ? 'team_b'
+      : null;
+
+    if (!team)
+      throw new BadRequestException(
+        `Captain ${captain} does not have an assigned team on Lobby ${lobby._id}!`,
+      );
+
+    // Get available roles for the captain's team and pickeable players.
+    const remaining = captains.getAvailableRoles(null, lobby, team),
+      players = captains.getPickeablePlayers(lobby);
+
+    // Filter players to only list players that queued up for an available role.
+    const filtered = players.filter((p) => {
+      for (const role of remaining) if (p.roles.includes(role)) return true;
+      return false;
+    });
+
+    if (!filtered.length)
+      throw new BadRequestException(
+        `Found no players to pick automatically on Lobby ${lobby._id}!`,
+      );
+
+    // Do the pick!
+    // Random player, random role.
+    const pick: LobbyPick = {
+      pick: {
+        player: filtered[Math.floor(Math.random() * filtered.length)].discord,
+        role: remaining[Math.floor(Math.random() * remaining.length)],
+      },
+      captain,
+    };
+
+    this.logger.debug(
+      `Performing automatic pick on Lobby ${lobbyId}: ${JSON.stringify(pick)}`,
+    );
+
+    return await captains.pickPlayer(lobby, pick, captain);
+  }
 
   /**
    * Sends a request to Cytokine to create a new lobby with asked requirements.
@@ -430,7 +542,7 @@ export class LobbyService {
     if (maps) return maps[Math.floor(Math.random() * maps.length)];
 
     // Find the format with this name.
-    const f: LobbyFormat = LobbyService.formats.formats.find(
+    const f: LobbyFormat = LobbyService.parseLobbyFormats().formats.find(
       (f: LobbyFormat) => f.name === format,
     );
 
@@ -558,6 +670,7 @@ export class LobbyService {
     status: string,
     format?: string,
     tier?: string,
+    distribution?: string,
     channels?: LobbyChannels,
     accessConfig?: string,
   ) {
@@ -579,6 +692,7 @@ export class LobbyService {
       format,
       tier,
       announcements: 0,
+      distribution,
       captainPicks: {
         position: 0,
         picks: [],

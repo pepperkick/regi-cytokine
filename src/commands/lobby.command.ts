@@ -1,6 +1,6 @@
 import * as config from '../../config.json';
 import { ButtonComponent, Discord, SlashGroup } from 'discordx';
-import { Logger, Module } from '@nestjs/common';
+import { forwardRef, Inject, Logger, Module } from '@nestjs/common';
 import { LobbyService } from '../modules/lobby/lobby.service';
 import { DiscordService } from '../discord.service';
 import { MessagingService } from 'src/messaging.service';
@@ -60,6 +60,7 @@ export class LobbyCommand {
   static discordService: DiscordService;
 
   constructor(
+    @Inject(forwardRef(() => LobbyService))
     private readonly service: LobbyService,
     private readonly messaging: MessagingService,
     private readonly preferenceService: PreferenceService,

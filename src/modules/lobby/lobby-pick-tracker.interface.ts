@@ -5,4 +5,7 @@ export interface LobbyPickTracker {
   // List of Picking order.
   // Contains the Discord IDs of the captains
   picks: string[];
+
+  // Timestamp of when the picking turn time expires.
+  pickExpires: Date;
 }

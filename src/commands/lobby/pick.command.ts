@@ -65,7 +65,7 @@ export class PickSubCommand {
   ) {
     // Get the Lobby we're working in.
     const { lobbies } = await LobbyCommand.service.getActiveLobbies();
-    let lobby = lobbies.find((l) =>
+    const lobby = lobbies.find((l) =>
       l.queuedPlayers.find((p) => p.discord === interaction.user.id),
     );
     const captains = new CaptainBasedHandler();
@@ -139,93 +139,16 @@ export class PickSubCommand {
     };
 
     try {
-      // Obtain the information channel to send the successful pick to.
-      const iLobby = await LobbyCommand.service.getInternalLobbyById(lobby._id);
-      const info = await LobbyCommand.discordService.createInfoChannel(
-        iLobby,
-        lobby.queuedPlayers,
-        true,
-      );
-
-      // Is this captain's turn to pick?
-      if (
-        iLobby.captainPicks.picks[iLobby.captainPicks.position] !==
-        interaction.user.id
-      )
-        return await interaction.editReply({
-          content:
-            ":x: Failed to perform pick: ``It's not your turn to pick.``",
-        });
-
-      if (iLobby.captainPicks.position >= iLobby.captainPicks.picks.length)
-        return await interaction.editReply({
-          content:
-            ':x: Failed to perform pick: `The picking process has finished.`',
-        });
-
-      iLobby.captainPicks.position += 1;
-      iLobby.markModified('captainPicks');
-      await iLobby.save();
-
-      // Send pick request.
-      lobby = await LobbyCommand.service.performPick(lobby._id, pick);
-
-      const emoji = LobbyCommand.messaging.getRequirementEmoji(role, true),
-        roleName = LobbyCommand.messaging.getRequirementDisplayName(role),
-        { position, picks } = iLobby.captainPicks;
-
-      await info.send({
-        content: `<@${player}> has been picked as ${emoji} **${roleName}** by <@${
-          interaction.user.id
-        }>!\n\n${
-          position < picks.length
-            ? `<@${picks[position]}> is picking next. `
-            : ''
-        }**${picks.length - position}** picks remaining.`,
-      });
-
-      // Are the picks finished?
-      if (position >= picks.length) {
-        // Determine which are the unfilled roles for each team to assign the captains to that role.
-        const remainingA = captains.getAvailableRoles(null, lobby, 'team_a'),
-          remainingB = captains.getAvailableRoles(null, lobby, 'team_b');
-        const [capA, capB] = captains.getCurrentCaptains(lobby.queuedPlayers);
-
-        this.logger.debug(remainingA, remainingB);
-
-        // Since there is always going to be 2 remaining roles, assing these to the captains.
-        await LobbyCommand.service.addRole(
-          lobby._id,
-          capA,
-          `red-${remainingA[0]}`,
-        );
-        await LobbyCommand.service.addRole(lobby._id, capA, remainingA[0]);
-        await LobbyCommand.service.addRole(
-          lobby._id,
-          capB,
-          `blu-${remainingB[0]}`,
-        );
-        lobby = await LobbyCommand.service.addRole(
-          lobby._id,
-          capB,
-          remainingB[0],
-        );
-
-        // Send the captains the roles they have been assigned.
-        await info.send({
-          content: `:white_check_mark: All picks are now finished! Captains have been automatically assigned a role. Lobby will start shortly...`,
-        });
-      }
-
-      // Success.
-      await LobbyCommand.messaging.updateReply(
+      const result = await captains.pickPlayer(
         lobby,
-        await LobbyCommand.discordService.getMessage(
-          iLobby.messageId,
-          iLobby.channels.general.textChannelId,
-        ),
-        config.formats.find((f) => f.name === iLobby.format) as LobbyFormat,
+        pick,
+        interaction.user.id,
       );
+
+      if (typeof result === 'string')
+        return await interaction.editReply({
+          content: `:x: Failed to perform pick: \`${result}\``,
+        });
 
       return await interaction.editReply({
         content: `:white_check_mark: Successfully picked ${player} as ${role}.`,

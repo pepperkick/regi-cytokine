@@ -3,7 +3,6 @@ import {
   ButtonInteraction,
   CommandInteraction,
   GuildMember,
-  GuildMemberRoleManager,
   Message,
 } from 'discord.js';
 import {
@@ -31,10 +30,11 @@ export class CreateSubCommand {
 
   @Slash('create', { description: 'Create a new lobby for a pug.' })
   async create(
-    @SlashChoice(LobbyService.regions.names)
     @SlashOption('region', {
       description: 'The region the lobby will be in.',
       required: true,
+      autocomplete: true,
+      type: 'STRING',
     })
     region: string,
     @SlashOption('distribution', {
@@ -83,6 +83,17 @@ export class CreateSubCommand {
     if (interaction instanceof AutocompleteInteraction) {
       // Get the focused option
       switch (interaction.options.getFocused(true).name) {
+        case 'region': {
+          // Get the regions
+          const regions = Object.keys(config.regions).map((r) => {
+            return {
+              name: config.regions[r].name,
+              value: r,
+            };
+          });
+
+          return await interaction.respond(regions);
+        }
         case 'distribution': {
           // Get available distribution types based on listed formats in the config.
           const available = [];
@@ -380,7 +391,7 @@ export class CreateSubCommand {
       // Create the lobby channels.
       const { text, voice } = await LobbyCommand.service.createChannels(
         name,
-        LobbyService.regions.voiceRegions[region],
+        LobbyService.parseRegions().voiceRegions[region],
         permissions,
       );
 
@@ -423,6 +434,7 @@ export class CreateSubCommand {
         lobby.status,
         format,
         tier,
+        distribution,
         {
           categoryId: text.parentId,
           general: {

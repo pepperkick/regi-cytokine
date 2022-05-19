@@ -143,10 +143,6 @@ export class AppService {
     discord.captainPicks.picks = pickOrder;
     discord.captainPicks.position = 0;
 
-    // Save it.
-    discord.markModified('captainPicks');
-    await discord.save();
-
     await info.send({
       content: `:crossed_swords: The captains for this match have been decided!\n\n:point_right: Check the current team composition on <#${discord.channels.general.textChannelId}>.`,
       embeds: [
@@ -172,8 +168,18 @@ export class AppService {
     const captain = discord.captainPicks.picks[discord.captainPicks.position];
 
     await info.send({
-      content: `<@${captain}>'s starts picking!\n\n:point_right: Use the \`/lobby pick\` command to pick a player for your team.`,
+      content: `<@${captain}>'s starts picking!\n\n:point_right: Use the \`/lobby pick\` command to pick a player for your team.\n:hourglass: You have **${config.lobbies.captainPickTimeout}** second(s) to pick.`,
     });
+
+    // Set the lobby pick expiry date.
+    const expiry = new Date();
+    expiry.setSeconds(expiry.getSeconds() + config.lobbies.captainPickTimeout);
+
+    discord.captainPicks.pickExpires = expiry;
+
+    // Save the changes.
+    discord.markModified('captainPicks');
+    await discord.save();
 
     // Update the lobby embed.
     return await this.messagingService.updateReply(
