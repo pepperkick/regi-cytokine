@@ -568,7 +568,7 @@ export class MessagingService {
           label,
           description: `Click here to take the ${label} role!`,
           value: `${opt.name}|${lobby._id}`,
-          emoji: this.getRequirementEmoji(opt.name, true) ?? '⚔️',
+          emoji: this.getRequirementEmoji(opt.name) ?? '⚔️',
         };
       });
   }
