@@ -23,7 +23,7 @@
             "premium": "",
             "<bypass>": ""
         },
-        "token": ""
+        "token": "",
         "emojis": [
             { "req": "captain-a", "emoji": { "default": "red_circle" } },
             { "req": "captain-a", "emoji": { "default": "blue_circle" } },
@@ -54,7 +54,7 @@
             { "req": "blu-medic", "emoji": { "id": "968592856019238932", "name": "BLUMedic" } },
             { "req": "blu-sniper", "emoji": { "id": "968592855956353105", "name": "BLUSniper" } },
             { "req": "blu-spy", "emoji": { "id": "968592855981490194", "name": "BLUSpy" } }
-        ],
+        ]
     },
     "lobbies": {
         "lobbyTextPrefix": "lobby-",
