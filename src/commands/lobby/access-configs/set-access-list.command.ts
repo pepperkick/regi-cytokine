@@ -1,9 +1,5 @@
 import { Discord, Slash, SlashGroup, SlashOption, SlashChoice } from 'discordx';
-import {
-  ApplicationCommandOptionChoice,
-  AutocompleteInteraction,
-  CommandInteraction,
-} from 'discord.js';
+import { AutocompleteInteraction, CommandInteraction } from 'discord.js';
 import { PreferenceKeys, LobbyCommand } from '../../lobby.command';
 import {
   RequirementName,
@@ -102,12 +98,10 @@ export class SetAccessListOnConfigCommand {
           const roles = Object.values(RequirementName).filter(
             (key) => !SpecialRequirementNames.includes(key),
           );
-          const choices: ApplicationCommandOptionChoice[] = roles.map(
-            (role) => ({
-              name: role,
-              value: role,
-            }),
-          );
+          const choices = roles.map((role) => ({
+            name: role,
+            value: role,
+          }));
           return await interaction.respond(
             choices
               .filter((choice) =>

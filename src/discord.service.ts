@@ -401,7 +401,7 @@ export class DiscordService {
 
       return {
         text: gTextChannel as TextChannel,
-        voice: gVoiceChannel as VoiceChannel,
+        voice: (<unknown>gVoiceChannel) as VoiceChannel,
       };
     } catch (e) {
       // Probably missing permissions when creating channels.

@@ -298,9 +298,3 @@ Handles status changes for **Match** documents. Body consists of an updated [``M
   "server": "620ac610e897bf0d54c12907"
 }
 ```
-
-## License
-
-All rights are reserved to Qixalite.
-
-Permission must be granted explicitly by Qixalite to use, copy, modify, and distribute this code and its related documentation for any reason.

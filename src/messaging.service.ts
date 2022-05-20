@@ -882,7 +882,7 @@ Hatch URI:                   http://${ip}${sv.hatchAddress}/status?password=${
    * @param lobbies The list of active Lobby objects to create the select menu from.
    * @returns The MessageActionRow object with the corresponding select menu.
    */
-  createLobbySelectMenu(lobbies): MessageActionRow {
+  createLobbySelectMenu(lobbies): any {
     // Create an array with all the options available (aka active lobbies)
     const options = [];
     for (const lobby of lobbies)
