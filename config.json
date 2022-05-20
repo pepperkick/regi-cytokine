@@ -23,7 +23,7 @@
             "premium": "",
             "<bypass>": ""
         },
-        "token": ""
+        "token": "",
         "emojis": [
             { "req": "captain-a", "emoji": { "default": "red_circle" } },
             { "req": "captain-a", "emoji": { "default": "blue_circle" } },
